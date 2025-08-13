@@ -14,6 +14,7 @@
     if (el.type === 'checkbox') {
       value = el.checked;
     } else if (el.type === 'radio') {
+      // Save the selected radio group's value
       const name = el.name;
       if (name) {
         const selected = document.querySelector(`input[type="radio"][name="${name}"]:checked`);
@@ -27,7 +28,9 @@
     } else {
       value = el.value;
     }
-    localStorage.setItem(id, value);
+    if (value !== undefined) {
+      localStorage.setItem(id, value);
+    }
   }
 
   function restoreValue(el) {
@@ -37,7 +40,7 @@
     } else if (el.type === 'radio') {
       const name = el.name;
       const savedValue = localStorage.getItem(STORAGE_PREFIX + 'radio-' + name);
-      if (el.value === savedValue) {
+      if (savedValue !== null && el.value === savedValue) {
         el.checked = true;
       }
     } else if (el.tagName.toLowerCase() === 'select') {
@@ -52,32 +55,17 @@
   function initField(el) {
     restoreValue(el);
     el.addEventListener('input', () => saveValue(el));
-    el.addEventListener('change', () => saveValue(el));
+    el.addEventListener('change', () => saveValue(el)); // for checkboxes, radios, selects
   }
 
-  function initAll() {
+  function init() {
     const fields = document.querySelectorAll('input, textarea, select');
     fields.forEach(initField);
   }
 
-  // Public API
-  window.FormAutosave = {
-    init: function (element) {
-      if (typeof element === 'string') {
-        // It's a CSS selector
-        const elements = document.querySelectorAll(element);
-        elements.forEach(initField);
-      } else if (element instanceof NodeList || Array.isArray(element)) {
-        element.forEach(initField);
-      } else if (element instanceof HTMLElement) {
-        initField(element);
-      } else {
-        // If no argument, initialize all
-        initAll();
-      }
-    }
-  };
-
-  // Auto initialize on page load
-  document.addEventListener('DOMContentLoaded', initAll);
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
 })();
