@@ -1,34 +1,90 @@
 (function () {
   var STORAGE_PREFIX = 'autosave-';
 
+  // --- helper: generate a safe base string from element attributes ---
+  function makeBaseString(el) {
+    // choose a stable source: prefer explicit data-autosave-key, then name, placeholder, aria-label, type+tag
+    var src = (el.dataset && el.dataset.autosaveKey) ||
+              el.name ||
+              el.placeholder ||
+              el.getAttribute && el.getAttribute('aria-label') ||
+              (el.type ? (el.type + '-' + el.tagName.toLowerCase()) : el.tagName.toLowerCase());
+
+    if (!src) src = 'field';
+
+    // normalize: trim, lowercase, collapse whitespace, keep alnum and dash/underscore
+    src = String(src).trim().toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9\-_]/g, '');
+
+    // left(10)
+    return src.slice(0, 10) || 'field';
+  }
+
+  // --- helper: ensure a unique id on element, using base + -1, -2 ... if required ---
+  function ensureGeneratedId(el) {
+    if (el.id) return el.id; // respect existing ids
+
+    var base = makeBaseString(el);
+    var candidate = base;
+    var suffix = 1;
+
+    // if candidate is empty (shouldn't happen), fallback
+    if (!candidate) candidate = 'field';
+
+    // if an element with this id exists and it's not the same element, append suffix until unique
+    while (true) {
+      var existing = document.getElementById(candidate);
+      if (!existing) break;
+      if (existing === el) break; // already assigned to this element
+      candidate = base + '-' + suffix;
+      suffix++;
+    }
+
+    // assign the id to the element (now unique)
+    try {
+      el.id = candidate;
+    } catch (e) {
+      // some elements might be read-only for id in weird DOMs; ignore
+      console.warn('autosave: failed to assign generated id', e);
+    }
+
+    return candidate;
+  }
+
+  // --- form identifier (unchanged except small normalization) ---
   function formIdentifier(form) {
     if (!form) return location.pathname;
     if (form.dataset && form.dataset.autosaveFormKey) return form.dataset.autosaveFormKey;
-    if (form.action) return form.action;
+    if (form.action) return 'action:' + form.action;
     if (form.id) return 'form-id-' + form.id;
-    // fallback to index among forms on page
     return location.pathname + '#form-' + Array.prototype.indexOf.call(document.forms, form);
   }
 
+  // --- storage key builder: uses data-autosave-key, id (generated if missing), name+form, or deterministic path as fallback ---
   function storageKeyFor(el) {
     // explicit override
     if (el.dataset && el.dataset.autosaveKey) return STORAGE_PREFIX + el.dataset.autosaveKey;
 
+    // prefer real id when present in markup; if missing, generate one using the requested method
+    if (!el.id) {
+      // generate id according to: tolower(trim(left(10))) and resolve duplicates with -1,-2,...
+      ensureGeneratedId(el);
+    }
     if (el.id) return STORAGE_PREFIX + 'id-' + el.id;
 
+    // prefer name within form context (should be reached only if id generation failed)
     if (el.name) {
       var formKey = formIdentifier(el.form);
       return STORAGE_PREFIX + 'name-' + formKey + '::' + el.name;
     }
 
-    // final fallback: deterministic DOM path
+    // final fallback: deterministic DOM path (rarely used because we prefer generated id)
     var parts = [], node = el;
     while (node && node !== document) {
       var tag = node.tagName.toLowerCase();
       var sibIndex = 0;
       var sib = node;
       while (sib = sib.previousElementSibling) {
-        if (sib.tagName === node.tagName) sibIndex++;
+        if (sib.tagName && sib.tagName.toLowerCase() === tag) sibIndex++;
       }
       parts.unshift(tag + (sibIndex ? '[' + sibIndex + ']' : ''));
       node = node.parentElement;
@@ -36,6 +92,7 @@
     return STORAGE_PREFIX + 'path-' + parts.join('>');
   }
 
+  // --- rest of your autosave code (unchanged) ---
   function saveValue(el) {
     try {
       if (el.type === 'radio') {
@@ -59,7 +116,6 @@
       // select or text-like
       localStorage.setItem(key, el.value == null ? '' : String(el.value));
     } catch (e) {
-      // silently fail on storage exceptions (private mode etc.)
       console.warn('autosave: storage failed', e);
     }
   }
@@ -90,7 +146,6 @@
   }
 
   function initField(el) {
-    // opt-out: if data-autosave="false" skip this element
     if (el.dataset && el.dataset.autosave === 'false') return;
     restoreValue(el);
     el.addEventListener('input', function () { saveValue(el); }, false);
@@ -104,7 +159,6 @@
 
   document.addEventListener('DOMContentLoaded', initAll, false);
 
-  // public API
   window.AutoSave = {
     init: initAll,
     clearAll: function () {
@@ -115,4 +169,4 @@
     },
     removeKey: function (keySuffix) { localStorage.removeItem(STORAGE_PREFIX + keySuffix); }
   };
-})()
+})();
