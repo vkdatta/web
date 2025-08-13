@@ -1,4 +1,3 @@
-<script>
 (function () {
   const STORAGE_PREFIX = 'autosave-';
 
@@ -64,4 +63,3 @@
     fields.forEach(initField);
   });
 })();
-</script>
