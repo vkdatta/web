@@ -1,145 +1,118 @@
-<script>
-        // Enhanced form autosave solution
-        (function () {
-            const STORAGE_PREFIX = 'autosave-';
-            const usedIds = new Set();
-            
-            // Enhanced ID generation algorithm
-            function generateElementId(el, index) {
-                // Create a unique fingerprint for each element
-                let fingerprint = '';
-                
-                if (el.name) fingerprint += `name:${el.name}|`;
-                if (el.type) fingerprint += `type:${el.type}|`;
-                if (el.id) fingerprint += `id:${el.id}|`;
-                
-                // Add position-based identifier
-                fingerprint += `index:${index}`;
-                
-                // Generate hash for consistent ID
-                let hash = 0;
-                for (let i = 0; i < fingerprint.length; i++) {
-                    const char = fingerprint.charCodeAt(i);
-                    hash = ((hash << 5) - hash) + char;
-                    hash |= 0; // Convert to 32bit integer
-                }
-                
-                return `autosave-${Math.abs(hash)}`;
-            }
+(function () {
+  var STORAGE_PREFIX = 'autosave-';
 
-            function saveValue(el, index) {
-                try {
-                    const id = generateElementId(el, index);
-                    let value;
-                    
-                    // Handle different input types
-                    if (el.type === 'checkbox') {
-                        value = el.checked;
-                    } else if (el.type === 'radio') {
-                        // Save only the selected radio button value
-                        if (el.checked) {
-                            const name = el.name;
-                            if (name) {
-                                localStorage.setItem(STORAGE_PREFIX + 'radio-' + name, el.value);
-                            }
-                        }
-                        return;
-                    } else {
-                        value = el.value;
-                    }
-                    
-                    // Save to localStorage
-                    localStorage.setItem(id, value);
-                } catch (e) {
-                    console.error('Error saving value:', e);
-                }
-            }
+  function formIdentifier(form) {
+    if (!form) return location.pathname;
+    if (form.dataset && form.dataset.autosaveFormKey) return form.dataset.autosaveFormKey;
+    if (form.action) return form.action;
+    if (form.id) return 'form-id-' + form.id;
+    // fallback to index among forms on page
+    return location.pathname + '#form-' + Array.prototype.indexOf.call(document.forms, form);
+  }
 
-            function restoreValue(el, index) {
-                try {
-                    const id = generateElementId(el, index);
-                    
-                    if (el.type === 'checkbox') {
-                        const saved = localStorage.getItem(id);
-                        if (saved !== null) {
-                            el.checked = saved === 'true';
-                        }
-                    } else if (el.type === 'radio') {
-                        const name = el.name;
-                        if (name) {
-                            const savedValue = localStorage.getItem(STORAGE_PREFIX + 'radio-' + name);
-                            if (savedValue === el.value) {
-                                el.checked = true;
-                            }
-                        }
-                    } else {
-                        const saved = localStorage.getItem(id);
-                        if (saved !== null) {
-                            el.value = saved;
-                        }
-                    }
-                } catch (e) {
-                    console.error('Error restoring value:', e);
-                }
-            }
+  function storageKeyFor(el) {
+    // explicit override
+    if (el.dataset && el.dataset.autosaveKey) return STORAGE_PREFIX + el.dataset.autosaveKey;
 
-            function initField(el, index) {
-                restoreValue(el, index);
-                el.addEventListener('input', () => saveValue(el, index));
-                el.addEventListener('change', () => saveValue(el, index));
-            }
+    if (el.id) return STORAGE_PREFIX + 'id-' + el.id;
 
-            // Initialize when DOM is ready
-            document.addEventListener('DOMContentLoaded', () => {
-                const fields = document.querySelectorAll('input, textarea, select');
-                fields.forEach((el, idx) => initField(el, idx));
-                updateStorageView();
-            });
-        })();
-        
-        // Helper functions
-        function saveForm() {
-            alert('Form data has been saved! Try refreshing the page to see autosave in action.');
+    if (el.name) {
+      var formKey = formIdentifier(el.form);
+      return STORAGE_PREFIX + 'name-' + formKey + '::' + el.name;
+    }
+
+    // final fallback: deterministic DOM path
+    var parts = [], node = el;
+    while (node && node !== document) {
+      var tag = node.tagName.toLowerCase();
+      var sibIndex = 0;
+      var sib = node;
+      while (sib = sib.previousElementSibling) {
+        if (sib.tagName === node.tagName) sibIndex++;
+      }
+      parts.unshift(tag + (sibIndex ? '[' + sibIndex + ']' : ''));
+      node = node.parentElement;
+    }
+    return STORAGE_PREFIX + 'path-' + parts.join('>');
+  }
+
+  function saveValue(el) {
+    try {
+      if (el.type === 'radio') {
+        var name = el.name;
+        if (!name) return;
+        var selected = document.querySelector('input[type="radio"][name="' + name + '"]:checked');
+        if (selected) {
+          var key = STORAGE_PREFIX + 'radio-' + formIdentifier(el.form) + '::' + name;
+          localStorage.setItem(key, selected.value);
         }
-        
-        function resetForm() {
-            if (confirm('Are you sure you want to reset the form? All saved data will be cleared.')) {
-                localStorage.clear();
-                document.getElementById('userForm').reset();
-                updateStorageView();
-                setTimeout(() => alert('Form has been reset!'), 300);
-            }
-        }
-        
-        function clearStorage() {
-            if (confirm('Are you sure you want to clear ALL saved form data?')) {
-                localStorage.clear();
-                updateStorageView();
-                setTimeout(() => alert('All saved data has been cleared!'), 300);
-            }
-        }
-        
-        function updateStorageView() {
-            const container = document.getElementById('storageContents');
-            container.innerHTML = '';
-            
-            if (localStorage.length === 0) {
-                container.innerHTML = '<div class="debug-item">No form data saved in localStorage</div>';
-                return;
-            }
-            
-            for (let i = 0; i < localStorage.length; i++) {
-                const key = localStorage.key(i);
-                if (key.startsWith('autosave-')) {
-                    const value = localStorage.getItem(key);
-                    const item = document.createElement('div');
-                    item.className = 'debug-item';
-                    item.innerHTML = `<span class="debug-key">${key}:</span> <span class="debug-value">${value}</span>`;
-                    container.appendChild(item);
-                }
-            }
-        }
-        
-        // Initialize storage viewer
-        window.addEventListener('load', updateStorageView);
-    </script>
+        return;
+      }
+
+      var key = storageKeyFor(el);
+
+      if (el.type === 'checkbox') {
+        localStorage.setItem(key, el.checked ? '1' : '0');
+        return;
+      }
+
+      // select or text-like
+      localStorage.setItem(key, el.value == null ? '' : String(el.value));
+    } catch (e) {
+      // silently fail on storage exceptions (private mode etc.)
+      console.warn('autosave: storage failed', e);
+    }
+  }
+
+  function restoreValue(el) {
+    try {
+      if (el.type === 'radio') {
+        var key = STORAGE_PREFIX + 'radio-' + formIdentifier(el.form) + '::' + el.name;
+        var saved = localStorage.getItem(key);
+        if (saved !== null && el.value === saved) el.checked = true;
+        return;
+      }
+
+      var key = storageKeyFor(el);
+      var saved = localStorage.getItem(key);
+      if (saved === null) return;
+
+      if (el.type === 'checkbox') {
+        el.checked = saved === '1';
+        return;
+      }
+
+      // select or inputs
+      el.value = saved;
+    } catch (e) {
+      console.warn('autosave: restore failed', e);
+    }
+  }
+
+  function initField(el) {
+    // opt-out: if data-autosave="false" skip this element
+    if (el.dataset && el.dataset.autosave === 'false') return;
+    restoreValue(el);
+    el.addEventListener('input', function () { saveValue(el); }, false);
+    el.addEventListener('change', function () { saveValue(el); }, false);
+  }
+
+  function initAll() {
+    var fields = document.querySelectorAll('input, textarea, select');
+    Array.prototype.forEach.call(fields, initField);
+  }
+
+  document.addEventListener('DOMContentLoaded', initAll, false);
+
+  // public API
+  window.AutoSave = {
+    init: initAll,
+    clearAll: function () {
+      for (var i = localStorage.length - 1; i >= 0; i--) {
+        var k = localStorage.key(i);
+        if (k && k.indexOf(STORAGE_PREFIX) === 0) localStorage.removeItem(k);
+      }
+    },
+    removeKey: function (keySuffix) { localStorage.removeItem(STORAGE_PREFIX + keySuffix); }
+  };
+})()
