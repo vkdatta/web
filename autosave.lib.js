@@ -1,55 +1,42 @@
 <script>
-//<![CDATA[
 (function () {
   const STORAGE_PREFIX = 'autosave-';
-  const idMap = {}; // Track generated IDs to handle duplicates
 
   function makeBaseId(el) {
-    let base = '';
-
-    if (el.name) {
-      base = el.name.trim().toLowerCase();
-    } else if (el.placeholder) {
-      base = el.placeholder.trim().toLowerCase();
-    } else if (el.type) {
-      base = el.type.trim().toLowerCase();
-    } else {
-      base = 'field';
-    }
-
-    // Limit to 10 chars for the base
-    return base.substring(0, 10) || 'field';
+    let base = (el.name || el.placeholder || el.type || 'field')
+      .toLowerCase()
+      .replace(/\s+/g, '')
+      .substring(0, 10)
+      .trim();
+    if (!base) base = 'field';
+    return base;
   }
 
-  function generateId(el) {
-    if (el.id && el.id.trim()) return el.id;
-
-    let baseId = makeBaseId(el);
-    let newId = baseId;
+  function generateUniqueId(el) {
+    let base = makeBaseId(el);
+    let id = base;
     let counter = 1;
 
-    // Ensure uniqueness
-    while (idMap[newId]) {
-      newId = `${baseId}-${counter++}`;
+    // Keep looping until we find a unique ID in DOM
+    while (document.getElementById(id)) {
+      id = base + '-' + counter++;
     }
 
-    idMap[newId] = true;
-    el.id = STORAGE_PREFIX + newId;
-    return el.id;
+    el.id = id;
+    return id;
   }
 
   function saveValue(el) {
-    const id = generateId(el);
+    const id = el.id || generateUniqueId(el);
     let value;
 
     if (el.type === 'checkbox') {
       value = el.checked;
     } else if (el.type === 'radio') {
-      const name = el.name;
-      if (name) {
-        const selected = document.querySelector(`input[type="radio"][name="${name}"]:checked`);
+      if (el.name) {
+        const selected = document.querySelector(`input[type="radio"][name="${el.name}"]:checked`);
         if (selected) {
-          localStorage.setItem(STORAGE_PREFIX + 'radio-' + name, selected.value);
+          localStorage.setItem(STORAGE_PREFIX + 'radio-' + el.name, selected.value);
         }
         return;
       }
@@ -57,21 +44,21 @@
       value = el.value;
     }
 
-    localStorage.setItem(id, value);
+    localStorage.setItem(STORAGE_PREFIX + id, value);
   }
 
   function restoreValue(el) {
-    const id = generateId(el);
+    const id = el.id || generateUniqueId(el);
 
     if (el.type === 'checkbox') {
-      el.checked = localStorage.getItem(id) === 'true';
+      el.checked = localStorage.getItem(STORAGE_PREFIX + id) === 'true';
     } else if (el.type === 'radio') {
       const savedValue = localStorage.getItem(STORAGE_PREFIX + 'radio-' + el.name);
       if (el.value === savedValue) {
         el.checked = true;
       }
     } else {
-      const saved = localStorage.getItem(id);
+      const saved = localStorage.getItem(STORAGE_PREFIX + id);
       if (saved !== null) el.value = saved;
     }
   }
@@ -84,8 +71,10 @@
 
   document.addEventListener('DOMContentLoaded', () => {
     const fields = document.querySelectorAll('input, textarea, select');
-    fields.forEach(initField);
+    fields.forEach(el => {
+      if (!el.id) generateUniqueId(el);
+      initField(el);
+    });
   });
 })();
-//]]>
 </script>
