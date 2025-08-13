@@ -1,11 +1,14 @@
-# autosave.lib.js
+# javascript
 
-Autosave Inputs in Frontend [Inputs, Textareas, Radios]
+Autosave Inputs in Frontend [Inputs, Textareas, Radios] usimg autosave.lib.js
+Double tap anywhere to emter fulscreen using fullscreen.lib.js
+
 
 # Implementation
 
 ``` javascript
 <script src='https://cdn.jsdelivr.net/gh/vkdatta/javascript@main/autosave.lib.js'/>
+<script src='https://cdn.jsdelivr.net/gh/vkdatta/javascript@main/fullscreen.lib.js'/>
 ```
 
 # Usage
