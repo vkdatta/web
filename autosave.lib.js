@@ -1,71 +1,118 @@
 (function () {
-  const STORAGE_PREFIX = 'autosave-';
+  var STORAGE_PREFIX = 'autosave-';
 
-  function generateId(el) {
-    if (!el.id) {
-      el.id = STORAGE_PREFIX + Math.random().toString(36).substr(2, 9);
+  function formIdentifier(form) {
+    if (!form) return location.pathname;
+    if (form.dataset && form.dataset.autosaveFormKey) return form.dataset.autosaveFormKey;
+    if (form.action) return form.action;
+    if (form.id) return 'form-id-' + form.id;
+    // fallback to index among forms on page
+    return location.pathname + '#form-' + Array.prototype.indexOf.call(document.forms, form);
+  }
+
+  function storageKeyFor(el) {
+    // explicit override
+    if (el.dataset && el.dataset.autosaveKey) return STORAGE_PREFIX + el.dataset.autosaveKey;
+
+    if (el.id) return STORAGE_PREFIX + 'id-' + el.id;
+
+    if (el.name) {
+      var formKey = formIdentifier(el.form);
+      return STORAGE_PREFIX + 'name-' + formKey + '::' + el.name;
     }
-    return el.id;
+
+    // final fallback: deterministic DOM path
+    var parts = [], node = el;
+    while (node && node !== document) {
+      var tag = node.tagName.toLowerCase();
+      var sibIndex = 0;
+      var sib = node;
+      while (sib = sib.previousElementSibling) {
+        if (sib.tagName === node.tagName) sibIndex++;
+      }
+      parts.unshift(tag + (sibIndex ? '[' + sibIndex + ']' : ''));
+      node = node.parentElement;
+    }
+    return STORAGE_PREFIX + 'path-' + parts.join('>');
   }
 
   function saveValue(el) {
-    const id = generateId(el);
-    let value;
-    if (el.type === 'checkbox') {
-      value = el.checked;
-    } else if (el.type === 'radio') {
-      // Save the selected radio group's value
-      const name = el.name;
-      if (name) {
-        const selected = document.querySelector(`input[type="radio"][name="${name}"]:checked`);
+    try {
+      if (el.type === 'radio') {
+        var name = el.name;
+        if (!name) return;
+        var selected = document.querySelector('input[type="radio"][name="' + name + '"]:checked');
         if (selected) {
-          localStorage.setItem(STORAGE_PREFIX + 'radio-' + name, selected.value);
+          var key = STORAGE_PREFIX + 'radio-' + formIdentifier(el.form) + '::' + name;
+          localStorage.setItem(key, selected.value);
         }
         return;
       }
-    } else if (el.tagName.toLowerCase() === 'select') {
-      value = el.value;
-    } else {
-      value = el.value;
-    }
-    if (value !== undefined) {
-      localStorage.setItem(id, value);
+
+      var key = storageKeyFor(el);
+
+      if (el.type === 'checkbox') {
+        localStorage.setItem(key, el.checked ? '1' : '0');
+        return;
+      }
+
+      // select or text-like
+      localStorage.setItem(key, el.value == null ? '' : String(el.value));
+    } catch (e) {
+      // silently fail on storage exceptions (private mode etc.)
+      console.warn('autosave: storage failed', e);
     }
   }
 
   function restoreValue(el) {
-    const id = generateId(el);
-    if (el.type === 'checkbox') {
-      el.checked = localStorage.getItem(id) === 'true';
-    } else if (el.type === 'radio') {
-      const name = el.name;
-      const savedValue = localStorage.getItem(STORAGE_PREFIX + 'radio-' + name);
-      if (savedValue !== null && el.value === savedValue) {
-        el.checked = true;
+    try {
+      if (el.type === 'radio') {
+        var key = STORAGE_PREFIX + 'radio-' + formIdentifier(el.form) + '::' + el.name;
+        var saved = localStorage.getItem(key);
+        if (saved !== null && el.value === saved) el.checked = true;
+        return;
       }
-    } else if (el.tagName.toLowerCase() === 'select') {
-      const saved = localStorage.getItem(id);
-      if (saved !== null) el.value = saved;
-    } else {
-      const saved = localStorage.getItem(id);
-      if (saved !== null) el.value = saved;
+
+      var key = storageKeyFor(el);
+      var saved = localStorage.getItem(key);
+      if (saved === null) return;
+
+      if (el.type === 'checkbox') {
+        el.checked = saved === '1';
+        return;
+      }
+
+      // select or inputs
+      el.value = saved;
+    } catch (e) {
+      console.warn('autosave: restore failed', e);
     }
   }
 
   function initField(el) {
+    // opt-out: if data-autosave="false" skip this element
+    if (el.dataset && el.dataset.autosave === 'false') return;
     restoreValue(el);
-    el.addEventListener('input', () => saveValue(el));
-    el.addEventListener('change', () => saveValue(el)); // for checkboxes, radios, selects
+    el.addEventListener('input', function () { saveValue(el); }, false);
+    el.addEventListener('change', function () { saveValue(el); }, false);
   }
 
-  function init() {
-    const fields = document.querySelectorAll('input, textarea, select');
-    fields.forEach(initField);
+  function initAll() {
+    var fields = document.querySelectorAll('input, textarea, select');
+    Array.prototype.forEach.call(fields, initField);
   }
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init);
-  } else {
-    init();
-  }
-})();
+  document.addEventListener('DOMContentLoaded', initAll, false);
+
+  // public API
+  window.AutoSave = {
+    init: initAll,
+    clearAll: function () {
+      for (var i = localStorage.length - 1; i >= 0; i--) {
+        var k = localStorage.key(i);
+        if (k && k.indexOf(STORAGE_PREFIX) === 0) localStorage.removeItem(k);
+      }
+    },
+    removeKey: function (keySuffix) { localStorage.removeItem(STORAGE_PREFIX + keySuffix); }
+  };
+})()
