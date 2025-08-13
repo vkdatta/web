@@ -1,80 +1,73 @@
-<script>
+<script><![CDATA[
 (function () {
   const STORAGE_PREFIX = 'autosave-';
+  const usedIds = new Set();
 
-  function makeBaseId(el) {
-    let base = (el.name || el.placeholder || el.type || 'field')
+  function generateId(el, index) {
+    let base = (el.id || el.name || el.tagName + index)
+      .trim()
       .toLowerCase()
-      .replace(/\s+/g, '')
-      .substring(0, 10)
-      .trim();
-    if (!base) base = 'field';
-    return base;
-  }
+      .replace(/\s+/g, '-')        // replace spaces with dash
+      .substring(0, 10);           // take first 10 chars
 
-  function generateUniqueId(el) {
-    let base = makeBaseId(el);
-    let id = base;
+    if (!base) base = 'field-' + index;
+
+    let unique = base;
     let counter = 1;
-
-    // Keep looping until we find a unique ID in DOM
-    while (document.getElementById(id)) {
-      id = base + '-' + counter++;
+    while (usedIds.has(unique)) {
+      unique = base + '-' + counter++;
     }
-
-    el.id = id;
-    return id;
+    usedIds.add(unique);
+    el.id = unique;
+    return STORAGE_PREFIX + unique;
   }
 
-  function saveValue(el) {
-    const id = el.id || generateUniqueId(el);
+  function saveValue(el, index) {
+    const id = generateId(el, index);
     let value;
 
     if (el.type === 'checkbox') {
       value = el.checked;
     } else if (el.type === 'radio') {
-      if (el.name) {
-        const selected = document.querySelector(`input[type="radio"][name="${el.name}"]:checked`);
+      const name = el.name;
+      if (name) {
+        const selected = document.querySelector(`input[type="radio"][name="${name}"]:checked`);
         if (selected) {
-          localStorage.setItem(STORAGE_PREFIX + 'radio-' + el.name, selected.value);
+          localStorage.setItem(STORAGE_PREFIX + 'radio-' + name, selected.value);
         }
         return;
       }
     } else {
       value = el.value;
     }
-
-    localStorage.setItem(STORAGE_PREFIX + id, value);
+    localStorage.setItem(id, value);
   }
 
-  function restoreValue(el) {
-    const id = el.id || generateUniqueId(el);
-
+  function restoreValue(el, index) {
+    const id = generateId(el, index);
     if (el.type === 'checkbox') {
-      el.checked = localStorage.getItem(STORAGE_PREFIX + id) === 'true';
+      el.checked = localStorage.getItem(id) === 'true';
     } else if (el.type === 'radio') {
-      const savedValue = localStorage.getItem(STORAGE_PREFIX + 'radio-' + el.name);
+      const name = el.name;
+      const savedValue = localStorage.getItem(STORAGE_PREFIX + 'radio-' + name);
       if (el.value === savedValue) {
         el.checked = true;
       }
     } else {
-      const saved = localStorage.getItem(STORAGE_PREFIX + id);
+      const saved = localStorage.getItem(id);
       if (saved !== null) el.value = saved;
     }
   }
 
-  function initField(el) {
-    restoreValue(el);
-    el.addEventListener('input', () => saveValue(el));
-    el.addEventListener('change', () => saveValue(el));
+  function initField(el, index) {
+    restoreValue(el, index);
+    el.addEventListener('input', () => saveValue(el, index));
+    el.addEventListener('change', () => saveValue(el, index));
   }
 
   document.addEventListener('DOMContentLoaded', () => {
     const fields = document.querySelectorAll('input, textarea, select');
-    fields.forEach(el => {
-      if (!el.id) generateUniqueId(el);
-      initField(el);
-    });
+    fields.forEach((el, idx) => initField(el, idx));
   });
 })();
-</script>
+]]></script>
