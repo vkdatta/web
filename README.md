@@ -5,7 +5,7 @@ Autosave Inputs in Frontend [Inputs, Textareas, Radios]
 # Implementation
 
 ``` javascript
-<script src='https://cdn.jsdelivr.net/gh/vkdatta/autosave@main/autosave.lib.js'/>
+<script src='https://cdn.jsdelivr.net/gh/vkdatta/javascript@main/autosave.lib.js'/>
 ```
 
 # Usage
