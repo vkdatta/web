@@ -5,18 +5,13 @@
   const FIELD_KEY_PREFIX = STORAGE_PREFIX + 'field:';
   const RADIO_KEY_PREFIX = STORAGE_PREFIX + 'radio:';
   const GENERATED_BTN_KEY = STORAGE_PREFIX + 'generated-buttons:';
-  const SAVE_DEBOUNCE_MS = 250;
-  const GEN_SAVE_DEBOUNCE_MS = 300;
+  const SAVE_DEBOUNCE_MS = 200;
+  const GEN_SAVE_DEBOUNCE_MS = 250;
 
-  function pageKey() {
-    return encodeURIComponent(location.origin + location.pathname + location.search);
-  }
-  function debounce(fn, wait) {
-    let t;
-    return function (...args) { clearTimeout(t); t = setTimeout(() => fn.apply(this, args), wait); };
-  }
-  function safeJSONParse(str, fallback = null) { try { return JSON.parse(str); } catch (e) { return fallback; } }
-
+  // --- utils ---
+  function pageKey() { return encodeURIComponent(location.origin + location.pathname + location.search); }
+  function debounce(fn, wait) { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), wait); }; }
+  function safeJSONParse(s, fallback = null) { try { return JSON.parse(s); } catch (e) { return fallback; } }
   function cssPath(el) {
     if (!el || el.nodeType !== 1) return '';
     const parts = [];
@@ -35,12 +30,9 @@
 
   function storageKeyForElement(el) { return FIELD_KEY_PREFIX + pageKey() + ':' + cssPath(el); }
   function storageKeyForRadio(name) { return RADIO_KEY_PREFIX + pageKey() + ':' + String(name); }
-  function storageKeyForGenerated(containerIdOrSelector) {
-    const suffix = containerIdOrSelector ? ':' + containerIdOrSelector : '';
-    return GENERATED_BTN_KEY + pageKey() + suffix;
-  }
+  function storageKeyForGenerated(containerIdOrSelector) { const suffix = containerIdOrSelector ? ':' + containerIdOrSelector : ''; return GENERATED_BTN_KEY + pageKey() + suffix; }
 
-  // ---------------- editable detection ----------------
+  // --- editable detection (infer rights by element properties) ---
   function isElementEditable(el) {
     if (!el || el.nodeType !== 1) return false;
     if (el.isContentEditable) return true;
@@ -49,7 +41,7 @@
     if (tag === 'select') return !el.disabled;
     if (tag === 'input') {
       const t = (el.type || '').toLowerCase();
-      if (t === 'hidden' || t === 'button' || t === 'submit' || t === 'reset' || t === 'image') return false;
+      if (['hidden', 'button', 'submit', 'reset', 'image'].includes(t)) return false;
       return !el.disabled && !el.readOnly;
     }
     return false;
@@ -60,7 +52,7 @@
     return Array.from(group).some(r => !r.disabled && !r.readOnly);
   }
 
-  // ---------------- field save / restore ----------------
+  // --- field save/restore ---
   function saveFieldValue(el) {
     try {
       const key = storageKeyForElement(el);
@@ -68,35 +60,25 @@
       if (el.type === 'checkbox') localStorage.setItem(key, el.checked ? 'true' : 'false');
       else if (el.type === 'radio') {
         const name = el.name; if (!name) return;
-        const selected = document.querySelector(`input[type="radio"][name="${CSS.escape ? CSS.escape(name) : name}"]:checked`);
-        if (selected) localStorage.setItem(storageKeyForRadio(name), selected.value);
+        const sel = document.querySelector(`input[type="radio"][name="${CSS.escape ? CSS.escape(name) : name}"]:checked`);
+        if (sel) localStorage.setItem(storageKeyForRadio(name), sel.value);
       } else if (el.tagName.toLowerCase() === 'select') localStorage.setItem(key, el.value);
       else if (el.isContentEditable) localStorage.setItem(key, el.innerHTML);
       else localStorage.setItem(key, el.value);
-    } catch (e) { console.warn('Autosave: saveFieldValue failed', e); }
+    } catch (e) { console.warn('Autosave saveField failed', e); }
   }
-
   function restoreFieldValue(el) {
     try {
-      const key = storageKeyForElement(el);
-      if (!key) return;
-      if (el.type === 'checkbox') {
-        const saved = localStorage.getItem(key); if (saved !== null) el.checked = saved === 'true';
-      } else if (el.type === 'radio') {
-        const name = el.name; if (!name) return;
-        const saved = localStorage.getItem(storageKeyForRadio(name));
-        if (saved !== null && el.value === saved) el.checked = true;
-      } else if (el.tagName.toLowerCase() === 'select') {
-        const saved = localStorage.getItem(key); if (saved !== null) el.value = saved;
-      } else if (el.isContentEditable) {
-        const saved = localStorage.getItem(key); if (saved !== null) el.innerHTML = saved;
-      } else {
-        const saved = localStorage.getItem(key); if (saved !== null) el.value = saved;
-      }
-    } catch (e) { console.warn('Autosave: restoreFieldValue failed', e); }
+      const key = storageKeyForElement(el); if (!key) return;
+      if (el.type === 'checkbox') { const s = localStorage.getItem(key); if (s !== null) el.checked = s === 'true'; }
+      else if (el.type === 'radio') { const name = el.name; if (!name) return; const s = localStorage.getItem(storageKeyForRadio(name)); if (s !== null && el.value === s) el.checked = true; }
+      else if (el.tagName.toLowerCase() === 'select') { const s = localStorage.getItem(key); if (s !== null) el.value = s; }
+      else if (el.isContentEditable) { const s = localStorage.getItem(key); if (s !== null) el.innerHTML = s; }
+      else { const s = localStorage.getItem(key); if (s !== null) el.value = s; }
+    } catch (e) { console.warn('Autosave restoreField failed', e); }
   }
 
-  // ---------------- initialize fields ----------------
+  // --- init fields & dynamic hookup ---
   const debouncedSaveMap = new WeakMap();
   function initField(el) {
     if (!el || el.nodeType !== 1) return;
@@ -108,22 +90,31 @@
     el.addEventListener('change', saver, { passive: true });
     if (el.isContentEditable) el.addEventListener('blur', saver, { passive: true });
   }
-
   function initAllFields(root = document) {
     try {
       const selector = 'input:not([type=hidden]):not([data-autosave="off"]), textarea:not([data-autosave="off"]), select:not([data-autosave="off"]), [contenteditable="true"]:not([data-autosave="off"])';
       const nodes = root.querySelectorAll(selector);
       nodes.forEach(node => {
-        if (node.type === 'radio') {
-          if (isRadioGroupEditable(node.name)) initField(node);
-        } else {
-          if (isElementEditable(node)) initField(node);
-        }
+        if (node.type === 'radio') { if (isRadioGroupEditable(node.name)) initField(node); }
+        else { if (isElementEditable(node)) initField(node); }
       });
-    } catch (e) { console.warn('Autosave: initAllFields failed', e); }
+    } catch (e) { console.warn('Autosave initAllFields failed', e); }
   }
 
-  // ---------------- generated buttons persistence (fixed) ----------------
+  // --- generated buttons persistence with stable ids ---
+  // generate a short random id (cryptographically random when available)
+  let idCounter = 0;
+  function generateStableId() {
+    idCounter += 1;
+    try {
+      const a = new Uint32Array(2);
+      crypto.getRandomValues(a);
+      return 'autosave-btn-' + (Date.now().toString(36)) + '-' + a[0].toString(36).slice(-6) + '-' + idCounter;
+    } catch (e) {
+      return 'autosave-btn-' + Date.now().toString(36) + '-' + Math.floor(Math.random() * 1e6).toString(36) + '-' + idCounter;
+    }
+  }
+
   function findGeneratedContainer() {
     let el = document.getElementById('generated'); if (el) return el;
     el = document.querySelector('[data-autosave-generated]'); if (el) return el;
@@ -140,11 +131,43 @@
   }
   function isAddClearAvailable() { return !!(guessAddControl() && guessClearControl()); }
 
-  function createGeneratedButton(label, container) {
+  // Ensure every button in the generated container has a stable data-autosave-id
+  function ensureStableIds(container) {
+    if (!container) return;
+    Array.from(container.children).forEach(child => {
+      if (child.nodeType !== 1) return;
+      // we care about buttons, but be lenient (some pages may use anchors)
+      if (!['button', 'a'].includes(child.tagName.toLowerCase())) return;
+      if (!child.dataset.autosaveId) {
+        // prefer preserving existing id if safe (starts with autosave-btn- or not used elsewhere)
+        let assignId = null;
+        if (child.id && !document.querySelectorAll('#' + CSS.escape(child.id)).length > 1) {
+          assignId = child.id;
+        } else {
+          assignId = generateStableId();
+        }
+        child.dataset.autosaveId = assignId;
+        // we do not force element.id unless it is missing; avoid clobbering page IDs
+        if (!child.id) child.id = assignId;
+      }
+    });
+  }
+
+  function createGeneratedButton(label, id, container) {
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'gen-btn';
     btn.textContent = label;
+    if (id) {
+      btn.dataset.autosaveId = id;
+      // give element an id only if not colliding with existing ids
+      if (!document.getElementById(id)) btn.id = id;
+    } else {
+      // ensure stable id is present
+      const gen = generateStableId();
+      btn.dataset.autosaveId = gen;
+      if (!document.getElementById(gen)) btn.id = gen;
+    }
     btn.addEventListener('click', () => {
       btn.toggleAttribute('aria-pressed');
       btn.style.boxShadow = btn.hasAttribute('aria-pressed') ? '0 4px 10px rgba(2,6,23,0.08)' : '';
@@ -155,100 +178,92 @@
 
   function saveGeneratedState(container) {
     if (!container) return;
-    // ALWAYS save (so user-added buttons are not lost).
+    ensureStableIds(container);
     const labels = Array.from(container.children)
-      .filter(c => c.nodeType === 1 && (c.tagName.toLowerCase() === 'button' || (c.classList && c.classList.contains('gen-btn'))))
-      .map(b => b.textContent || '');
+      .filter(c => c.nodeType === 1 && (c.tagName.toLowerCase() === 'button' || c.matches?.('.gen-btn')))
+      .map(b => ({ id: b.dataset.autosaveId || b.id || generateStableId(), label: b.textContent || '' }));
     const skey = storageKeyForGenerated(container.id || 'generated');
-    try { localStorage.setItem(skey, JSON.stringify(labels)); } catch (e) { console.warn('Autosave: saveGeneratedState failed', e); }
+    try { localStorage.setItem(skey, JSON.stringify(labels)); } catch (e) { console.warn('Autosave saveGenerated failed', e); }
   }
   const debouncedSaveGenerated = debounce(saveGeneratedState, GEN_SAVE_DEBOUNCE_MS);
 
   function restoreGeneratedStateIfAllowed(container) {
     if (!container) return;
-    // Only restore *into the DOM* if user has both controls present (so UI remains manageable).
-    if (!isAddClearAvailable()) return;
+    if (!isAddClearAvailable()) return; // only populate DOM when Add+Clear available
     const skey = storageKeyForGenerated(container.id || 'generated');
     const raw = localStorage.getItem(skey);
     const arr = safeJSONParse(raw, []);
     if (!Array.isArray(arr) || arr.length === 0) return;
-    // Replace container children with restored buttons
-    while (container.firstChild) container.removeChild(container.firstChild);
-    arr.forEach(label => { try { createGeneratedButton(label, container); } catch (e) { /* ignore */ } });
-  }
-
-  // If saved data exists but Add/Clear aren't present yet, wait and restore when they do.
-  function waitUntilControlsThenRestore(container) {
-    if (!container) return;
-    const skey = storageKeyForGenerated(container.id || 'generated');
-    const raw = localStorage.getItem(skey);
-    const arr = safeJSONParse(raw, []);
-    if (!Array.isArray(arr) || arr.length === 0) return;
-    // If controls exist, restore now
-    if (isAddClearAvailable()) { restoreGeneratedStateIfAllowed(container); return; }
-    // Otherwise observe for controls appearing
-    const controlObserver = new MutationObserver(() => {
-      if (isAddClearAvailable()) {
-        controlObserver.disconnect();
-        restoreGeneratedStateIfAllowed(container);
+    // Build map of existing autosave ids to avoid duplicates
+    const existingMap = new Map();
+    Array.from(container.children).forEach(ch => {
+      const aid = ch.dataset?.autosaveId || ch.id;
+      if (aid) existingMap.set(aid, ch);
+    });
+    // Add or update
+    arr.forEach(obj => {
+      if (!obj || typeof obj !== 'object') return;
+      const { id, label } = obj;
+      if (existingMap.has(id)) {
+        const el = existingMap.get(id);
+        if (el.textContent !== label) el.textContent = label;
+      } else {
+        try { createGeneratedButton(label, id, container); } catch (e) { /* ignore per-button error */ }
       }
     });
-    controlObserver.observe(document.documentElement || document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['id', 'class', 'data-action', 'data-add', 'data-clear', 'disabled'] });
-    // safety: stop observing after 30s
-    setTimeout(() => { try { controlObserver.disconnect(); } catch (e) {} }, 30000);
+    // Ensure every child has a stable id for future saves
+    ensureStableIds(container);
   }
 
+  // Observe generated container for changes and assign IDs + save
   let genObserver = null;
   function observeGeneratedContainer(container) {
     if (!container) return;
-    // restore now if possible, or wait for controls to restore later
+    // Try restoring (if allowed) and ensure ids
+    ensureStableIds(container);
     restoreGeneratedStateIfAllowed(container);
-    waitUntilControlsThenRestore(container);
+    ensureStableIds(container);
 
-    // disconnect previous observer
-    if (genObserver) {
-      try { genObserver.disconnect(); } catch (e) {}
-    }
+    if (genObserver) try { genObserver.disconnect(); } catch (e) {}
     genObserver = new MutationObserver(muts => {
       for (const m of muts) {
-        if (m.type === 'childList') { debouncedSaveGenerated(container); break; }
-        // attributes that may indicate a button changed (rare)
-        if (m.type === 'attributes') { debouncedSaveGenerated(container); break; }
+        if (m.type === 'childList' || m.type === 'attributes') {
+          ensureStableIds(container);
+          debouncedSaveGenerated(container);
+          break;
+        }
       }
     });
-    genObserver.observe(container, { childList: true, subtree: false, attributes: true, attributeFilter: ['class', 'disabled'] });
+    genObserver.observe(container, { childList: true, subtree: false, attributes: true, attributeFilter: ['class', 'id', 'disabled', 'data-autosave-id'] });
 
-    // also save on unload as a final safety net
+    // last-chance save on unload
     window.addEventListener('beforeunload', () => saveGeneratedState(container));
   }
 
-  // If container isn't present at bootstrap, watch the DOM and attach once it's added
+  // Watch the DOM for the container (attach even if container appears later)
   function watchForGeneratedContainer() {
     const existing = findGeneratedContainer();
     if (existing) { observeGeneratedContainer(existing); return; }
 
-    const containerObserver = new MutationObserver(muts => {
+    const co = new MutationObserver(muts => {
       for (const m of muts) {
         if (m.type === 'childList' && m.addedNodes.length) {
           for (const n of m.addedNodes) {
             if (n.nodeType !== 1) continue;
-            // check subtree and node itself
-            const found = n.matches && n.matches('#generated, [data-autosave-generated]') ? n : n.querySelector && n.querySelector('#generated, [data-autosave-generated]');
-            if (found) { observeGeneratedContainer(found); containerObserver.disconnect(); return; }
+            const found = (n.matches && n.matches('#generated, [data-autosave-generated]')) ? n : (n.querySelector && n.querySelector('#generated, [data-autosave-generated]'));
+            if (found) { observeGeneratedContainer(found); co.disconnect(); return; }
           }
         }
       }
     });
-    containerObserver.observe(document.documentElement || document.body, { childList: true, subtree: true });
-    // stop watching after 30s to avoid permanent observer if container never appears
-    setTimeout(() => { try { containerObserver.disconnect(); } catch (e) {} }, 30000);
+    co.observe(document.documentElement || document.body, { childList: true, subtree: true });
+    // safety cutoff
+    setTimeout(() => { try { co.disconnect(); } catch (e) {} }, 30000);
   }
 
-  // ---------------- bootstrap ----------------
+  // --- bootstrap ---
   function bootstrapAutosave() {
     initAllFields(document);
-
-    // dynamic hookup for newly added fields
     const fieldObserver = new MutationObserver(mutations => {
       for (const m of mutations) {
         if (m.type === 'childList' && m.addedNodes.length) {
@@ -261,7 +276,6 @@
     });
     fieldObserver.observe(document.documentElement || document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['disabled', 'readonly', 'contenteditable', 'data-autosave'] });
 
-    // generated buttons handling
     watchForGeneratedContainer();
 
     // restore radios globally
@@ -277,7 +291,7 @@
       });
     } catch (e) {}
 
-    console.info('Autosave: initialized (generated-buttons saving fixed).');
+    console.info('Autosave: initialized (stable IDs for generated buttons enabled).');
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bootstrapAutosave); else bootstrapAutosave();
