@@ -53,7 +53,9 @@
   // General state getters/setters for various element types
   function getState(el) {
     if (!el) return null;
-    if (el.tagName === 'SELECT') {
+    if (el.isContentEditable) {
+      return el.innerHTML;
+    } else if (el.tagName === 'SELECT') {
       return el.value;
     } else if (el.tagName === 'TEXTAREA') {
       return el.value;
@@ -67,9 +69,7 @@
       }
     } else if (el.tagName === 'BUTTON') {
       if (el.hasAttribute('aria-pressed')) {
-        return el.hasAttribute('aria-pressed');
-      } else {
-        return ( پذیر: '').trim();
+        return el.getAttribute('aria-pressed') === 'true';
       }
     }
     // Add more types if needed
@@ -78,7 +78,9 @@
 
   function setState(el, state) {
     if (state == null) return;
-    if (el.tagName === 'SELECT') {
+    if (el.isContentEditable) {
+      el.innerHTML = state;
+    } else if (el.tagName === 'SELECT') {
       el.value = state;
     } else if (el.tagName === 'TEXTAREA') {
       el.value = state;
@@ -92,14 +94,10 @@
           el.value = String(state);
       }
     } else if (el.tagName === 'BUTTON') {
-      if (el.hasAttribute('aria-pressed')) {
-        if (!!state) {
-          el.setAttribute('aria-pressed', 'true');
-        } else {
-          el.removeAttribute('aria-pressed');
-        }
+      if (!!state) {
+        el.setAttribute('aria-pressed', 'true');
       } else {
-        el.textContent = String(state);
+        el.removeAttribute('aria-pressed');
       }
     }
   }
@@ -131,7 +129,7 @@
       .map(btn => {
         const id = ensureId(btn);
         const label = (btn.textContent || '').trim();
-        const pressed = btn.hasAttribute('aria-pressed');
+        const pressed = btn.getAttribute('aria-pressed') === 'true';
         return { id: id, label: label, pressed: pressed };
       });
   }
@@ -185,7 +183,8 @@
       }
       if (el) {
         if ((el.textContent || '').trim() !== label) el.textContent = label;
-        if (pressed !== el.hasAttribute('aria-pressed')) {
+        const currentPressed = el.getAttribute('aria-pressed') === 'true';
+        if (pressed !== currentPressed) {
           if (pressed) {
             el.setAttribute('aria-pressed', 'true');
           } else {
@@ -194,6 +193,7 @@
         }
         attachToggleToRestored(el);
         updateStyle(el);
+        el.dispatchEvent(new CustomEvent('autosave:restored', { bubbles: true, detail: { state: pressed } }));
       } else {
         const b = document.createElement('button');
         b.type = 'button';
@@ -204,6 +204,7 @@
         if (pressed) b.setAttribute('aria-pressed', 'true');
         attachToggleToRestored(b);
         updateStyle(b);
+        b.dispatchEvent(new CustomEvent('autosave:restored', { bubbles: true, detail: { state: pressed } }));
         cont.appendChild(b);
       }
     });
@@ -250,17 +251,18 @@
     }
   }
 
-  // === Static elements ([data-autosave]) ===
+  // === Static elements (automatic for actionable elements) ===
 
   // Snapshot static
   function snapshotStatic() {
-    const els = document.querySelectorAll('[data-autosave]');
+    const els = document.querySelectorAll('input:not([type=password]), textarea, select, button, [contenteditable]');
     return Array.from(els)
       .map(el => {
         const id = ensureId(el);
         const state = getState(el);
+        if (state == null) return null;
         return { id, state };
-      });
+      }).filter(Boolean);
   }
 
   // Save functions for static
@@ -287,10 +289,7 @@
       }
       if (el) {
         setState(el, state);
-        // For buttons with aria-pressed, update style if it's the same as generated (optional)
-        if (el.tagName === 'BUTTON' && el.hasAttribute('aria-pressed')) {
-          updateStyle(el); // Reuse if applicable, else remove this
-        }
+        el.dispatchEvent(new CustomEvent('autosave:restored', { bubbles: true, detail: { state } }));
       }
       // No creation for static elements
     });
@@ -298,11 +297,11 @@
 
   // Observe static (event listeners)
   function observeStatic() {
-    const els = document.querySelectorAll('[data-autosave]');
+    const els = document.querySelectorAll('input:not([type=password]), textarea, select, button, [contenteditable]');
     Array.from(els).forEach(el => {
       ensureId(el);
       // Add change listeners based on type
-      if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
+      if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable) {
         el.addEventListener('input', saveDebouncedStatic);
         el.addEventListener('change', saveDebouncedStatic);
       } else if (el.tagName === 'SELECT') {
