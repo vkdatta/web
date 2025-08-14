@@ -1,61 +1,39 @@
 (function () {
   'use strict';
+  // Ultra-robust autosave for generated buttons + form fields
+  // Replace previous autosave IIFE with this block only.
 
-  // ---------- Config ----------
-  const PREFIX = 'autosave-';
+  const PREFIX = 'autosave-ultimate-';
   const FIELD_PREFIX = PREFIX + 'field:';
   const RADIO_PREFIX = PREFIX + 'radio:';
-  const GEN_PREFIX = PREFIX + 'generated-buttons:';
-  const SAVE_DEBOUNCE = 160;         // ms for debounced saves
-  const GEN_SAVE_DEBOUNCE = 220;     // ms for generated buttons
-  const POLL_INTERVAL = 1000;        // snapshot poll fallback (ms)
-  const POLL_TIMEOUT = 30000;        // stop polling after this many ms (safety)
+  const GEN_PREFIX = PREFIX + 'generated:';
+  const SAVE_DEBOUNCE_MS = 180;
+  const GEN_SAVE_DEBOUNCE_MS = 220;
+  const POLL_INTERVAL = 900;
+  const POLL_TIMEOUT = 30000;
 
-  // ---------- small helpers ----------
-  const nowKey = () => encodeURIComponent(location.origin + location.pathname + location.search);
+  const pageKey = () => encodeURIComponent(location.origin + location.pathname + location.search);
 
   function debounce(fn, wait) {
     let t;
     return function (...a) { clearTimeout(t); t = setTimeout(() => fn(...a), wait); };
   }
+  function safeParse(s, d = null) { try { return JSON.parse(s); } catch (e) { return d; } }
 
-  function safeParse(s, fallback = null) {
-    try { return JSON.parse(s); } catch (e) { return fallback; }
-  }
-
-  // small stable id generator
-  let _nid = 0;
-  function genId() {
-    _nid += 1;
+  // --- stable id generator ---
+  let idCounter = 0;
+  function genStableId() {
+    idCounter++;
     try {
-      const a = new Uint32Array(1);
-      crypto.getRandomValues(a);
-      return 'autosave-btn-' + Date.now().toString(36) + '-' + a[0].toString(36).slice(-6) + '-' + _nid;
+      const arr = new Uint32Array(1);
+      crypto.getRandomValues(arr);
+      return 'autosave-' + Date.now().toString(36) + '-' + arr[0].toString(36).slice(-6) + '-' + idCounter;
     } catch (e) {
-      return 'autosave-btn-' + Date.now().toString(36) + '-' + Math.floor(Math.random() * 1e6).toString(36) + '-' + _nid;
+      return 'autosave-' + Date.now().toString(36) + '-' + Math.floor(Math.random() * 1e6).toString(36) + '-' + idCounter;
     }
   }
 
-  // ---------- editable detection (infer permission by element itself) ----------
-  function isEditable(el) {
-    if (!el || el.nodeType !== 1) return false;
-    if (el.isContentEditable) return true;
-    const t = el.tagName && el.tagName.toLowerCase();
-    if (t === 'textarea') return !el.disabled && !el.readOnly;
-    if (t === 'select') return !el.disabled;
-    if (t === 'input') {
-      const it = (el.type || '').toLowerCase();
-      if (['hidden', 'button', 'submit', 'reset', 'image'].includes(it)) return false;
-      return !el.disabled && !el.readOnly;
-    }
-    return false;
-  }
-
-  // ---------- field autosave (inputs, textareas, selects, contenteditable, radios, checkboxes) ----------
-  function fieldKey(el) { return FIELD_PREFIX + nowKey() + ':' + elementPath(el); }
-  function radioKey(name) { return RADIO_PREFIX + nowKey() + ':' + String(name); }
-
-  // compute simple path for uniqueness (not perfect, but stable enough)
+  // --- helpers for element keys ---
   function elementPath(el) {
     if (!el || el.nodeType !== 1) return '';
     const parts = [];
@@ -74,34 +52,56 @@
     parts.unshift('html');
     return parts.join(' > ');
   }
+  function fieldKey(el) { return FIELD_PREFIX + pageKey() + ':' + elementPath(el); }
+  function radioKey(name) { return RADIO_PREFIX + pageKey() + ':' + String(name); }
+  function genKey(containerId) { return GEN_PREFIX + pageKey() + ':' + (containerId || 'generated'); }
 
+  // --- detect editable fields (infer permission from element) ---
+  function isEditable(el) {
+    if (!el || el.nodeType !== 1) return false;
+    if (el.isContentEditable) return true;
+    const t = el.tagName && el.tagName.toLowerCase();
+    if (t === 'textarea') return !el.disabled && !el.readOnly;
+    if (t === 'select') return !el.disabled;
+    if (t === 'input') {
+      const it = (el.type || '').toLowerCase();
+      if (['hidden', 'button', 'submit', 'reset', 'image'].includes(it)) return false;
+      return !el.disabled && !el.readOnly;
+    }
+    return false;
+  }
+
+  // --- field save / restore ---
   function saveField(el) {
     try {
+      if (!isEditable(el)) return;
       const key = fieldKey(el);
       if (!key) return;
       const tag = el.tagName.toLowerCase();
-      if (el.type === 'checkbox') localStorage.setItem(key, el.checked ? 'true' : 'false');
+      if (el.type === 'checkbox') localStorage.setItem(key, el.checked ? '1' : '0');
       else if (el.type === 'radio') {
         if (!el.name) return;
-        const sel = document.querySelector('input[type="radio"][name="' + (el.name) + '"]:checked');
+        const sel = document.querySelector('input[type="radio"][name="' + el.name + '"]:checked');
         if (sel) localStorage.setItem(radioKey(el.name), sel.value);
       } else if (tag === 'select') localStorage.setItem(key, el.value);
       else if (el.isContentEditable) localStorage.setItem(key, el.innerHTML);
       else localStorage.setItem(key, el.value);
-    } catch (e) { console.warn('Autosave field save error', e); }
+    } catch (e) { console.warn('autosave: field save failed', e); }
   }
 
   function restoreField(el) {
     try {
+      if (!isEditable(el)) return;
       const key = fieldKey(el);
       if (!key) return;
       if (el.type === 'checkbox') {
-        const v = localStorage.getItem(key); if (v !== null) el.checked = v === 'true';
+        const v = localStorage.getItem(key); if (v !== null) el.checked = v === '1';
       } else if (el.type === 'radio') {
         if (!el.name) return;
-        const v = localStorage.getItem(radioKey(el.name)); if (v !== null) {
-          const match = document.querySelector('input[type="radio"][name="' + (el.name) + '"][value="' + (v) + '"]');
-          if (match) match.checked = true;
+        const v = localStorage.getItem(radioKey(el.name));
+        if (v !== null) {
+          const sel = document.querySelector('input[type="radio"][name="' + el.name + '"][value="' + v + '"]');
+          if (sel) sel.checked = true;
         }
       } else if (el.tagName.toLowerCase() === 'select') {
         const v = localStorage.getItem(key); if (v !== null) el.value = v;
@@ -110,114 +110,102 @@
       } else {
         const v = localStorage.getItem(key); if (v !== null) el.value = v;
       }
-    } catch (e) { console.warn('Autosave field restore error', e); }
+    } catch (e) { console.warn('autosave: field restore failed', e); }
   }
 
-  // initialize fields under root
-  const debMap = new WeakMap();
+  // initialize fields under a root
+  const saveFieldDeb = debounce(saveField, SAVE_DEBOUNCE_MS);
+  const fieldSaverMap = new WeakMap();
   function initField(el) {
     if (!isEditable(el)) return;
-    restoreField(el);
-    const saver = debounce(() => saveField(el), SAVE_DEBOUNCE);
-    debMap.set(el, saver);
-    el.addEventListener('input', saver, { passive: true });
-    el.addEventListener('change', saver, { passive: true });
-    if (el.isContentEditable) el.addEventListener('blur', saver, { passive: true });
+    try { restoreField(el); } catch (e) {}
+    const runner = () => saveField(el);
+    const deb = debounce(runner, SAVE_DEBOUNCE_MS);
+    fieldSaverMap.set(el, deb);
+    el.addEventListener('input', deb, { passive: true });
+    el.addEventListener('change', deb, { passive: true });
+    if (el.isContentEditable) el.addEventListener('blur', deb, { passive: true });
   }
   function initAllFields(root = document) {
     try {
       const sel = 'input:not([type=hidden]):not([data-autosave="off"]), textarea:not([data-autosave="off"]), select:not([data-autosave="off"]), [contenteditable="true"]:not([data-autosave="off"])';
-      root.querySelectorAll(sel).forEach(n => {
-        if (n.type === 'radio') {
-          // radio group editable if at least one not disabled
-          const group = document.querySelectorAll('input[type="radio"][name="' + (n.name || '') + '"]');
-          if (Array.from(group).some(r => !r.disabled && !r.readOnly)) initField(n);
-        } else initField(n);
+      [...root.querySelectorAll(sel)].forEach(node => {
+        if (node.type === 'radio') {
+          const group = document.querySelectorAll('input[type="radio"][name="' + (node.name || '') + '"]');
+          if ([...group].some(r => !r.disabled && !r.readOnly)) initField(node);
+        } else initField(node);
       });
-    } catch (e) { console.warn('Autosave initAllFields failed', e); }
+    } catch (e) { console.warn('autosave: initAllFields failed', e); }
   }
 
-  // ---------- Generated buttons persistence (robust) ----------
-  function genKey(containerId) { return GEN_PREFIX + nowKey() + ':' + (containerId || 'generated'); }
-
-  // find container
+  // --- generated buttons handling (stable ids + robust detection) ---
   function findContainer() {
     return document.getElementById('generated') || document.querySelector('[data-autosave-generated]') || null;
   }
-
-  // heuristics for add/clear buttons (aggressive)
   function pickAddButton() {
-    const q = document.querySelector('#addBtn, [data-action="add"], [data-add], button[title="Add"], button[aria-label*="add"], .add, .add-btn');
-    if (q) return q;
-    const all = Array.from(document.getElementsByTagName('button'));
-    return all.find(b => /^\s*(?:\+|add|new)\s*$/i.test((b.textContent || '') + (b.getAttribute('aria-label') || '')));
+    return document.querySelector('#addBtn, [data-action="add"], [data-add], button[title="Add"], button[aria-label*="add"], .add, .add-btn') ||
+      [...document.getElementsByTagName('button')].find(b => /^\s*(?:\+|add|new)\s*$/i.test((b.textContent || '') + (b.getAttribute('aria-label') || '')));
   }
   function pickClearButton() {
-    const q = document.querySelector('#clearBtn, [data-action="clear"], [data-clear], button[title="Clear"], button[aria-label*="clear"], .clear, .clear-btn');
-    if (q) return q;
-    const all = Array.from(document.getElementsByTagName('button'));
-    return all.find(b => /\b(clear|clear all|remove all)\b/i.test((b.textContent || '') + (b.getAttribute('aria-label') || '')));
+    return document.querySelector('#clearBtn, [data-action="clear"], [data-clear], button[title="Clear"], button[aria-label*="clear"], .clear, .clear-btn') ||
+      [...document.getElementsByTagName('button')].find(b => /\b(clear|clear all|remove all)\b/i.test((b.textContent || '') + (b.getAttribute('aria-label') || '')));
   }
   function addClearPresent() { return !!(pickAddButton() && pickClearButton()); }
 
-  // ensure stable ids for children
-  function ensureIds(container) {
+  function ensureStableIds(container) {
     if (!container) return;
-    Array.from(container.children).forEach(ch => {
-      if (ch.nodeType !== 1) return;
-      const tag = ch.tagName.toLowerCase();
-      if (!['button', 'a', 'div', 'span'].includes(tag)) return;
-      if (!ch.dataset.autosaveId) {
-        const assigned = ch.id && !document.querySelectorAll('#' + CSS.escape(ch.id)).length > 1 ? ch.id : genId();
-        ch.dataset.autosaveId = assigned;
-        if (!ch.id) ch.id = assigned; // safe to set if no id existed
+    [...container.children].forEach(child => {
+      if (child.nodeType !== 1) return;
+      const t = (child.tagName || '').toLowerCase();
+      if (!['button','a','div','span'].includes(t)) return;
+      if (!child.dataset.autosaveId) {
+        const prefer = child.id && (!document.getElementById(child.id) || document.getElementById(child.id) === child) ? child.id : null;
+        const id = prefer || genStableId();
+        child.dataset.autosaveId = id;
+        if (!child.id) try { child.id = id; } catch (e) {}
       }
     });
   }
 
-  function snapshotFromContainer(container) {
+  function snapshot(container) {
     if (!container) return [];
-    return Array.from(container.children)
-      .filter(c => c.nodeType === 1)
-      .map(c => ({ id: c.dataset?.autosaveId || c.id || '', label: (c.textContent || '').trim() }));
+    return [...container.children].filter(c => c.nodeType === 1).map(c => ({ id: c.dataset?.autosaveId || c.id || '', label: (c.textContent || '').trim() }));
   }
 
-  function saveGenNow(container) {
+  function saveGenerated(container) {
     try {
       if (!container) return;
-      ensureIds(container);
-      const arr = snapshotFromContainer(container);
-      const key = genKey(container.id || 'generated');
-      localStorage.setItem(key, JSON.stringify(arr));
-    } catch (e) { console.warn('Autosave saveGenNow failed', e); }
+      ensureStableIds(container);
+      const arr = snapshot(container);
+      localStorage.setItem(genKey(container.id || 'generated'), JSON.stringify(arr));
+      // small console feedback for debugging
+      console.debug('autosave: saved generated', arr);
+    } catch (e) { console.warn('autosave: failed to save generated', e); }
   }
-  const saveGenDeb = debounce(saveGenNow, GEN_SAVE_DEBOUNCE);
+  const saveGeneratedDeb = debounce(saveGenerated, GEN_SAVE_DEBOUNCE_MS);
 
-  // restore only when page offers add+clear controls (we avoid injecting UI if user cannot manage it)
-  function restoreGenIfAllowed(container) {
-    if (!container) return;
-    if (!addClearPresent()) return; // wait until both controls exist
-    const key = genKey(container.id || 'generated');
-    const raw = localStorage.getItem(key);
-    const arr = safeParse(raw, []);
-    if (!Array.isArray(arr) || arr.length === 0) return;
-    // map existing
-    const existing = new Map();
-    Array.from(container.children).forEach(ch => {
-      const aid = ch.dataset?.autosaveId || ch.id;
-      if (aid) existing.set(aid, ch);
-    });
-    // add missing or update labels
-    arr.forEach(obj => {
-      if (!obj || typeof obj !== 'object') return;
-      const id = obj.id || '';
-      const label = obj.label || '';
-      if (existing.has(id)) {
-        const el = existing.get(id);
-        if ((el.textContent || '') !== label) el.textContent = label;
-      } else {
-        // create button with same id/label
-        try {
+  function restoreGeneratedIfAllowed(container) {
+    try {
+      if (!container) return;
+      if (!addClearPresent()) return; // only inject DOM when user can manage Add+Clear
+      const raw = localStorage.getItem(genKey(container.id || 'generated'));
+      const arr = safeParse(raw, []);
+      if (!Array.isArray(arr) || arr.length === 0) return;
+      // build map of existing ids
+      const existing = new Map();
+      [...container.children].forEach(c => {
+        const aid = c.dataset?.autosaveId || c.id;
+        if (aid) existing.set(aid, c);
+      });
+      arr.forEach(obj => {
+        if (!obj || typeof obj !== 'object') return;
+        const id = obj.id || '';
+        const label = obj.label || '';
+        if (existing.has(id)) {
+          const el = existing.get(id);
+          if ((el.textContent || '') !== label) el.textContent = label;
+        } else {
+          // create new
           const b = document.createElement('button');
           b.type = 'button';
           b.className = 'gen-btn';
@@ -225,151 +213,232 @@
           if (id) { b.dataset.autosaveId = id; if (!document.getElementById(id)) b.id = id; }
           b.addEventListener('click', () => { b.toggleAttribute('aria-pressed'); b.style.boxShadow = b.hasAttribute('aria-pressed') ? '0 4px 10px rgba(2,6,23,0.08)' : ''; });
           container.appendChild(b);
-        } catch (e) {}
-      }
-    });
-    ensureIds(container);
+        }
+      });
+      ensureStableIds(container);
+      console.debug('autosave: restored generated (if allowed)', arr);
+    } catch (e) { console.warn('autosave: restoreGenerated failed', e); }
   }
 
-  // ---------- robust observers & fallbacks ----------
-  let genObserver = null;
-  let pollTimer = null;
-  let pollStart = null;
-  let lastSnapshotJson = '';
+  // --- super-robust mutation capturing: monkey-patch core DOM mutation APIs + innerHTML setter ---
+  function safeCall(fn, ctx, args) { try { return fn.apply(ctx, args); } catch (e) { try { return fn.call(ctx, ...args); } catch (err) {} } }
 
-  function attachGenObserver(container) {
+  function wrapDomMutators(postFn) {
+    // appendChild, insertBefore, replaceChild, replaceWith, removeChild
+    const proto = Node.prototype;
+    const m1 = proto.appendChild;
+    proto.appendChild = function (child) {
+      const res = safeCall(m1, this, [child]);
+      try { postFn(this, child, 'appendChild'); } catch (e) {}
+      return res;
+    };
+    const m2 = proto.insertBefore;
+    proto.insertBefore = function (child, ref) {
+      const res = safeCall(m2, this, [child, ref]);
+      try { postFn(this, child, 'insertBefore'); } catch (e) {}
+      return res;
+    };
+    const m3 = proto.replaceChild;
+    proto.replaceChild = function (newNode, oldNode) {
+      const res = safeCall(m3, this, [newNode, oldNode]);
+      try { postFn(this, newNode, 'replaceChild'); } catch (e) {}
+      return res;
+    };
+    const m4 = proto.removeChild;
+    proto.removeChild = function (node) {
+      const res = safeCall(m4, this, [node]);
+      try { postFn(this, node, 'removeChild'); } catch (e) {}
+      return res;
+    };
+
+    // replaceWith may be on Element.prototype
+    if (Element.prototype.replaceWith) {
+      const rp = Element.prototype.replaceWith;
+      Element.prototype.replaceWith = function (...args) {
+        const res = safeCall(rp, this, args);
+        try { postFn(this, args && args[0], 'replaceWith'); } catch (e) {}
+        return res;
+      };
+    }
+
+    // innerHTML setter wrapper (high-impact; frameworks often use it)
+    try {
+      const desc = Object.getOwnPropertyDescriptor(Element.prototype, 'innerHTML');
+      if (desc && desc.set) {
+        const origSet = desc.set;
+        Object.defineProperty(Element.prototype, 'innerHTML', {
+          get: desc.get,
+          set: function (v) {
+            const res = safeCall(origSet, this, [v]);
+            try { postFn(this, null, 'innerHTML'); } catch (e) {}
+            return res;
+          },
+          configurable: true,
+          enumerable: desc.enumerable
+        });
+      }
+    } catch (e) { /* ignore if cannot override on this browser */ }
+  }
+
+  // --- fallback observer & poll ---
+  let pollHandle = null;
+  let pollStart = 0;
+  function startPoll(container, onChange) {
+    pollStart = Date.now();
+    if (pollHandle) clearInterval(pollHandle);
+    let last = JSON.stringify(snapshot(container || document.createElement('div')));
+    pollHandle = setInterval(() => {
+      try {
+        if (!container) container = findContainer();
+        const s = JSON.stringify(snapshot(container || document.createElement('div')));
+        if (s !== last) { last = s; onChange(); }
+        if (Date.now() - pollStart > POLL_TIMEOUT) { clearInterval(pollHandle); pollHandle = null; }
+      } catch (e) {}
+    }, POLL_INTERVAL);
+  }
+  function stopPoll() { if (pollHandle) { clearInterval(pollHandle); pollHandle = null; } }
+
+  // --- attach to container robustly ---
+  let genObserver = null;
+  function attachToContainer(container) {
     if (!container) return;
-    // initial restore attempt (if controls present)
-    restoreGenIfAllowed(container);
-    ensureIds(container);
-    // snapshot baseline
-    lastSnapshotJson = JSON.stringify(snapshotFromContainer(container));
-    // observer for direct mutations
+    // ensure ids and try restore
+    ensureStableIds(container);
+    restoreGeneratedIfAllowed(container);
+    ensureStableIds(container);
+    // mutation observer as primary
     if (genObserver) try { genObserver.disconnect(); } catch (e) {}
     genObserver = new MutationObserver((muts) => {
-      // if anything changed, ensure ids and save
+      // bail quickly on no changes
       for (const m of muts) {
         if (m.type === 'childList' || m.type === 'attributes') {
-          ensureIds(container);
-          saveGenDeb(container);
+          ensureStableIds(container);
+          saveGeneratedDebounced(container);
           break;
         }
       }
     });
     genObserver.observe(container, { childList: true, attributes: true, subtree: false, attributeFilter: ['class', 'id', 'data-autosave-id'] });
+    // patch low-level DOM methods to catch framework changes
+    wrapDomMutators((parent, node, op) => {
+      // if mutation touches container or its subtree, save
+      try {
+        if (!container) return;
+        if (parent === container || parent.contains(container) || (node && (node === container || (node.nodeType === 1 && node.contains && node.contains(container))))) {
+          ensureStableIds(container);
+          saveGeneratedNow(container);
+        } else {
+          // also if node was appended into container specifically
+          if (node && node.parentElement === container) {
+            ensureStableIds(container);
+            saveGeneratedNow(container);
+          }
+        }
+      } catch (e) {}
+    });
 
-    // global click hook: if user clicks an add/clear-ish control, attempt immediate save/restore
-    document.addEventListener('click', onDocumentClick, true);
+    // click capture to detect Add/Clear clicks; schedule immediate save after original handlers run
+    document.addEventListener('click', onDocClickCapture, true);
 
-    // start polling fallback: every POLL_INTERVAL compare snapshot; if changed, save
-    pollStart = Date.now();
-    if (pollTimer) clearInterval(pollTimer);
-    pollTimer = setInterval(() => {
-      const now = Date.now();
-      if (now - pollStart > POLL_TIMEOUT) { clearInterval(pollTimer); pollTimer = null; return; }
-      const snap = JSON.stringify(snapshotFromContainer(container));
-      if (snap !== lastSnapshotJson) {
-        lastSnapshotJson = snap;
-        ensureIds(container);
-        saveGenNow(container);
-      }
-    }, POLL_INTERVAL);
+    // start poll fallback
+    startPoll(container, () => { ensureStableIds(container); saveGeneratedNow(container); });
 
-    // beforeunload final saver
-    window.addEventListener('beforeunload', () => saveGenNow(container));
+    // beforeunload last-chance save
+    window.addEventListener('beforeunload', () => saveGeneratedNow(container));
   }
 
-  function detachGenObserver() {
+  function detachFromContainer() {
     if (genObserver) try { genObserver.disconnect(); } catch (e) {}
-    if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
-    document.removeEventListener('click', onDocumentClick, true);
+    stopPoll();
+    document.removeEventListener('click', onDocClickCapture, true);
   }
 
-  // click handler to detect Add/Clear and ensure immediate saves
-  function onDocumentClick(e) {
-    const target = e.target;
-    if (!target) return;
-    const btn = target.closest && target.closest('button');
-    if (!btn) return;
-    // if clicked element is likely Add/clear we must trigger immediate save/restore
-    const text = ((btn.textContent || '') + ' ' + (btn.getAttribute('aria-label') || '')).toLowerCase();
-    if (/^\s*(\+|add|new)\s*$/.test(text) || text.includes('add') || /clear|remove all|clear all/.test(text)) {
-      const container = findContainer();
-      if (container) {
-        // small tick to allow original handler to mutate DOM first
+  function saveGeneratedNow(container) {
+    saveGenerated(container);
+  }
+  const saveGeneratedDebounced = debounce(saveGeneratedNow, GEN_SAVE_DEBOUNCE_MS);
+
+  // click capture handler
+  function onDocClickCapture(e) {
+    try {
+      const btn = e.target && e.target.closest && e.target.closest('button');
+      if (!btn) return;
+      const text = ((btn.textContent || '') + ' ' + (btn.getAttribute('aria-label') || '')).toLowerCase();
+      if (text.includes('add') || /^\s*\+\s*$/.test(text) || text.includes('new') || text.includes('clear') || text.includes('remove all')) {
+        // wait tiny bit to let page handler mutate DOM then save
         setTimeout(() => {
-          ensureIds(container);
-          saveGenNow(container);
-          // If Add caused buttons to appear and Add+Clear present, restore missing (rare)
-          restoreGenIfAllowed(container);
-        }, 20);
+          const c = findContainer();
+          if (c) { ensureStableIds(c); saveGeneratedNow(c); }
+        }, 12);
       }
-    }
+    } catch (e) {}
   }
 
-  // watch for container creation if not present immediately
+  // --- locate container even if added later ---
   let containerWatcher = null;
-  function watchForContainer() {
-    const c = findContainer();
-    if (c) { attachGenObserver(c); return; }
-    // watch DOM for container being added
-    containerWatcher = new MutationObserver((muts) => {
+  function watchForContainerAndAttach() {
+    const existing = findContainer();
+    if (existing) { attachToContainer(existing); return; }
+    // watch DOM for container creation
+    containerWatcher = new MutationObserver(muts => {
       for (const m of muts) {
         if (m.type === 'childList' && m.addedNodes.length) {
           for (const n of m.addedNodes) {
             if (n.nodeType !== 1) continue;
-            const found = (n.matches && (n.matches('#generated') || n.matches('[data-autosave-generated]'))) ? n
-              : (n.querySelector && (n.querySelector('#generated') || n.querySelector('[data-autosave-generated]')));
-            if (found) { attachGenObserver(found); containerWatcher.disconnect(); containerWatcher = null; return; }
+            const found = (n.matches && (n.matches('#generated') || n.matches('[data-autosave-generated]'))) ? n : (n.querySelector && (n.querySelector('#generated') || n.querySelector('[data-autosave-generated]')));
+            if (found) {
+              attachToContainer(found);
+              if (containerWatcher) try { containerWatcher.disconnect(); } catch (e) {}
+              containerWatcher = null;
+              return;
+            }
           }
         }
       }
     });
     containerWatcher.observe(document.documentElement || document.body, { childList: true, subtree: true });
-    // safety cutoff
+    // safety disconnect after PSTIMEOUT
     setTimeout(() => { if (containerWatcher) try { containerWatcher.disconnect(); containerWatcher = null; } catch (e) {} }, POLL_TIMEOUT);
   }
 
-  // ---------- bootstrap ----------
-  function start() {
+  // --- init bootstrap ---
+  function bootstrap() {
     try {
       initAllFields(document);
 
-      // observe document for new editable fields
-      const globalFieldObserver = new MutationObserver((muts) => {
+      // global observer for new editable fields
+      const globalFieldsObserver = new MutationObserver(muts => {
         for (const m of muts) {
           if (m.type === 'childList' && m.addedNodes.length) {
             m.addedNodes.forEach(n => { if (n.nodeType === 1) initAllFields(n); });
           }
           if (m.type === 'attributes' && (m.attributeName === 'contenteditable' || m.attributeName === 'disabled' || m.attributeName === 'readonly' || m.attributeName === 'data-autosave')) {
-            initField(m.target);
+            try { initField(m.target); } catch (e) {}
           }
         }
       });
-      globalFieldObserver.observe(document.documentElement || document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['contenteditable', 'disabled', 'readonly', 'data-autosave'] });
+      globalFieldsObserver.observe(document.documentElement || document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['contenteditable', 'disabled', 'readonly', 'data-autosave'] });
 
-      // watch and attach to generated container
-      watchForContainer();
+      // attach to generated container (or wait for it)
+      watchForContainerAndAttach();
 
-      // restore radios globally (safe)
+      // restore radio groups globally
       try {
-        Array.from(document.querySelectorAll('input[type="radio"][name]')).forEach(r => {
-          const rk = radioKey(r.name);
-          const v = localStorage.getItem(rk);
+        [...document.querySelectorAll('input[type="radio"][name]')].forEach(r => {
+          const v = localStorage.getItem(radioKey(r.name));
           if (v !== null) {
-            const sel = document.querySelector('input[type="radio"][name="' + (r.name) + '"][value="' + (v) + '"]');
+            const sel = document.querySelector('input[type="radio"][name="' + r.name + '"][value="' + v + '"]');
             if (sel) sel.checked = true;
           }
         });
       } catch (e) {}
 
-      // final console hint
-      console.info('Autosave: robust mode active (fields + generated buttons).');
-    } catch (e) {
-      console.error('Autosave bootstrap failed', e);
+      console.info('autosave-ultimate: running (aggressive mode)');
+    } catch (err) {
+      console.error('autosave-ultimate bootstrap error', err);
     }
   }
 
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bootstrap); else bootstrap();
 
 })();
