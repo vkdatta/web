@@ -7,8 +7,9 @@ Double tap anywhere to emter fulscreen using fullscreen.lib.js
 # Implementation
 
 ``` javascript
-<script src='https://cdn.jsdelivr.net/gh/vkdatta/javascript@main/autosave.lib.js'/>
-<script src='https://cdn.jsdelivr.net/gh/vkdatta/javascript@main/fullscreen.lib.js'/>
+<script src='https://cdn.jsdelivr.net/gh/vkdatta/javascript@main/autosave.lib.js'></script>
+<script src='https://cdn.jsdelivr.net/gh/vkdatta/javascript@main/fullscreen.lib.js'></script>
+<script src='https://cdn.jsdelivr.net/gh/vkdatta/javascript@main/note.lib.js'></script>
 ```
 
 # Usage
