@@ -183,6 +183,22 @@ function initApp() {
         wrapper.appendChild(p);
         return out;
       }
+      if(type==='input'){
+  const wrapper=document.createElement('div');
+  wrapper.className='modal-field';
+  const input=document.createElement('input');
+  input.className='modal-input';
+  input.type=opts.inputType||'text';
+  if(opts.placeholder) input.placeholder=opts.placeholder;
+  if(opts.value) input.value=opts.value;
+  if(opts.key) input.dataset.modalKey=opts.key;
+  if(opts.visibleIf) wrapper.dataset.visibleIf=opts.visibleIf;
+  wrapper.appendChild(input);
+  const out={};
+  out.el=wrapper;
+  out.input=input;
+  return out;
+}
       if (type === "textarea") {
         const ta = document.createElement("textarea");
         ta.className = "modal-textarea";
