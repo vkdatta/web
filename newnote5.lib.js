@@ -278,18 +278,17 @@ function parseOpts(rest) {
     .map((s) => s.trim())
     .filter(Boolean)
     .forEach((p) => {
-      const eq = p.indexOf("=");
-      if (eq !== -1) {
-        const k = p.slice(0, eq).trim();
-        const v = p.slice(eq + 1).trim();
+      const parts = p.split("=");
+      if (parts.length > 1) {
+        const k = parts[0].trim();
+        const v = parts.slice(1).join("=").trim();
         opts[k] = v;
-      } else {
-        opts.value = p.trim();
+      } else if (parts[0]) {
+        opts.value = parts[0].trim();
       }
     });
   return opts;
 }
-
     function splitOptions(s) {
       if (!s) return [];
       s = s.trim();
