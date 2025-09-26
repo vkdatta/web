@@ -163,7 +163,7 @@ function initApp() {
       resize: vertical; 
     } 
     
-    .modal-select { 
+    .custom-dropdown-trigger {
       -webkit-appearance: none; 
       -moz-appearance: none; 
       appearance: none; 
@@ -172,7 +172,7 @@ function initApp() {
       background-size: 6px 6px, 6px 6px; 
       background-repeat: no-repeat; 
       padding-right: 36px; 
-    } 
+    }
     
     .custom-dropdown { 
       position: relative; 
@@ -476,7 +476,7 @@ function initApp() {
         if (field.tagName === 'INPUT' && (field.type === 'text' || field.type === 'email' || field.type === 'url')) {
           isEmpty = field.value.trim() === '';
         } else if (field.classList.contains('custom-dropdown-trigger')) {
-          isEmpty = field.textContent.includes('Select...') || field.dataset.value === '';
+          isEmpty = (field.dataset.value || '').trim() === '';
         } else if (field.tagName === 'TEXTAREA') {
           isEmpty = field.value.trim() === '';
         }
@@ -749,7 +749,7 @@ function initApp() {
         trigger.className = "custom-dropdown-trigger modal-input";
         trigger.tabIndex = 0;
         
-        const options = opts.options || [{ label: "Select...", value: "" }];
+        const options = opts.options || [{ label: "Select option", value: "" }];
         trigger.textContent = options[0].label;
         trigger.dataset.value = options[0].value;
         trigger.dataset.options = JSON.stringify(options);
@@ -836,67 +836,55 @@ function initApp() {
           return;
         }
         
-        let errorMsg = '';
-        while (true) {
-          const bodyContent = [];
-          if (errorMsg) {
-            bodyContent.push(`<div style="color: var(--danger); padding: 10px; background: var(--glass); border-radius: 8px;">${errorMsg}</div>`);
-          }
-          
-          const formatOptions = t === "italic" ? 
-            "MarkDown (*text*),MarkUp (<i>text</i>)" :
-            t === "underline" ? 
-            "MarkDown (__text__),MarkUp (<u>text</u>)" :
-            t === "bold" ? 
-            "MarkDown (**text**),MarkUp (<b>text</b>)" :
-            "MarkDown (```),MarkUp (<code>)";
-          
-          bodyContent.push(`
+        const formatOptions = t === "italic" ? 
+          "MarkDown (*text*),MarkUp (<i>text</i>)" :
+          t === "underline" ? 
+          "MarkDown (__text__),MarkUp (<u>text</u>)" :
+          t === "bold" ? 
+          "MarkDown (**text**),MarkUp (<b>text</b>)" :
+          "MarkDown (```),MarkUp (<code>)";
+        
+        const optionsArray = [
+          { label: "Select option", value: "" },
+          { label: formatOptions.split(',')[0], value: "1" },
+          { label: formatOptions.split(',')[1], value: "2" }
+        ];
+        
+        const result = await showModal({
+          header: `<div class="modal-title">${t[0].toUpperCase() + t.slice(1)} Text</div>`,
+          body: `
             <label class="modal-label">Choose Format</label>
-            <select id="formatType" class="modal-select">
-              <option value="">Select format...</option>
-              <option value="1">${formatOptions.split(',')[0]}</option>
-              <option value="2">${formatOptions.split(',')[1]}</option>
-            </select>
-          `);
-          
-          const result = await showModal({
-            header: `<div class="modal-title">${t[0].toUpperCase() + t.slice(1)} Text</div>`,
-            body: bodyContent.join(''),
-            footer: `
-              <button onclick="closeModal()">Cancel</button>
-              <button onclick="handleFormatSubmit('${t}')" style="background: var(--accent-2); color: #052027;">OK</button>
-            `
-          });
-          
-          if (!result) return;
-          
-          if (result.action === 'OK' || result.action === 'submit') {
-            const formatValue = modalScope.formatType ? modalScope.formatType.value : null;
-            if (!formatValue) {
-              errorMsg = "Please select a format!";
-              continue;
-            }
-            
-            const sel = v.slice(s, e);
-            let formatted = '';
-            
-            if (t === "italic") formatted = formatValue === "2" ? `<i>${sel}</i>` : `*${sel}*`;
-            else if (t === "underline") formatted = formatValue === "2" ? `<u>${sel}</u>` : `__${sel}__`;
-            else if (t === "bold") formatted = formatValue === "2" ? `<b>${sel}</b>` : `**${sel}**`;
-            else if (t === "code") formatted = formatValue === "2" ? `<code>${sel}</code>` : `\`\`\`\n${sel}\n\`\`\``;
-            
-            noteTextarea.value = v.slice(0, s) + formatted + v.slice(e);
-            updateNoteMetadata();
-            showNotification(`Text ${t} applied!`);
-          }
-          break;
-        }
+            <div class="custom-dropdown">
+              <div id="formatType" class="custom-dropdown-trigger modal-input" data-options='${JSON.stringify(optionsArray)}'>Select option</div>
+            </div>
+          `,
+          footer: `
+            <button onclick="closeModal()">Cancel</button>
+            <button onclick="handleFormatSubmit('${t}')" style="background: var(--accent-2); color: #052027;">OK</button>
+          `
+        });
+        
+        if (!result || result.action !== 'OK') return;
+        
+        const formatValue = result.format;
+        if (!formatValue) return;
+        
+        const sel = v.slice(s, e);
+        let formatted = '';
+        
+        if (t === "italic") formatted = formatValue === "2" ? `<i>${sel}</i>` : `*${sel}*`;
+        else if (t === "underline") formatted = formatValue === "2" ? `<u>${sel}</u>` : `__${sel}__`;
+        else if (t === "bold") formatted = formatValue === "2" ? `<b>${sel}</b>` : `**${sel}**`;
+        else if (t === "code") formatted = formatValue === "2" ? `<code>${sel}</code>` : `\`\`\`\n${sel}\n\`\`\``;
+        
+        noteTextarea.value = v.slice(0, s) + formatted + v.slice(e);
+        updateNoteMetadata();
+        showNotification(`Text ${t} applied!`);
       })();
     };
 
     window.handleFormatSubmit = function(type) {
-      const formatValue = modalScope.formatType ? modalScope.formatType.value : null;
+      const formatValue = modalScope.formatType ? modalScope.formatType.dataset.value : null;
       if (!formatValue) {
         showNotification("Please select a format!");
         return;
@@ -917,15 +905,19 @@ function initApp() {
           return;
         }
         
+        const optionsArray = [
+          { label: "Select option", value: "" },
+          { label: "MarkDown (- item)", value: "1" },
+          { label: "MarkUp (&lt;ul&gt;&lt;li&gt;)", value: "2" }
+        ];
+        
         const result = await showModal({
           header: `<div class="modal-title">Bullet List</div>`,
           body: `
             <label class="modal-label">Choose Format</label>
-            <select id="listFormat" class="modal-select">
-              <option value="">Select format...</option>
-              <option value="1">MarkDown (- item)</option>
-              <option value="2">MarkUp (&lt;ul&gt;&lt;li&gt;)</option>
-            </select>
+            <div class="custom-dropdown">
+              <div id="listFormat" class="custom-dropdown-trigger modal-input" data-options='${JSON.stringify(optionsArray)}'>Select option</div>
+            </div>
           `,
           footer: `
             <button onclick="closeModal()">Cancel</button>
@@ -933,26 +925,24 @@ function initApp() {
           `
         });
         
-        if (!result || result.action === 'Cancel') return;
+        if (!result || result.action !== 'OK') return;
         
-        if (result.action === 'OK' || result.action === 'submit') {
-          const formatValue = modalScope.listFormat ? modalScope.listFormat.value : null;
-          if (!formatValue) return;
-          
-          const sel = v.slice(s, e),
-                lines = sel.split(/\r?\n/);
-          let formatted;
-          
-          if (formatValue === "2") {
-            formatted = "<ul>\n" + lines.map(t => "<li>" + t + "</li>").join("\n") + "\n</ul>";
-          } else {
-            formatted = lines.map(t => "- " + t).join("\n");
-          }
-          
-          noteTextarea.value = v.slice(0, s) + formatted + v.slice(e);
-          updateNoteMetadata();
-          showNotification("Bullet list applied!");
+        const formatValue = result.format;
+        if (!formatValue) return;
+        
+        const sel = v.slice(s, e),
+              lines = sel.split(/\r?\n/);
+        let formatted;
+        
+        if (formatValue === "2") {
+          formatted = "<ul>\n" + lines.map(t => "<li>" + t + "</li>").join("\n") + "\n</ul>";
+        } else {
+          formatted = lines.map(t => "- " + t).join("\n");
         }
+        
+        noteTextarea.value = v.slice(0, s) + formatted + v.slice(e);
+        updateNoteMetadata();
+        showNotification("Bullet list applied!");
       })();
     };
 
@@ -969,15 +959,19 @@ function initApp() {
           return;
         }
         
+        const optionsArray = [
+          { label: "Select option", value: "" },
+          { label: "MarkDown (1. item)", value: "1" },
+          { label: "MarkUp (&lt;ol&gt;&lt;li&gt;)", value: "2" }
+        ];
+        
         const result = await showModal({
           header: `<div class="modal-title">Numbered List</div>`,
           body: `
             <label class="modal-label">Choose Format</label>
-            <select id="listFormat" class="modal-select">
-              <option value="">Select format...</option>
-              <option value="1">MarkDown (1. item)</option>
-              <option value="2">MarkUp (&lt;ol&gt;&lt;li&gt;)</option>
-            </select>
+            <div class="custom-dropdown">
+              <div id="listFormat" class="custom-dropdown-trigger modal-input" data-options='${JSON.stringify(optionsArray)}'>Select option</div>
+            </div>
           `,
           footer: `
             <button onclick="closeModal()">Cancel</button>
@@ -985,31 +979,29 @@ function initApp() {
           `
         });
         
-        if (!result || result.action === 'Cancel') return;
+        if (!result || result.action !== 'OK') return;
         
-        if (result.action === 'OK' || result.action === 'submit') {
-          const formatValue = modalScope.listFormat ? modalScope.listFormat.value : null;
-          if (!formatValue) return;
-          
-          const sel = v.slice(s, e),
-                lines = sel.split(/\r?\n/);
-          let formatted;
-          
-          if (formatValue === "2") {
-            formatted = "<ol>\n" + lines.map(t => "<li>" + t + "</li>").join("\n") + "\n</ol>";
-          } else {
-            formatted = lines.map((t, i) => (i + 1) + ". " + t).join("\n");
-          }
-          
-          noteTextarea.value = v.slice(0, s) + formatted + v.slice(e);
-          updateNoteMetadata();
-          showNotification("Numbered list applied!");
+        const formatValue = result.format;
+        if (!formatValue) return;
+        
+        const sel = v.slice(s, e),
+              lines = sel.split(/\r?\n/);
+        let formatted;
+        
+        if (formatValue === "2") {
+          formatted = "<ol>\n" + lines.map(t => "<li>" + t + "</li>").join("\n") + "\n</ol>";
+        } else {
+          formatted = lines.map((t, i) => (i + 1) + ". " + t).join("\n");
         }
+        
+        noteTextarea.value = v.slice(0, s) + formatted + v.slice(e);
+        updateNoteMetadata();
+        showNotification("Numbered list applied!");
       })();
     };
 
     window.handleListSubmit = function(type) {
-      const formatValue = modalScope.listFormat ? modalScope.listFormat.value : null;
+      const formatValue = modalScope.listFormat ? modalScope.listFormat.dataset.value : null;
       if (!formatValue) {
         showNotification("Please select a format!");
         return;
@@ -1024,6 +1016,12 @@ function initApp() {
         const s = noteTextarea.selectionStart,
               e = noteTextarea.selectionEnd,
               v = noteTextarea.value;
+        
+        const formatOptionsArray = [
+          { label: "Select option", value: "" },
+          { label: "Markdown", value: "markdown" },
+          { label: "MarkUp", value: "markup" }
+        ];
         
         const result = await showModal({
           header: `<div class="modal-title">Insert Link</div>`,
@@ -1043,10 +1041,9 @@ function initApp() {
             <div style="display: flex; gap: 10px; align-items: center;">
               <div style="flex: 1;">
                 <label class="modal-label">Format</label>
-                <select id="linkFormat">
-                  <option value="markdown">Markdown</option>
-                  <option value="markup">MarkUp</option>
-                </select>
+                <div class="custom-dropdown">
+                  <div id="linkFormat" class="custom-dropdown-trigger modal-input" data-options='${JSON.stringify(formatOptionsArray)}'>Select option</div>
+                </div>
               </div>
             </div>
           `,
@@ -1056,32 +1053,30 @@ function initApp() {
           `
         });
         
-        if (!result || result.action === 'Cancel') return;
+        if (!result || result.action !== 'submit') return;
         
-        if (result.action === 'OK' || result.action === 'submit') {
-          const url = modalScope.linkUrl ? modalScope.linkUrl.value.trim() : '';
-          const text = modalScope.linkText ? modalScope.linkText.value.trim() : '';
-          const format = modalScope.linkFormat ? modalScope.linkFormat.value : '';
-          
-          if (!url || !text) return;
-          
-          const link = format === "markup" ? 
-            `<a href="${url}">${text}</a>` : 
-            `[${text}](${url})`;
-          
-          noteTextarea.value = v.slice(0, s) + link + v.slice(e);
-          updateNoteMetadata();
-          showNotification("Link inserted!");
-        }
+        const url = result.url;
+        const text = result.text;
+        const format = result.format;
+        
+        if (!url || !text || !format) return;
+        
+        const link = format === "markup" ? 
+          `<a href="${url}">${text}</a>` : 
+          `[${text}](${url})`;
+        
+        noteTextarea.value = v.slice(0, s) + link + v.slice(e);
+        updateNoteMetadata();
+        showNotification("Link inserted!");
       })();
     };
 
     window.handleLinkSubmit = function() {
       const url = modalScope.linkUrl ? modalScope.linkUrl.value.trim() : '';
       const text = modalScope.linkText ? modalScope.linkText.value.trim() : '';
-      const format = modalScope.linkFormat ? modalScope.linkFormat.value : '';
+      const format = modalScope.linkFormat ? modalScope.linkFormat.dataset.value : '';
       
-      if (!url || !text) {
+      if (!url || !text || !format) {
         showNotification("Please fill in all fields!");
         return;
       }
@@ -1096,6 +1091,12 @@ function initApp() {
               e = noteTextarea.selectionEnd,
               v = noteTextarea.value;
         
+        const formatOptionsArray = [
+          { label: "Select option", value: "" },
+          { label: "Markdown", value: "markdown" },
+          { label: "MarkUp", value: "markup" }
+        ];
+        
         const result = await showModal({
           header: `<div class="modal-title">Insert Image</div>`,
           body: `
@@ -1108,10 +1109,9 @@ function initApp() {
             <div style="display: flex; gap: 10px; align-items: center;">
               <div style="flex: 1;">
                 <label class="modal-label">Format</label>
-                <select id="imageFormat">
-                  <option value="markdown">Markdown</option>
-                  <option value="markup">MarkUp</option>
-                </select>
+                <div class="custom-dropdown">
+                  <div id="imageFormat" class="custom-dropdown-trigger modal-input" data-options='${JSON.stringify(formatOptionsArray)}'>Select option</div>
+                </div>
               </div>
             </div>
           `,
@@ -1121,31 +1121,29 @@ function initApp() {
           `
         });
         
-        if (!result || result.action === 'Cancel') return;
+        if (!result || result.action !== 'submit') return;
         
-        if (result.action === 'OK' || result.action === 'submit') {
-          const url = modalScope.imageUrl ? modalScope.imageUrl.value.trim() : '';
-          const format = modalScope.imageFormat ? modalScope.imageFormat.value : '';
-          
-          if (!url) return;
-          
-          const image = format === "markup" ? 
-            `<img src="${url}" alt="Image" />` : 
-            `![Image](${url})`;
-          
-          noteTextarea.value = s === e ? v + image : v.slice(0, s) + image + v.slice(e);
-          updateNoteMetadata();
-          showNotification("Image inserted!");
-        }
+        const url = result.url;
+        const format = result.format;
+        
+        if (!url || !format) return;
+        
+        const image = format === "markup" ? 
+          `<img src="${url}" alt="Image" />` : 
+          `![Image](${url})`;
+        
+        noteTextarea.value = s === e ? v + image : v.slice(0, s) + image + v.slice(e);
+        updateNoteMetadata();
+        showNotification("Image inserted!");
       })();
     };
 
     window.handleImageSubmit = function() {
       const url = modalScope.imageUrl ? modalScope.imageUrl.value.trim() : '';
-      const format = modalScope.imageFormat ? modalScope.imageFormat.value : '';
+      const format = modalScope.imageFormat ? modalScope.imageFormat.dataset.value : '';
       
-      if (!url) {
-        showNotification("Please enter an image URL!");
+      if (!url || !format) {
+        showNotification("Please fill in all fields!");
         return;
       }
       closeModal({ action: 'submit', url: url, format: format });
