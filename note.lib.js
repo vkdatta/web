@@ -167,11 +167,19 @@ function initApp() {
       -webkit-appearance: none; 
       -moz-appearance: none; 
       appearance: none; 
-      background-image: linear-gradient(45deg, transparent 50%, var(--modal-muted) 50%), linear-gradient(135deg, var(--modal-muted) 50%, transparent 50%); 
-      background-position: calc(100% - 18px) calc(1em + 2px), calc(100% - 13px) calc(1em + 2px); 
-      background-size: 6px 6px, 6px 6px; 
-      background-repeat: no-repeat; 
-      padding-right: 36px; 
+      padding-right: 32px; 
+      position: relative;
+    }
+    
+    .custom-dropdown-trigger::after {
+      content: '\\25BC';
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--modal-muted);
+      font-size: 12px;
+      pointer-events: none;
     }
     
     .custom-dropdown { 
@@ -602,9 +610,11 @@ function initApp() {
             button.removeAttribute('onclick');
             
             button.addEventListener('click', () => {
-              if (!validateModalFields(bodyDiv)) {
-                showNotification('Please fill in all required fields.');
-                return;
+              if (onclickAttr !== 'closeModal()') {
+                if (!validateModalFields(bodyDiv)) {
+                  showNotification('Please fill in all required fields.');
+                  return;
+                }
               }
               
               try {
@@ -1282,6 +1292,10 @@ function initApp() {
       return "function" == typeof r ? r() : r;
     };
 
+window.handleRename=function(){const e=window.preserveSelection(async function(){if(!window.currentNote)return void window.showNotification("No note selected");const t=window.currentNote.title||"",n=window.currentNote.extension||"",o=await showModal({header:'<div class="modal-title">Rename Note</div>',body:`<div style="display:flex;gap:10px;align-items:center;"><div style="flex:1;"><label class="modal-label">Name</label><input type="text" id="newTitle" placeholder="Enter Name" value="${t.replace(/"/g,"&quot;")}"></div></div><div style="display:flex;gap:10px;align-items:center;"><div style="flex:1;"><label class="modal-label">Extension</label><input type="text" id="newExtension" placeholder="Enter Extension" value="${n.replace(/"/g,"&quot;")}"></div></div>`,footer:'<button onclick="closeModal()">Cancel</button><button onclick="handleRenameSubmit()" style="background:var(--accent-2);color:#052027;">OK</button>'});if(!o||"OK"!==o.action)return;let a=String(o.newTitle||"").trim(),i=String(o.newExtension||"").trim();if(!a&&!i)return;a=a||t,i=i||n,window.currentNote.title=a,window.currentNote.extension=i.replace(/^\./,"").toLowerCase(),window.currentNote.lastEdited=(new Date).toISOString();const l=notes.findIndex(e=>e.id===window.currentNote.id);-1!==l&&(notes[l].title=a,notes[l].extension=window.currentNote.extension,notes[l].lastEdited=window.currentNote.lastEdited),window.updateNoteMetadata(),window.updateDocumentInfo(),window.populateNoteList(),window.showNotification("Note updated!")});return"function"==typeof e?e():e},window.handleRenameSubmit=function(){closeModal({action:"OK",newTitle:modalScope.newTitle?modalScope.newTitle.value:"",newExtension:modalScope.newExtension?modalScope.newExtension.value:""})};
+window.handleDownload=async function(){if(!currentNote||!noteTextarea)return;const dfn=`${currentNote.title||'note'}.${currentNote.extension||'txt'}`.replace(/"/g,"&quot;");const res=await showModal({header:`<div class="modal-title">Download Note</div>`,body:`<div style="display: flex; gap: 10px; align-items: center;"><div style="flex: 1;"><label class="modal-label">Filename</label><input type="text" id="fileName" placeholder="Enter filename including extension" value="${dfn}"></div></div>`,footer:`<button onclick="closeModal()">Cancel</button><button onclick="handleDownloadSubmit()" data-skip-validation style="background: var(--accent-2); color: #052027;">Download</button>`});if(!res||res.action!=="Download")return;let f=String(res.fileName||"").trim();if(!f)return;f=f.replace(/\0/g,"").replace(/[/\\]+/g,"").replace(/["'<>:|?*]+/g,"");const p=f.split("."),ext=p.length>1?(p.pop()||"txt").toLowerCase():"txt",name=p.join(".")||"note",mimeMap={txt:"text/plain; charset=utf-8",text:"text/plain; charset=utf-8",md:"text/markdown; charset=utf-8",markdown:"text/markdown; charset=utf-8",csv:"text/csv; charset=utf-8",log:"text/plain; charset=utf-8",ini:"text/plain; charset=utf-8",conf:"text/plain; charset=utf-8",env:"text/plain; charset=utf-8",html:"text/html; charset=utf-8",htm:"text/html; charset=utf-8",css:"text/css; charset=utf-8",js:"application/javascript; charset=utf-8",mjs:"text/javascript; charset=utf-8",ts:"application/typescript; charset=utf-8",jsx:"text/jsx; charset=utf-8",tsx:"text/tsx; charset=utf-8",json:"application/json; charset=utf-8",xml:"application/xml; charset=utf-8",yaml:"text/yaml; charset=utf-8",yml:"text/yaml; charset=utf-8",png:"image/png",jpg:"image/jpeg",jpeg:"image/jpeg",webp:"image/webp",gif:"image/gif",svg:"image/svg+xml; charset=utf-8",ico:"image/vnd.microsoft.icon",woff:"font/woff",woff2:"font/woff2",ttf:"font/ttf",otf:"font/otf",mp3:"audio/mpeg",m4a:"audio/mp4",wav:"audio/wav",ogg:"audio/ogg",flac:"audio/flac",mp4:"video/mp4",m4v:"video/x-m4v",mov:"video/quicktime",webm:"video/webm",mkv:"video/x-matroska",avi:"video/x-msvideo",zip:"application/zip",tar:"application/x-tar",gz:"application/gzip",tgz:"application/gzip",bz2:"application/x-bzip2",xz:"application/x-xz",rar:"application/vnd.rar","7z":"application/x-7z-compressed",pdf:"application/pdf",doc:"application/msword",docx:"application/vnd.openxmlformats-officedocument.wordprocessingml.document",xls:"application/vnd.ms-excel",xlsx:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",ppt:"application/vnd.ms-powerpoint",pptx:"application/vnd.openxmlformats-officedocument.presentationml.presentation",odt:"application/vnd.oasis.opendocument.text",ods:"application/vnd.oasis.opendocument.spreadsheet",odp:"application/vnd.oasis.opendocument.presentation",epub:"application/epub+zip",exe:"application/vnd.microsoft.portable-executable",dll:"application/octet-stream",bin:"application/octet-stream",wasm:"application/wasm",sh:"application/x-sh",bash:"application/x-sh",ps1:"text/plain; charset=utf-8",bat:"application/x-msdownload",sql:"text/x-sql; charset=utf-8",rtf:"application/rtf",svgz:"image/svg+xml; charset=utf-8",heic:"image/heic",heif:"image/heif"},textLike=["text/plain","text/markdown","text/csv","text/html","application/json","application/javascript","application/xml","text/yaml","text/jsx","text/tsx"],mime=mimeMap[ext]||(/\.(jpg|jpeg|png|gif|webp|svg|ico)$/i.test(ext)?`image/${ext}`:"application/octet-stream");if(textLike.some(t=>mime.indexOf(t)===0)&&!/charset=/.test(mime))mime+="; charset=utf-8";const fileName=`${name}.${ext}`,blob=new Blob([noteTextarea.value],{type:mime}),url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download=fileName;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1500);showNotification(`Note downloaded as ${fileName}!`);};window.handleDownloadSubmit=function(){const fileName=modalScope.fileName?modalScope.fileName.value:'';closeModal({action:'Download',fileName});};
+window.handleFindReplace=async function(){if(!currentNote||!noteTextarea)return;const r=await showModal({header:`<div class="modal-title">Find and Replace</div>`,body:`<div style="display: flex; gap: 10px; align-items: center;"><div style="flex: 1;"><label class="modal-label">Find</label><input type="text" id="findText" placeholder="Enter text to find"></div></div><div style="display: flex; gap: 10px; align-items: center;"><div style="flex: 1;"><label class="modal-label">Replace</label><input type="text" id="replaceText" placeholder="Enter replacement text"></div></div>`,footer:`<button onclick="closeModal()">Cancel</button><button onclick="handleFindReplaceSubmit()" data-skip-validation style="background: var(--accent-2); color: #052027;">Replace</button>`});if(!r||r.action!=="Replace")return;const f=r.findText.trim(),p=r.replaceText;if(!f){showNotification("Please enter text to find!");return}try{const e=f.replace(/[.*+?^${}()|[\]\\]/g,"\\$&"),t=new RegExp(e,"g");noteTextarea.value=noteTextarea.value.replace(t,p),updateNoteMetadata(),showNotification("Text replaced!")}catch(e){showNotification("Error in find and replace!")}};window.handleFindReplaceSubmit=function(){const e=modalScope.findText?modalScope.findText.value:"",t=modalScope.replaceText?modalScope.replaceText.value:"";closeModal({action:"Replace",findText:e,replaceText:t})};
+    
     window.handlePasteNote = function() {
       const r = async function() {
         if (!currentNote || !noteTextarea) return;
