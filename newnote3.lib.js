@@ -271,21 +271,24 @@ function initApp() {
       out.el = wrapper;
       return out;
     }
-  function parseOpts(rest) {
+function parseOpts(rest) {
   const opts = {};
   rest
     .split("|")
     .map((s) => s.trim())
     .filter(Boolean)
     .forEach((p) => {
-      const [k, ...restParts] = p.split("=");
-      const v = restParts.join("=").trim();   // join back everything after first "="
-      if (k && v) opts[k.trim()] = v;
-      else if (k) opts.value = k.trim();
+      const eq = p.indexOf("=");
+      if (eq > -1) {
+        const k = p.slice(0, eq).trim();
+        const v = p.slice(eq + 1).trim();
+        opts[k] = v;
+      } else {
+        opts.value = p.trim();
+      }
     });
   return opts;
-}
-    function splitOptions(s) {
+}    function splitOptions(s) {
       if (!s) return [];
       s = s.trim();
       const out = [];
