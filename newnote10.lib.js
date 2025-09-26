@@ -167,11 +167,19 @@ function initApp() {
       -webkit-appearance: none; 
       -moz-appearance: none; 
       appearance: none; 
-      background-image: linear-gradient(45deg, transparent 50%, var(--modal-muted) 50%), linear-gradient(135deg, var(--modal-muted) 50%, transparent 50%); 
-      background-position: calc(100% - 18px) calc(1em + 2px), calc(100% - 13px) calc(1em + 2px); 
-      background-size: 6px 6px, 6px 6px; 
-      background-repeat: no-repeat; 
-      padding-right: 36px; 
+      padding-right: 32px; 
+      position: relative;
+    }
+    
+    .custom-dropdown-trigger::after {
+      content: '\\25BC';
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--modal-muted);
+      font-size: 12px;
+      pointer-events: none;
     }
     
     .custom-dropdown { 
@@ -602,9 +610,11 @@ function initApp() {
             button.removeAttribute('onclick');
             
             button.addEventListener('click', () => {
-              if (!validateModalFields(bodyDiv)) {
-                showNotification('Please fill in all required fields.');
-                return;
+              if (onclickAttr !== 'closeModal()') {
+                if (!validateModalFields(bodyDiv)) {
+                  showNotification('Please fill in all required fields.');
+                  return;
+                }
               }
               
               try {
