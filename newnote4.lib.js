@@ -279,7 +279,7 @@ function parseOpts(rest) {
     .filter(Boolean)
     .forEach((p) => {
       const eq = p.indexOf("=");
-      if (eq > -1) {
+      if (eq !== -1) {
         const k = p.slice(0, eq).trim();
         const v = p.slice(eq + 1).trim();
         opts[k] = v;
@@ -288,7 +288,9 @@ function parseOpts(rest) {
       }
     });
   return opts;
-}    function splitOptions(s) {
+}
+
+    function splitOptions(s) {
       if (!s) return [];
       s = s.trim();
       const out = [];
