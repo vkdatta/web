@@ -1388,3 +1388,4 @@ window.showHomepage=function(){if(homepage&&noteAppContainer&&diffCheckerContain
 window.updateNoteVisibility=function(){localStorage.setItem('visibleNotes',visibleNotes);window.populateNoteList();};
 window.preserveSelection = function(handler) { return () => { const start = window.noteTextarea.selectionStart; const end = window.noteTextarea.selectionEnd; handler(); window.noteTextarea.setSelectionRange(start, end); }; };
 
+window.init=()=>{window.notes=window.loadNotes();window.updateNoteVisibility();window.applyFontSize();window.setupEventListeners();window.checkPasswordRequirement();window.handlePopState();window.initDiffChecker()};
