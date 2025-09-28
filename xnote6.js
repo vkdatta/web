@@ -1,8 +1,38 @@
-document.addEventListener("DOMContentLoaded", () => {
-  initApp();
-  window.setupEventListeners();
-  window.init();
-});
+window.notes = [];
+window.currentNote = null;
+window.visibleNotes = localStorage.getItem('visibleNotes') ? parseInt(localStorage.getItem('visibleNotes')) : 1;
+window.isHomepage = true;
+window.currentApp = 'home';
+window.fontSize = localStorage.getItem('fontSize') ? parseInt(localStorage.getItem('fontSize')) : 14;
+window.undoStack = [];
+window.redoStack = [];
+window.dob = localStorage.getItem('dob') || '';
+window.maxNotes = 15;
+window.homepage = document.getElementById('homepage');
+window.noteAppContainer = document.getElementById('noteAppContainer');
+window.diffCheckerContainer = document.getElementById('diffCheckerContainer');
+window.topbar = document.getElementById('topbar');
+window.themeToggle = document.getElementById('themeToggle');
+window.undoBtn = document.getElementById('undoBtn');
+window.redoBtn = document.getElementById('redoBtn');
+window.homeBtn = document.getElementById('homeBtn');
+window.sidebar1 = document.getElementById('sidebar1');
+window.sidebar1Toggle = document.getElementById('sidebar1Toggle');
+window.noteList = document.getElementById('noteList');
+window.noteTextarea = document.getElementById('noteTextarea');
+window.showNextNoteBtn = document.getElementById('showNextNoteBtn');
+window.hideLastNoteBtn = document.getElementById('hideLastNoteBtn');
+window.sidebar2Toggle = document.getElementById('sidebar2Toggle');
+window.secondarySidebar = document.getElementById('secondarySidebar');
+window.notification = document.getElementById('notification');
+window.noteAppBtn = document.getElementById('noteAppBtn');
+window.diffCheckerBtn = document.getElementById('diffCheckerBtn');
+window.infoName = document.getElementById('infoName');
+window.infoCharsWith = document.getElementById('infoCharsWith');
+window.infoCharsWithout = document.getElementById('infoCharsWithout');
+window.infoWords = document.getElementById('infoWords');
+window.infoReadTime = document.getElementById('infoReadTime');
+window.infoExtension = document.getElementById('infoExtension');
 
 function initApp() {
   (function () {
@@ -410,7 +440,6 @@ function initApp() {
       return menu;
     }
 
-    // Modal system variables
     let modalBackdrop = null;
     let modalResolver = null;
     let modalScope = {};
@@ -843,19 +872,469 @@ function initApp() {
       }
 
       if (type === "row") {
-        // Assuming the truncated part is for row, but since truncated, I'll assume it's not essential or complete it if possible, but as per user, whatever inside is correct, so leave as is.
-        // The code has ...(truncated 78541 characters)... so probably the full history manager follows.
-        // For now, assume the code is as is, but to complete, perhaps the row is for modal row, but since truncated, perhaps it's not there.
-        // But in the code, it's if (type === "row") ...(truncated 78541 characters)... so the rest is the history manager.
-        // So, the createModalElement has if (type === "row") ... but truncated, probably incomplete, but as per user, inside is correct.
-        // I'll assume the truncated is the rest of the code, so keep as is.
+        const row = document.createElement("div");
+        row.className = "modal-row";
+        if (opts.position) row.dataset.position = opts.position;
+        out.el = row;
+        return out;
       }
     };
 
+    function shallowEqual(obj1, obj2) {
+      if (obj1 === obj2) return true;
+      if (typeof obj1 !== 'object' || obj1 === null || typeof obj2 !== 'object' || obj2 === null) return false;
+      const keys1 = Object.keys(obj1);
+      const keys2 = Object.keys(obj2);
+      if (keys1.length !== keys2.length) return false;
+      for (let key of keys1) {
+        if (!obj2.hasOwnProperty(key) || obj1[key] !== obj2[key]) return false;
+      }
+      return true;
+    }
+
+    function approxBytes(obj) {
+      return JSON.stringify(obj).length;
+    }
+
+    function clamp(value, min, max) {
+      return Math.min(Math.max(value, min), max);
+    }
+
+    function now() {
+      return Date.now();
+    }
+
+    function snapshot(target) {
+      return {
+        value: target.value,
+        start: target.selectionStart,
+        end: target.selectionEnd,
+        dir: target.selectionDirection,
+        ts: now()
+      };
+    }
+
+    function restoreSelectionState(target, frame) {
+      target.selectionStart = frame.start;
+      target.selectionEnd = frame.end;
+      target.selectionDirection = frame.dir || 'forward';
+    }
+
+    function diffIsSmall(a, b) {
+      const diff = Math.abs(a.value.length - b.value.length);
+      return diff < 5;
+    }
+
     class HistoryManager {
-      // Assuming the full code for HistoryManager is here, as truncated, but keep as is.
-      // The code has the full _serialize, _notify, _applyFrame, etc.
-      // So, it's there.
+      constructor(target, opts = {}) {
+        this.target = target;
+        this.opts = opts;
+        this.maxEntries = opts.maxEntries || 100;
+        this.coalesceMs = opts.coalesceMs || 1000;
+        this.persistKey = opts.persistKey || 'undov_history';
+        this.persistTTL = opts.persistTTL || 86400000;
+        this.powerWindowMs = opts.powerWindowMs || 500;
+        this.imeDebounce = opts.imeDebounce || 50;
+        this._undo = [];
+        this._redo = [];
+        this._suppress = false;
+        this._composition = false;
+        this._coalesceTimer = null;
+        this._lastUndoClick = 0;
+        this._lastRedoClick = 0;
+        this._undoPower = 1;
+        this._redoPower = 1;
+        this._wrapped = {};
+        this._observer = null;
+        this._onInput = this._onInput.bind(this);
+        this._onCutPaste = this._onCutPaste.bind(this);
+        this._onKeydown = this._onKeydown.bind(this);
+        this._onCompositionStart = this._onCompositionStart.bind(this);
+        this._onCompositionEnd = this._onCompositionEnd.bind(this);
+        this._loadPersist();
+        this._commitInitial();
+        this._installListeners();
+        this._wrapProgrammatics();
+      }
+
+      destroy() {
+        this._uninstallListeners();
+        this._unwrapProgrammatics();
+        this._disconnectObserver();
+        this._undo = [];
+        this._redo = [];
+      }
+
+      recordNow(reason = "manual") {
+        if (this._suppress) return;
+        this._commitImmediate(reason);
+      }
+
+      performUndo() {
+        if (!this._undo.length) {
+          this._notify("No undo available");
+          return;
+        }
+        const power = this._undoPower;
+        const frames = [];
+        for (let i = 0; i < power; i++) {
+          if (!this._undo.length) break;
+          frames.push(this._undo.pop());
+        }
+        const frame = frames[frames.length - 1];
+        if (!frame) return;
+        this._applyFrame(frame);
+        frames.reverse().forEach(f => this._redoPush(f));
+        this._notify(`Undo performed (${power}x)`);
+      }
+
+      performRedo() {
+        if (!this._redo.length) {
+          this._notify("No redo available");
+          return;
+        }
+        const power = this._redoPower;
+        const frames = [];
+        for (let i = 0; i < power; i++) {
+          if (!this._redo.length) break;
+          frames.push(this._redo.pop());
+        }
+        const frame = frames[frames.length - 1];
+        if (!frame) return;
+        this._applyFrame(frame);
+        frames.reverse().forEach(f => this._undoPush(f));
+        this._notify(`Redo performed (${power}x)`);
+      }
+
+      clear() {
+        this._undo = [];
+        this._redo = [];
+        this._persist();
+        this._commitInitial();
+        this._notify("History cleared");
+      }
+
+      serialize() {
+        return JSON.stringify({ undo: this._undo, redo: this._redo });
+      }
+
+      deserialize(e) {
+        try {
+          const t = typeof e === "string" ? JSON.parse(e) : e;
+          this._undo = t.undo || [];
+          this._redo = t.redo || [];
+          this._trim();
+          this._persist();
+          return true;
+        } catch (n) {
+          return false;
+        }
+      }
+      _notify(e) {
+        try {
+          window.showNotification && window.showNotification(e);
+        } catch (t) {
+          console.log(e);
+        }
+      }
+      _applyFrame(e) {
+        if (!this.target) return;
+        this._suppress = true;
+        this.target.value = e.value;
+        restoreSelectionState(this.target, e);
+        if (window.currentNote) window.currentNote.content = e.value;
+        if (typeof window.updateNoteMetadata === "function")
+          window.updateNoteMetadata();
+        this._suppress = false;
+      }
+      _createFrame(e) {
+        return {
+          value: e.value,
+          start: e.start,
+          end: e.end,
+          dir: e.dir,
+          ts: e.ts
+        };
+      }
+      _undoPush(e) {
+        if (
+          this._undo.length &&
+          shallowEqual(this._undo[this._undo.length - 1], e)
+        )
+          return;
+        this._undo.push(e);
+        this._trim();
+        this._persist();
+      }
+      _redoPush(e) {
+        if (
+          this._redo.length &&
+          shallowEqual(this._redo[this._redo.length - 1], e)
+        )
+          return;
+        this._redo.push(e);
+        this._trim();
+        this._persist();
+      }
+      _trim() {
+        const e = this.maxEntries;
+        while (this._undo.length > e) this._undo.shift();
+        while (this._redo.length > e) this._redo.shift();
+        if (this.opts.memoryBudgetBytes) {
+          let t = approxBytes({ undo: this._undo, redo: this._redo });
+          while (t > this.opts.memoryBudgetBytes && this._undo.length > 1) {
+            this._undo.shift();
+            t = approxBytes({ undo: this._undo, redo: this._redo });
+          }
+        }
+      }
+      _persist() {
+        try {
+          localStorage.setItem(
+            this.persistKey,
+            JSON.stringify({
+              undo: this._undo,
+              redo: this._redo,
+              expires: now() + this.persistTTL
+            })
+          );
+        } catch (e) {}
+      }
+      _loadPersist() {
+        try {
+          const e = localStorage.getItem(this.persistKey);
+          if (!e) return;
+          const t = JSON.parse(e);
+          if (t.expires && t.expires > now()) {
+            this._undo = (t.undo || []).slice(-this.maxEntries);
+            this._redo = (t.redo || []).slice(-this.maxEntries);
+          }
+        } catch (n) {}
+      }
+      _commitInitial() {
+        if (!this.target) return;
+        const e = snapshot(this.target);
+        this._undo = [this._createFrame(e)];
+        this._redo = [];
+        this._persist();
+      }
+      _installListeners() {
+        if (!this.target) return;
+        this.target.addEventListener("input", this._onInput);
+        this.target.addEventListener("paste", this._onCutPaste);
+        this.target.addEventListener("cut", this._onCutPaste);
+        this.target.addEventListener("keydown", this._onKeydown);
+        this.target.addEventListener(
+          "compositionstart",
+          this._onCompositionStart
+        );
+        this.target.addEventListener(
+          "compositionend",
+          this._onCompositionEnd
+        );
+        this._observer = new MutationObserver(() => {
+          if (this._suppress) return;
+          this._scheduleCommit();
+        });
+        this._observer.observe(this.target, {
+          characterData: true,
+          childList: true,
+          subtree: true
+        });
+        if (window.undoBtn)
+          window.undoBtn.addEventListener("click", () => {
+            const e = now();
+            if (e - this._lastUndoClick <= this.powerWindowMs) {
+              this._undoPower = clamp(
+                this._undoPower + 1,
+                1,
+                this.maxEntries
+              );
+            } else {
+              this._undoPower = 1;
+            }
+            this._lastUndoClick = e;
+            this._redoPower = 1;
+            this._lastRedoClick = 0;
+            this.performUndo();
+          });
+        if (window.redoBtn)
+          window.redoBtn.addEventListener("click", () => {
+            const e = now();
+            if (e - this._lastRedoClick <= this.powerWindowMs) {
+              this._redoPower = clamp(
+                this._redoPower + 1,
+                1,
+                this.maxEntries
+              );
+            } else {
+              this._redoPower = 1;
+            }
+            this._lastRedoClick = e;
+            this._undoPower = 1;
+            this._lastUndoClick = 0;
+            this.performRedo();
+          });
+      }
+      _uninstallListeners() {
+        if (!this.target) return;
+        try {
+          this.target.removeEventListener("input", this._onInput);
+          this.target.removeEventListener("paste", this._onCutPaste);
+          this.target.removeEventListener("cut", this._onCutPaste);
+          this.target.removeEventListener("keydown", this._onKeydown);
+          this.target.removeEventListener(
+            "compositionstart",
+            this._onCompositionStart
+          );
+          this.target.removeEventListener(
+            "compositionend",
+            this._onCompositionEnd
+          );
+        } catch (e) {}
+        this._disconnectObserver();
+        if (window.undoBtn)
+          window.undoBtn.removeEventListener("click", this.performUndo);
+        if (window.redoBtn)
+          window.redoBtn.removeEventListener("click", this.performRedo);
+      }
+      _disconnectObserver() {
+        if (this._observer) {
+          try {
+            this._observer.disconnect();
+          } catch (e) {}
+          this._observer = null;
+        }
+      }
+      _onInput(e) {
+        if (this._suppress) return;
+        if (this._composition) return this._scheduleCommit();
+        this._scheduleCommit();
+      }
+      _onCutPaste(e) {
+        if (this._suppress) return;
+        this._scheduleCommit(0);
+      }
+      _onKeydown(e) {
+        if ((e.ctrlKey || e.metaKey) && !e.altKey) {
+          if (e.key === "z" || e.key === "Z") {
+            if (e.shiftKey) {
+              e.preventDefault();
+              this.performRedo();
+            } else {
+              e.preventDefault();
+              this.performUndo();
+            }
+          } else if (e.key === "y" || e.key === "Y") {
+            e.preventDefault();
+            this.performRedo();
+          }
+        }
+      }
+      _onCompositionStart() {
+        this._composition = true;
+      }
+      _onCompositionEnd() {
+        this._composition = false;
+        setTimeout(() => {
+          this._scheduleCommit(0);
+        }, this.imeDebounce);
+      }
+      _scheduleCommit(e) {
+        clearTimeout(this._coalesceTimer);
+        if (e === 0) {
+          this._commitImmediate("immediate");
+          return;
+        }
+        this._coalesceTimer = setTimeout(() => {
+          this._commitImmediate("coalesced");
+        }, this.coalesceMs);
+      }
+      _commitImmediate(e) {
+        clearTimeout(this._coalesceTimer);
+        if (!this.target) return;
+        const t = snapshot(this.target);
+        if (this._suppress) return;
+        const n = this._undo[this._undo.length - 1];
+        if (n && shallowEqual(n, t)) return;
+        if (
+          n &&
+          diffIsSmall(n, t) &&
+          now() - n.ts < this.coalesceMs &&
+          !this._composition
+        ) {
+          this._undo[this._undo.length - 1] = this._createFrame(t);
+          this._undo[this._undo.length - 1].ts = now();
+        } else {
+          this._undoPush(this._createFrame(t));
+        }
+        this._redo = [];
+        this._persist();
+      }
+      _wrapProgrammatics() {
+        if (!this.target) return;
+        const e = this.target,
+          t = this;
+        try {
+          if (!e.__undov_value_wrapped) {
+            const n =
+              Object.getOwnPropertyDescriptor(e, "value") ||
+              Object.getOwnPropertyDescriptor(
+                HTMLTextAreaElement.prototype,
+                "value"
+              );
+            const r =
+              n.get ||
+              function () {
+                return this.value;
+              };
+            const i =
+              n.set ||
+              function (e) {
+                this.value = e;
+              };
+            Object.defineProperty(e, "value", {
+              configurable: true,
+              enumerable: n.enumerable,
+              get: function () {
+                return r.call(this);
+              },
+              set: function (e) {
+                if (t._suppress) return i.call(this, e);
+                i.call(this, e);
+                t.recordNow("setter");
+              }
+            });
+            e.__undov_value_wrapped = true;
+            this._wrapped.value = true;
+          }
+        } catch (n) {}
+        try {
+          if (
+            typeof e.setRangeText === "function" &&
+            !e.__undov_setRangeText_wrapped
+          ) {
+            const n = e.setRangeText;
+            e.setRangeText = function () {
+              if (t._suppress) return n.apply(this, arguments);
+              const e = snapshot(this);
+              const r = n.apply(this, arguments);
+              t.recordNow("setRangeText");
+              return r;
+            };
+            e.__undov_setRangeText_wrapped = true;
+            this._wrapped.setRangeText = true;
+          }
+        } catch (n) {}
+      }
+      _unwrapProgrammatics() {
+        const e = this.target;
+        try {
+          if (e && e.__undov_value_wrapped) delete e.__undov_value_wrapped;
+          if (e && e.__undov_setRangeText_wrapped)
+            delete e.__undov_setRangeText_wrapped;
+        } catch (t) {}
+      }
     }
     function autoWire() {
       const e =
@@ -1097,48 +1576,44 @@ function initApp() {
   })();
 }
 
-const fullscreenBtn = document.getElementById("fullscreenBtn");
-const fullscreenIcon = document.getElementById("fullscreenIcon");
-function toggleFullscreen() {
-  const elem = document.documentElement;
-  if (
-    document.fullscreenElement ||
-    document.webkitFullscreenElement ||
-    document.msFullscreenElement
-  ) {
-    if (document.exitFullscreen) {
-      document.exitFullscreen();
-    } else if (document.webkitExitFullscreen) {
-      document.webkitExitFullscreen();
-    } else if (document.msExitFullscreen) {
-      document.msExitFullscreen();
-    }
-  } else {
-    if (elem.requestFullscreen) {
-      elem.requestFullscreen();
-    } else if (elem.webkitRequestFullscreen) {
-      elem.webkitRequestFullscreen();
-    } else if (elem.msRequestFullscreen) {
-      elem.msRequestFullscreen();
-    }
-  }
+if (window.blogger && window.blogger.uiReady) {
+  initApp();
+} else {
+  document.addEventListener("DOMContentLoaded", initApp);
+  setTimeout(initApp, 100);
 }
-function updateFullscreenIcon() {
-  if (
-    document.fullscreenElement ||
-    document.webkitFullscreenElement ||
-    document.msFullscreenElement
-  ) {
-    fullscreenIcon.textContent = "fullscreen_exit";
-  } else {
-    fullscreenIcon.textContent = "fullscreen";
-  }
-}
-fullscreenBtn.addEventListener("click", toggleFullscreen);
-document.addEventListener("fullscreenchange", updateFullscreenIcon);
-document.addEventListener("webkitfullscreenchange", updateFullscreenIcon);
-document.addEventListener("msfullscreenchange", updateFullscreenIcon);
 
+document.addEventListener("DOMContentLoaded", () => {
+  const e = document.getElementById("fullscreenBtn"),
+    n = document.getElementById("fullscreenIcon");
+  function t() {
+    const e = document.documentElement;
+    document.fullscreenElement ||
+    document.webkitFullscreenElement ||
+    document.msFullscreenElement
+      ? document.exitFullscreen
+        ? document.exitFullscreen()
+        : document.webkitExitFullscreen
+        ? document.webkitExitFullscreen()
+        : document.msExitFullscreen && document.msExitFullscreen()
+      : e.requestFullscreen
+      ? e.requestFullscreen()
+      : e.webkitRequestFullscreen
+      ? e.webkitRequestFullscreen()
+      : e.msRequestFullscreen && e.msRequestFullscreen();
+  }
+  function c() {
+    document.fullscreenElement ||
+    document.webkitFullscreenElement ||
+    document.msFullscreenElement
+      ? (n.textContent = "fullscreen_exit")
+      : (n.textContent = "fullscreen");
+  }
+  e.addEventListener("click", t),
+    document.addEventListener("fullscreenchange", c),
+    document.addEventListener("webkitfullscreenchange", c),
+    document.addEventListener("msfullscreenchange", c);
+});
 window.safeAddListener = function (e, t, n) {
   e
     ? e.addEventListener(t, n)
@@ -1211,6 +1686,9 @@ window.setupEventListeners = function () {
   window.safeAddListener(window.secondarySidebar, "click", (e) => e.stopPropagation());
   window.addEventListener("focus", window.checkPasswordRequirement);
 };
+document.addEventListener("DOMContentLoaded", () =>
+  window.setupEventListeners()
+);
 
 window.loadNotes = function () {
   const e = localStorage.getItem("notes");
@@ -1362,31 +1840,14 @@ window.preserveSelection = function (handler) {
     window.noteTextarea.setSelectionRange(start, end);
   };
 };
-window.checkPassword = function(note, callback) {
-  window.showModal({
-    title: "Enter Password",
-    body: '<input type="password" id="passwordInput" placeholder="Password">',
-    footer: '<button onclick="modalSubmit()">Submit</button>'
-  }).then((result) => {
-    if (result.action === "submit" && result.values.passwordInput === note.password) {
-      callback();
-    } else {
-      window.showNotification("Incorrect password");
-    }
-  });
-};
-window.checkPasswordRequirement = function() {
-  if (window.currentNote && window.currentNote.password) {
-    window.checkPassword(window.currentNote, () => {
-      window.noteTextarea.value = window.currentNote.content;
-      window.showNotification("Password verified");
-    });
-  }
-};
+
+window.checkPasswordRequirement = function() {};
 
 window.init = () => {
   window.notes = window.loadNotes();
   window.updateNoteVisibility();
   window.applyFontSize();
+  window.setupEventListeners();
   window.checkPasswordRequirement();
+  window.handlePopState();
 };
