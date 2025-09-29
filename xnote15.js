@@ -1593,9 +1593,6 @@ window.setupEventListeners = function () {
   });
   safeAddListener(secondarySidebar, "click", (e) => e.stopPropagation());
   };
-document.addEventListener("DOMContentLoaded", () =>
-  window.setupEventListeners()
-);
 
 window.loadNotes = function() {
   const savedNotes = localStorage.getItem('notes');
@@ -1640,7 +1637,6 @@ window.handlePasteNote = function () { const r = async function () { if (!curren
   window.updateNoteVisibility();
   window.applyFontSize();
   window.setupEventListeners();
-  window.handlePopState();
 })();
 
 
