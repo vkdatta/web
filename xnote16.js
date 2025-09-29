@@ -1615,18 +1615,6 @@ window.loadNotes = function() {
     { id: '15', title: 'note15', content: '', extension: 'txt', lastEdited: new Date().toISOString(), password: '' }
   ];
 };
-
-window.showHomepage = function () {
-  if (homepage && noteAppContainer && diffCheckerContainer) {
-    homepage.style.display = "flex";
-    noteAppContainer.style.display = "none";
-    diffCheckerContainer.style.display = "none";
-    topbar.style.display = "none";
-    isHomepage = true;
-    currentApp = "home";
-    history.pushState({ page: "home" }, "", "/");
-  }
-};
     
 window.toggleFullscreen=function(){const e=document.documentElement;!document.fullscreenElement&&!document.webkitFullscreenElement&&!document.msFullscreenElement?e.requestFullscreen?e.requestFullscreen():e.webkitRequestFullscreen?e.webkitRequestFullscreen():e.msRequestFullscreen&&e.msRequestFullscreen():document.exitFullscreen?document.exitFullscreen():document.webkitExitFullscreen?document.webkitExitFullscreen():document.msExitFullscreen&&document.msExitFullscreen()};
 window.handlePasteNote = function () { const r = async function () { if (!currentNote || !noteTextarea) return; if (!navigator.clipboard || !navigator.permissions) { showNotification("Paste not supported in this browser."); return; } try { const perm = await navigator.permissions.query({ name: "clipboard-read" }); if (perm.state === "denied") { showNotification( "Clipboard access denied. Please allow it in your browser settings." ); return; } const clip = await navigator.clipboard.readText(); const s = noteTextarea.selectionStart, e = noteTextarea.selectionEnd; noteTextarea.value = noteTextarea.value.slice(0, s) + clip + noteTextarea.value.slice(e); const n = s + clip.length; noteTextarea.selectionStart = noteTextarea.selectionEnd = n; updateNoteMetadata(); showNotification("Pasted from clipboard!"); } catch { showNotification( "Paste failed (permission denied or empty clipboard)." ); } }; r(); };
