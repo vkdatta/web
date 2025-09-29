@@ -3551,8 +3551,7 @@ window.setupEventListeners = function () {
     }
   });
   safeAddListener(secondarySidebar, "click", (e) => e.stopPropagation());
-  window.addEventListener("focus", checkPasswordRequirement);
-};
+  };
 document.addEventListener("DOMContentLoaded", () =>
   window.setupEventListeners()
 );
