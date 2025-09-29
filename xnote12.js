@@ -893,7 +893,15 @@ function initApp() {
 
     ensureModal();
 
-      window.populateNoteList = function () {
+  window.preserveSelection = function (handler) {
+  return () => {
+    const start = window.noteTextarea.selectionStart;
+    const end = window.noteTextarea.selectionEnd;
+    handler();
+    window.noteTextarea.setSelectionRange(start, end);
+  };
+};
+    window.populateNoteList = function () {
       if (!noteList) return;
       noteList.innerHTML = "";
       notes.slice(0, Math.max(1, visibleNotes)).forEach((n) => {
@@ -3513,15 +3521,6 @@ window.loadNotes = function() {
     history.pushState({ page: "home" }, "", "/");
   }
 };
-window.preserveSelection = function (handler) {
-  return () => {
-    const start = window.noteTextarea.selectionStart;
-    const end = window.noteTextarea.selectionEnd;
-    handler();
-    window.noteTextarea.setSelectionRange(start, end);
-  };
-};
-
     window.toggleFullscreen=function(){const e=document.documentElement;!document.fullscreenElement&&!document.webkitFullscreenElement&&!document.msFullscreenElement?e.requestFullscreen?e.requestFullscreen():e.webkitRequestFullscreen?e.webkitRequestFullscreen():e.msRequestFullscreen&&e.msRequestFullscreen():document.exitFullscreen?document.exitFullscreen():document.webkitExitFullscreen?document.webkitExitFullscreen():document.msExitFullscreen&&document.msExitFullscreen()};
 
     window.handlePasteNote = function () {
