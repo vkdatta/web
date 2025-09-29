@@ -3365,7 +3365,14 @@ function initApp() {
         showNotification("New document created!");
       }
     };
-
+window.init = () => {
+  window.notes = window.loadNotes();
+  window.updateNoteVisibility();
+  window.applyFontSize();
+  window.setupEventListeners();
+  window.handlePopState();
+  window.initDiffChecker();
+};
     window.handleOpenFile = function () {
       const e = getNextEmptyNote();
       if (!e) {
@@ -3695,14 +3702,4 @@ window.preserveSelection = function (handler) {
     handler();
     window.noteTextarea.setSelectionRange(start, end);
   };
-};
-
-window.init = () => {
-  window.notes = window.loadNotes();
-  window.updateNoteVisibility();
-  window.applyFontSize();
-  window.setupEventListeners();
-  window.checkPasswordRequirement();
-  window.handlePopState();
-  window.initDiffChecker();
 };
