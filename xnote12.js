@@ -2348,7 +2348,7 @@ function initApp() {
       noteTextarea.value = MD5(noteTextarea.value);
       showNotification("MD5 Generated!");
     };
-    window.reverseText = preserveSelection(async () => {
+    window.reverseText = window.preserveSelection(async () => {
       if (!currentNote || !noteTextarea) return;
       const s = noteTextarea.selectionStart;
       const e = noteTextarea.selectionEnd;
