@@ -3406,81 +3406,6 @@ window.init = () => {
       t.click();
     };
 
-    window.handlePasteNote = function () {
-      const r = async function () {
-        if (!currentNote || !noteTextarea) return;
-        if (!navigator.clipboard || !navigator.permissions) {
-          showNotification("Paste not supported in this browser.");
-          return;
-        }
-        try {
-          const perm = await navigator.permissions.query({
-            name: "clipboard-read"
-          });
-          if (perm.state === "denied") {
-            showNotification(
-              "Clipboard access denied. Please allow it in your browser settings."
-            );
-            return;
-          }
-          const clip = await navigator.clipboard.readText();
-          const s = noteTextarea.selectionStart,
-            e = noteTextarea.selectionEnd;
-          noteTextarea.value =
-            noteTextarea.value.slice(0, s) + clip + noteTextarea.value.slice(e);
-          const n = s + clip.length;
-          noteTextarea.selectionStart = noteTextarea.selectionEnd = n;
-          updateNoteMetadata();
-          showNotification("Pasted from clipboard!");
-        } catch {
-          showNotification(
-            "Paste failed (permission denied or empty clipboard)."
-          );
-        }
-      };
-      r();
-    };
-  })();
-}
-
-if (window.blogger && window.blogger.uiReady) {
-  initApp();
-} else {
-  document.addEventListener("DOMContentLoaded", initApp);
-  setTimeout(initApp, 100);
-}
-
-document.addEventListener("DOMContentLoaded", () => {
-  const e = document.getElementById("fullscreenBtn"),
-    n = document.getElementById("fullscreenIcon");
-  function t() {
-    const e = document.documentElement;
-    document.fullscreenElement ||
-    document.webkitFullscreenElement ||
-    document.msFullscreenElement
-      ? document.exitFullscreen
-        ? document.exitFullscreen()
-        : document.webkitExitFullscreen
-        ? document.webkitExitFullscreen()
-        : document.msExitFullscreen && document.msExitFullscreen()
-      : e.requestFullscreen
-      ? e.requestFullscreen()
-      : e.webkitRequestFullscreen
-      ? e.webkitRequestFullscreen()
-      : e.msRequestFullscreen && e.msRequestFullscreen();
-  }
-  function c() {
-    document.fullscreenElement ||
-    document.webkitFullscreenElement ||
-    document.msFullscreenElement
-      ? (n.textContent = "fullscreen_exit")
-      : (n.textContent = "fullscreen");
-  }
-  e.addEventListener("click", t),
-    document.addEventListener("fullscreenchange", c),
-    document.addEventListener("webkitfullscreenchange", c),
-    document.addEventListener("msfullscreenchange", c);
-});
 window.safeAddListener = function (e, t, n) {
   e
     ? e.addEventListener(t, n)
@@ -3556,134 +3481,28 @@ document.addEventListener("DOMContentLoaded", () =>
   window.setupEventListeners()
 );
 
-window.loadNotes = function () {
-  const e = localStorage.getItem("notes");
-  return e
-    ? JSON.parse(e)
-    : [
-        {
-          id: "1",
-          title: "example",
-          content: 'console.log("Hello, World!");',
-          extension: "js",
-          lastEdited: new Date().toISOString(),
-          password: ""
-        },
-        {
-          id: "2",
-          title: "example",
-          content: "<h1>Hello, World!</h1>",
-          extension: "html",
-          lastEdited: new Date().toISOString(),
-          password: ""
-        },
-        {
-          id: "3",
-          title: "example",
-          content: "body { background: #fff; }",
-          extension: "css",
-          lastEdited: new Date().toISOString(),
-          password: ""
-        },
-        {
-          id: "4",
-          title: "example",
-          content: 'print("Hello, World!")',
-          extension: "py",
-          lastEdited: new Date().toISOString(),
-          password: ""
-        },
-        {
-          id: "5",
-          title: "note5",
-          content: "",
-          extension: "txt",
-          lastEdited: new Date().toISOString(),
-          password: ""
-        },
-        {
-          id: "6",
-          title: "note6",
-          content: "",
-          extension: "txt",
-          lastEdited: new Date().toISOString(),
-          password: ""
-        },
-        {
-          id: "7",
-          title: "note7",
-          content: "",
-          extension: "txt",
-          lastEdited: new Date().toISOString(),
-          password: ""
-        },
-        {
-          id: "8",
-          title: "note8",
-          content: "",
-          extension: "txt",
-          lastEdited: new Date().toISOString(),
-          password: ""
-        },
-        {
-          id: "9",
-          title: "note9",
-          content: "",
-          extension: "txt",
-          lastEdited: new Date().toISOString(),
-          password: ""
-        },
-        {
-          id: "10",
-          title: "note10",
-          content: "",
-          extension: "txt",
-          lastEdited: new Date().toISOString(),
-          password: ""
-        },
-        {
-          id: "11",
-          title: "note11",
-          content: "",
-          extension: "txt",
-          lastEdited: new Date().toISOString(),
-          password: ""
-        },
-        {
-          id: "12",
-          title: "note12",
-          content: "",
-          extension: "txt",
-          lastEdited: new Date().toISOString(),
-          password: ""
-        },
-        {
-          id: "13",
-          title: "note13",
-          content: "",
-          extension: "txt",
-          lastEdited: new Date().toISOString(),
-          password: ""
-        },
-        {
-          id: "14",
-          title: "note14",
-          content: "",
-          extension: "txt",
-          lastEdited: new Date().toISOString(),
-          password: ""
-        },
-        {
-          id: "15",
-          title: "note15",
-          content: "",
-          extension: "txt",
-          lastEdited: new Date().toISOString(),
-          password: ""
-        }
-      ];
+window.loadNotes = function() {
+  const savedNotes = localStorage.getItem('notes');
+  if (savedNotes) return JSON.parse(savedNotes);
+  return [
+    { id: '1', title: 'example', content: '', extension: 'txt', lastEdited: new Date().toISOString(), password: '' },
+    { id: '2', title: 'example', content: '', extension: 'txt', lastEdited: new Date().toISOString(), password: '' },
+    { id: '3', title: 'example', content: '', extension: 'txt', lastEdited: new Date().toISOString(), password: '' },
+    { id: '4', title: 'example', content: '', extension: 'txt', lastEdited: new Date().toISOString(), password: '' },
+    { id: '5', title: 'note5', content: '', extension: 'txt', lastEdited: new Date().toISOString(), password: '' },
+    { id: '6', title: 'note6', content: '', extension: 'txt', lastEdited: new Date().toISOString(), password: '' },
+    { id: '7', title: 'note7', content: '', extension: 'txt', lastEdited: new Date().toISOString(), password: '' },
+    { id: '8', title: 'note8', content: '', extension: 'txt', lastEdited: new Date().toISOString(), password: '' },
+    { id: '9', title: 'note9', content: '', extension: 'txt', lastEdited: new Date().toISOString(), password: '' },
+    { id: '10', title: 'note10', content: '', extension: 'txt', lastEdited: new Date().toISOString(), password: '' },
+    { id: '11', title: 'note11', content: '', extension: 'txt', lastEdited: new Date().toISOString(), password: '' },
+    { id: '12', title: 'note12', content: '', extension: 'txt', lastEdited: new Date().toISOString(), password: '' },
+    { id: '13', title: 'note13', content: '', extension: 'txt', lastEdited: new Date().toISOString(), password: '' },
+    { id: '14', title: 'note14', content: '', extension: 'txt', lastEdited: new Date().toISOString(), password: '' },
+    { id: '15', title: 'note15', content: '', extension: 'txt', lastEdited: new Date().toISOString(), password: '' }
+  ];
 };
-window.showHomepage = function () {
+    window.showHomepage = function () {
   if (homepage && noteAppContainer && diffCheckerContainer) {
     homepage.style.display = "flex";
     noteAppContainer.style.display = "none";
@@ -3702,3 +3521,49 @@ window.preserveSelection = function (handler) {
     window.noteTextarea.setSelectionRange(start, end);
   };
 };
+
+    window.toggleFullscreen=function(){const e=document.documentElement;!document.fullscreenElement&&!document.webkitFullscreenElement&&!document.msFullscreenElement?e.requestFullscreen?e.requestFullscreen():e.webkitRequestFullscreen?e.webkitRequestFullscreen():e.msRequestFullscreen&&e.msRequestFullscreen():document.exitFullscreen?document.exitFullscreen():document.webkitExitFullscreen?document.webkitExitFullscreen():document.msExitFullscreen&&document.msExitFullscreen()};
+
+    window.handlePasteNote = function () {
+      const r = async function () {
+        if (!currentNote || !noteTextarea) return;
+        if (!navigator.clipboard || !navigator.permissions) {
+          showNotification("Paste not supported in this browser.");
+          return;
+        }
+        try {
+          const perm = await navigator.permissions.query({
+            name: "clipboard-read"
+          });
+          if (perm.state === "denied") {
+            showNotification(
+              "Clipboard access denied. Please allow it in your browser settings."
+            );
+            return;
+          }
+          const clip = await navigator.clipboard.readText();
+          const s = noteTextarea.selectionStart,
+            e = noteTextarea.selectionEnd;
+          noteTextarea.value =
+            noteTextarea.value.slice(0, s) + clip + noteTextarea.value.slice(e);
+          const n = s + clip.length;
+          noteTextarea.selectionStart = noteTextarea.selectionEnd = n;
+          updateNoteMetadata();
+          showNotification("Pasted from clipboard!");
+        } catch {
+          showNotification(
+            "Paste failed (permission denied or empty clipboard)."
+          );
+        }
+      };
+      r();
+    };
+  })();
+}
+
+if (window.blogger && window.blogger.uiReady) {
+  initApp();
+} else {
+  document.addEventListener("DOMContentLoaded", initApp);
+  setTimeout(initApp, 100);
+}
