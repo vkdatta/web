@@ -447,23 +447,19 @@ function initApp() {
 
     function ensureModal() {
       if (modalBackdrop) return;
-
       modalBackdrop = document.createElement("div");
       modalBackdrop.className = "modal-backdrop";
       modalBackdrop.setAttribute("aria-hidden", "true");
-
       document.body.appendChild(modalBackdrop);
-
       modalBackdrop.addEventListener("click", (e) => {
         if (e.target === modalBackdrop) closeModal();
       });
-
       document.addEventListener("keydown", (e) => {
         if (e.key === "Escape" && modalBackdrop.classList.contains("active")) {
           closeModal();
         }
       });
-    }
+    };
 
     function closeModal(result = null) {
       if (modalBackdrop) {
@@ -896,6 +892,27 @@ function initApp() {
     };
 
     ensureModal();
+
+      window.populateNoteList = function () {
+      if (!noteList) return;
+      noteList.innerHTML = "";
+      notes.slice(0, Math.max(1, visibleNotes)).forEach((n) => {
+        const t = document.createElement("li");
+        t.className = "note-item";
+        t.dataset.id = n.id;
+        t.innerHTML = `<span class="note-title">${n.title}</span><span class="note-badge">${n.content.length} chars | .${n.extension}</span>`;
+        t.onclick = () => {
+          showNoteApp(n.id);
+        };
+        if (currentNote && currentNote.id === n.id) t.classList.add("selected");
+        noteList.appendChild(t);
+      });
+    };
+
+    window.updateNoteVisibility = function () {
+  localStorage.setItem("visibleNotes", visibleNotes);
+  window.populateNoteList();
+};
 
     window.handleFormat = function (t) {
       return preserveSelection(async function () {
@@ -3282,21 +3299,6 @@ function initApp() {
         showNotification(`Font size decreased to ${fontSize}px`);
       });
 
-    window.populateNoteList = function () {
-      if (!noteList) return;
-      noteList.innerHTML = "";
-      notes.slice(0, Math.max(1, visibleNotes)).forEach((n) => {
-        const t = document.createElement("li");
-        t.className = "note-item";
-        t.dataset.id = n.id;
-        t.innerHTML = `<span class="note-title">${n.title}</span><span class="note-badge">${n.content.length} chars | .${n.extension}</span>`;
-        t.onclick = () => {
-          showNoteApp(n.id);
-        };
-        if (currentNote && currentNote.id === n.id) t.classList.add("selected");
-        noteList.appendChild(t);
-      });
-    };
 
     window.openNote = function (e) {
       const t = notes.find((n) => n.id === e);
@@ -3685,10 +3687,6 @@ window.showHomepage = function () {
     currentApp = "home";
     history.pushState({ page: "home" }, "", "/");
   }
-};
-window.updateNoteVisibility = function () {
-  localStorage.setItem("visibleNotes", visibleNotes);
-  window.populateNoteList();
 };
 window.preserveSelection = function (handler) {
   return () => {
