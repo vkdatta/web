@@ -2836,7 +2836,7 @@ window.handleFindReplaceSubmit = function () {
     caseSensitive: c
   });
 };
-var MD5 = function (d) {
+var generateMD5 = function (d) {
   var r = M(V(Y(X(d), 8 * d.length)));
   return r.toLowerCase();
 };
@@ -3323,7 +3323,7 @@ function bit_rol(d, _) {
 }
 window.MD5 = () => {
   if (!noteTextarea) return;
-  noteTextarea.value = MD5(noteTextarea.value);
+  noteTextarea.value = generateMD5(noteTextarea.value);
   updateNoteMetadata();
   showNotification("MD5 Generated!");
 };
