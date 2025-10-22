@@ -23,13 +23,21 @@ Include the scripts and stylesheets at the top of your HTML for easy usage:
 <script src="https://cdn.jsdelivr.net/gh/vkdatta/web@main/fullscreen.js"></script>
 ```
 
-```<script src="https://cdn.jsdelivr.net/gh/vkdatta/web@main/noteapp.js"></script>```
+```
+<script src="https://cdn.jsdelivr.net/gh/vkdatta/web@main/noteapp.js"></script>
+```
 
-```<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/vkdatta/web@main/noteapp.css">```
+```
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/vkdatta/web@main/noteapp.css">
+```
 
-```<script src="https://cdn.jsdelivr.net/gh/vkdatta/web@main/diffapp.js"></script>```
+```
+<script src="https://cdn.jsdelivr.net/gh/vkdatta/web@main/diffapp.js"></script>
+```
 
-```<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/vkdatta/web@main/diffapp.css">```
+```
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/vkdatta/web@main/diffapp.css">
+```
 
 ---
 
@@ -55,11 +63,7 @@ Double-tap anywhere on the page to toggle fullscreen mode.
 
 Usage Example:
 
-```
-<script>
-  // Fullscreen functionality is automatically initialized on page load
-</script>
-```
+```<script>Fullscreen functionality is automatically initialized on page load</script>```
 
 - Works on desktops and mobile devices.
 - No extra setup required—just include the script.
