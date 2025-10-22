@@ -693,13 +693,16 @@ document.addEventListener('DOMContentLoaded', () => {
     diffCheckerContainer.style.display = "none";
     topbar.style.display = "flex";
   }
-  function showDiffChecker() {
-    homepage.style.display = "none";
-    noteAppContainer.style.display = "none";
-    diffCheckerContainer.style.display = "flex";
-    topbar.style.display = "flex";
+function showDiffChecker() {
+  if (!currentUser) return showNotification('Login required for cloud features');
+  homepage.style.display = "none";
+  noteAppContainer.style.display = "none";
+  diffCheckerContainer.style.display = "flex";
+  topbar.style.display = "flex";
+  if (typeof initDiffChecker === 'function') {
+    initDiffChecker();
   }
-  window.addEventListener('popstate', () => {
+}  window.addEventListener('popstate', () => {
     const path = window.location.pathname;
     if (path === '/' || path === '') showHomepage();
     else if (path.startsWith('/website/Note')) showNoteApp();
