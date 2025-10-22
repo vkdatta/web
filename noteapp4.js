@@ -10,7 +10,7 @@ let fontSize = 14;
 let isDarkTheme = true;
 let showLineNumbers = false;
 let highlightBg = '#8b0000';
-let highlightText = '#fff';
+let highlightText = '#ffffff';
 let downloadFormat = 'markup';
 let encryptAlgo = 'md5';
 let settingsLevel = 'app';
@@ -324,8 +324,37 @@ async function initAuth() {
     }
     populateSidebars();
   });
-  document.getElementById('googleLoginBtn').onclick = () => window.signInWithPopup(auth, provider).catch(console.error);
-  document.getElementById('logoutBtn').onclick = () => window.signOut(auth).catch(console.error);
+  document.getElementById('googleLoginBtn').onclick = () => {
+    window.signInWithPopup(auth, provider)
+      .then((result) => {
+        showNotification('Welcome! Syncing your notes...');
+      })
+      .catch((error) => {
+        if (error.code === 'auth/unauthorized-domain') {
+          showNotification('Auth issue: Add "dex-code.blogspot.com" to Firebase > Auth > Settings > Authorized domains, then refresh.');
+        } else {
+          showNotification(`Login failed: ${error.message}`);
+        }
+        console.error('OAuth error:', error);
+      });
+  };
+  document.getElementById('logoutBtn').onclick = () => {
+    window.signOut(auth)
+      .then(() => showNotification('Logged out—local notes cleared.'))
+      .catch((error) => {
+        showNotification(`Logout failed: ${error.message}`);
+        console.error('Logout error:', error);
+      });
+  };
+  auth._initializationPromise.then(() => {
+    const originalErrorHandler = auth._errorHandler;
+    auth._errorHandler = (error) => {
+      if (error.code === 'auth/unauthorized-domain') {
+        showNotification('Domain not authorized—check Firebase console (Auth > Settings > Authorized domains) and add your site URL.');
+      }
+      originalErrorHandler(error);
+    };
+  });
 }
 async function loadUserData(uid) {
   const { db, collection, doc, getDoc, getDocs, query, orderBy } = window.dbHelpers;
@@ -337,7 +366,7 @@ async function loadUserData(uid) {
       fontSize = data.fontSize?.app || 14;
       showLineNumbers = data.lineNumbers?.app || false;
       highlightBg = data.highlightBg?.app || '#8b0000';
-      highlightText = data.highlightText?.app || '#fff';
+      highlightText = data.highlightText?.app || '#ffffff';
       downloadFormat = data.downloadFormat?.app || 'markup';
       encryptAlgo = data.encryptAlgo?.app || 'md5';
       applyTheme();
@@ -419,7 +448,7 @@ function encryptContent(content, algo) {
     case 'md5': return CryptoJS.MD5(content).toString();
     case 'sha1': return CryptoJS.SHA1(content).toString();
     case 'sha256': return CryptoJS.SHA256(content).toString();
-    case 'aes': return CryptoJS.AES.encrypt(content, 'userkey').toString(); // Use a prompt for key if needed
+    case 'aes': return CryptoJS.AES.encrypt(content, 'userkey').toString();
     default: return content;
   }
 }
@@ -693,16 +722,16 @@ document.addEventListener('DOMContentLoaded', () => {
     diffCheckerContainer.style.display = "none";
     topbar.style.display = "flex";
   }
-function showDiffChecker() {
-  if (!currentUser) return showNotification('Login required for cloud features');
-  homepage.style.display = "none";
-  noteAppContainer.style.display = "none";
-  diffCheckerContainer.style.display = "flex";
-  topbar.style.display = "flex";
-  if (typeof initDiffChecker === 'function') {
-    initDiffChecker();
+  function showDiffChecker() {
+    homepage.style.display = "none";
+    noteAppContainer.style.display = "none";
+    diffCheckerContainer.style.display = "flex";
+    topbar.style.display = "flex";
+    if (typeof initDiffChecker === 'function') {
+      initDiffChecker();
+    }
   }
-}  window.addEventListener('popstate', () => {
+  window.addEventListener('popstate', () => {
     const path = window.location.pathname;
     if (path === '/' || path === '') showHomepage();
     else if (path.startsWith('/website/Note')) showNoteApp();
@@ -725,7 +754,7 @@ function showFindReplaceModal() {
     title: 'Find & Replace',
     body: `
       <input id="findText" placeholder="Find (regex if checked)" style="width:100%;">
-      <input type="checkbox" id="regexToggle"> Use Regex
+      <input type="checkbox" id="regexToggle" /> Use Regex
       <input id="replaceText" placeholder="Replace with">
       <button onclick="performReplace()">Replace</button>
       <button onclick="performReplaceAll()">Replace All</button>
@@ -772,7 +801,7 @@ function showSettings() {
   document.getElementById('highlightText').value = highlightText;
   document.getElementById('encryptAlgo').value = encryptAlgo;
   document.getElementById('downloadFormat').value = downloadFormat;
-  document.getElementById('noteBg').value = getComputedStyle(document.documentElement).getPropertyValue('--primary').trim() || '#000';
+  document.getElementById('noteBg').value = getComputedStyle(document.documentElement).getPropertyValue('--primary').trim() || '#000000';
   document.getElementById('noteText').value = getComputedStyle(document.documentElement).getPropertyValue('--color').trim() || '#cacaca';
 }
 function saveSettings() {
