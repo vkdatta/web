@@ -347,24 +347,37 @@ function handleFileUpload2(e) {
 }
 
 function initDiffChecker() {
-  const uploadBtn1 = document.getElementById('uploadBtn1');
-  const uploadBtn2 = document.getElementById('uploadBtn2');
-  const fileInput1 = document.getElementById('fileInput1');
-  const fileInput2 = document.getElementById('fileInput2');
-  const compareBtn = document.getElementById('compareBtn');
-  const clearBtn = document.getElementById('clearBtn');
-  const swapBtn = document.getElementById('swapBtn');
-  const text1 = document.getElementById('text1');
-  const text2 = document.getElementById('text2');
-  const linesLeft = document.getElementById('linesLeft');
-  const linesRight = document.getElementById('linesRight');
-  const diffSummary = document.getElementById('diffSummary');
-  const diffCountEl = document.getElementById('diffCount');
-  const lineCountEl = document.getElementById('lineCount');
-  const selectionInfo = document.getElementById('selectionInfo');
-  const state = { lines1: [], lines2: [], s1flat: '', s2flat: '', map1: [], map2: [], lineStarts1: [], lineStarts2: [] };
-  const WORD_DIFF_THRESHOLD = 10000;
-  const LINE_DIFF_THRESHOLD = 1000;
+  // Defer init until diff container is visible/loaded
+  const diffContainer = document.getElementById('diffCheckerContainer');
+  if (!diffContainer) {
+    // Retry on next tick if container not ready
+    setTimeout(initDiffChecker, 100);
+    return;
+  }
+  // Now safe to query elements
+  uploadBtn1 = document.getElementById('uploadBtn1');
+  uploadBtn2 = document.getElementById('uploadBtn2');
+  fileInput1 = document.getElementById('fileInput1');
+  fileInput2 = document.getElementById('fileInput2');
+  compareBtn = document.getElementById('compareBtn');
+  clearBtn = document.getElementById('clearBtn');
+  swapBtn = document.getElementById('swapBtn');
+  text1 = document.getElementById('text1');
+  text2 = document.getElementById('text2');
+  linesLeft = document.getElementById('linesLeft');
+  linesRight = document.getElementById('linesRight');
+  diffSummary = document.getElementById('diffSummary');
+  diffCountEl = document.getElementById('diffCount');
+  lineCountEl = document.getElementById('lineCount');
+  selectionInfo = document.getElementById('selectionInfo');
+
+  // Null guards for all
+  if (!uploadBtn1 || !uploadBtn2 || !fileInput1 || !fileInput2 || !compareBtn || !clearBtn || !swapBtn || !text1 || !text2 || !linesLeft || !linesRight || !diffSummary || !diffCountEl || !lineCountEl || !selectionInfo) {
+    console.warn('Diff elements not fully loaded—retrying in 100ms');
+    setTimeout(initDiffChecker, 100);
+    return;
+  }
+
   uploadBtn1.addEventListener("click", () => fileInput1.click());
   uploadBtn2.addEventListener("click", () => fileInput2.click());
   fileInput1.addEventListener("change", handleFileUpload1);
@@ -374,4 +387,10 @@ function initDiffChecker() {
   swapBtn.addEventListener("click", swapTexts);
   setTimeout(compareTexts, 300);
 }
-initDiffChecker();
+
+// Call only after DOM ready or container visible
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initDiffChecker);
+} else {
+  initDiffChecker();
+}
