@@ -15,9 +15,13 @@ All files are intended for **personal use** and can be directly included via CDN
 
 Include the scripts and stylesheets at the top of your HTML for easy usage:
 
-```<script src="https://cdn.jsdelivr.net/gh/vkdatta/web@main/autosave.js"></script>```
+```
+<script src="https://cdn.jsdelivr.net/gh/vkdatta/web@main/autosave.js"></script>
+```
 
-```<script src="https://cdn.jsdelivr.net/gh/vkdatta/web@main/fullscreen.js"></script>```
+```
+<script src="https://cdn.jsdelivr.net/gh/vkdatta/web@main/fullscreen.js"></script>
+```
 
 ```<script src="https://cdn.jsdelivr.net/gh/vkdatta/web@main/noteapp.js"></script>```
 
