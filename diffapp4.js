@@ -1,4 +1,12 @@
+let text1, text2, linesLeft, linesRight, diffSummary, diffCountEl, lineCountEl, uploadBtn1, uploadBtn2, fileInput1, fileInput2, compareBtn, clearBtn, swapBtn, selectionInfo;
+let state = { lines1: [], lines2: [], s1flat: '', s2flat: '', map1: [], map2: [], lineStarts1: [], lineStarts2: [] };
+const WORD_DIFF_THRESHOLD = 10000;
+const LINE_DIFF_THRESHOLD = 1000;
+let savedLeft = null;
+let savedRight = null;
+
 function clearAll() {
+  if (!text1 || !text2 || !linesLeft || !linesRight || !diffSummary || !diffCountEl || !lineCountEl || !selectionInfo) return;
   text1.value = "";
   text2.value = "";
   linesLeft.innerHTML = "Original text will appear here after comparison";
@@ -13,6 +21,7 @@ function clearAll() {
   selectionInfo.textContent = "None";
 }
 function swapTexts() {
+  if (!text1 || !text2) return;
   const temp = text1.value;
   text1.value = text2.value;
   text2.value = temp;
@@ -28,6 +37,7 @@ function escapeHTML(str) {
 }
 
 function compareTexts() {
+  if (!text1 || !text2 || !linesLeft || !linesRight || !diffSummary || !diffCountEl || !lineCountEl) return;
   const orig1 = text1.value || "";
   const orig2 = text2.value || "";
   const largeFile = orig1.length + orig2.length > WORD_DIFF_THRESHOLD;
@@ -86,7 +96,7 @@ function compareTexts() {
           ? "Texts are identical!"
           : "Comparison complete";
       diffSummary.style.color =
-        diffCountEl.textContent === "0" ? "var(--added-text)" : "var(--text)";
+        diffCountEl.textContent === "0" ? "var(--added-text)" : "var(--color)";
       setupScrollSync();
     } catch (e) {
       diffSummary.textContent = "Error during comparison";
@@ -346,15 +356,20 @@ function handleFileUpload2(e) {
   }
 }
 
+let retryCount = 0;
+const MAX_RETRIES = 50;
+
 function initDiffChecker() {
-  // Defer init until diff container is visible/loaded
   const diffContainer = document.getElementById('diffCheckerContainer');
   if (!diffContainer) {
-    // Retry on next tick if container not ready
-    setTimeout(initDiffChecker, 100);
+    if (retryCount < MAX_RETRIES) {
+      retryCount++;
+      setTimeout(initDiffChecker, 100);
+    } else {
+      console.error('Diff container not found after max retries—skipping init.');
+    }
     return;
   }
-  // Now safe to query elements
   uploadBtn1 = document.getElementById('uploadBtn1');
   uploadBtn2 = document.getElementById('uploadBtn2');
   fileInput1 = document.getElementById('fileInput1');
@@ -370,14 +385,16 @@ function initDiffChecker() {
   diffCountEl = document.getElementById('diffCount');
   lineCountEl = document.getElementById('lineCount');
   selectionInfo = document.getElementById('selectionInfo');
-
-  // Null guards for all
   if (!uploadBtn1 || !uploadBtn2 || !fileInput1 || !fileInput2 || !compareBtn || !clearBtn || !swapBtn || !text1 || !text2 || !linesLeft || !linesRight || !diffSummary || !diffCountEl || !lineCountEl || !selectionInfo) {
-    console.warn('Diff elements not fully loaded—retrying in 100ms');
-    setTimeout(initDiffChecker, 100);
+    if (retryCount < MAX_RETRIES) {
+      retryCount++;
+      console.warn(`Diff elements not fully loaded—retrying in 100ms (attempt ${retryCount})`);
+      setTimeout(initDiffChecker, 100);
+    } else {
+      console.error('Diff elements missing after max retries—UI may be incomplete.');
+    }
     return;
   }
-
   uploadBtn1.addEventListener("click", () => fileInput1.click());
   uploadBtn2.addEventListener("click", () => fileInput2.click());
   fileInput1.addEventListener("change", handleFileUpload1);
@@ -386,9 +403,8 @@ function initDiffChecker() {
   clearBtn.addEventListener("click", clearAll);
   swapBtn.addEventListener("click", swapTexts);
   setTimeout(compareTexts, 300);
+  retryCount = 0;
 }
-
-// Call only after DOM ready or container visible
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', initDiffChecker);
 } else {
