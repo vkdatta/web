@@ -1,9 +1,10 @@
-/* newdiffapp.css */
+/* Full diffapp5.css - Fonts fixed (Classy for labels/buttons, Source Code Pro for textareas) */
 .diff-input-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 20px;
   margin-bottom: 20px;
+  font-family: 'Classy', sans-serif;
 }
 @media (max-width: 900px) {
   .diff-input-grid {
@@ -26,9 +27,10 @@
 .diff-panel {
   background: var(--matte);
   border-radius: 12px;
-  box-shadow: 3px 3px 6px rgba(0, 0, 0, 0.1), -3px -3px 6px rgba(255, 255, 255, 0.05);
+  box-shadow: var(--shadow);
   overflow: hidden;
   backdrop-filter: blur(10px);
+  font-family: 'Classy', sans-serif;
 }
 .diff-panel-header {
   background: var(--matte);
@@ -37,16 +39,17 @@
   font-weight: 600;
   color: var(--color);
   display: flex;
-  align-items: left;
+  align-items: center;
   justify-content: space-between;
   gap: 10px;
+  font-family: 'Classy', sans-serif;
 }
 .diff-textarea {
   width: 100%;
   min-height: 200px;
   padding: 16px;
   border: none;
-  font-family: 'Source Code Pro', monospace;
+  font-family: 'Source Code Pro', monospace !important;
   font-size: 14px;
   resize: vertical;
   background: transparent;
@@ -66,12 +69,13 @@
   flex-wrap: wrap;
   gap: 15px;
   margin-bottom: 20px;
-  align-items: left;
+  align-items: center;
   padding: 16px;
   background: var(--matte);
   border-radius: 12px;
   backdrop-filter: blur(10px);
-  box-shadow: 3px 3px 6px rgba(0, 0, 0, 0.1), -3px -3px 6px rgba(255, 255, 255, 0.05);
+  box-shadow: var(--shadow);
+  font-family: 'Classy', sans-serif;
 }
 .diff-options {
   display: flex;
@@ -80,11 +84,12 @@
 }
 .diff-options label {
   display: flex;
-  align-items: left;
+  align-items: center;
   gap: 8px;
   cursor: pointer;
   font-size: 0.9rem;
   color: var(--color);
+  font-family: 'Classy', sans-serif;
 }
 .diff-options input[type="checkbox"] {
   appearance: none;
@@ -126,7 +131,8 @@
   gap: 8px;
   font-size: 0.9rem;
   backdrop-filter: blur(5px);
-  box-shadow: 3px 3px 6px rgba(0, 0, 0, 0.1), -3px -3px 6px rgba(255, 255, 255, 0.05);
+  box-shadow: var(--shadow);
+  font-family: 'Classy', sans-serif;
 }
 .diff-btn:hover {
   transform: translateY(-2px);
@@ -153,9 +159,10 @@
   border: 1px solid var(--diff-border);
   border-radius: 12px;
   overflow: hidden;
-  box-shadow: 3px 3px 6px rgba(0, 0, 0, 0.1), -3px -3px 6px rgba(255, 255, 255, 0.05);
+  box-shadow: var(--shadow);
   backdrop-filter: blur(10px);
   background: var(--matte);
+  font-family: 'Classy', sans-serif;
 }
 .diff-header {
   display: flex;
@@ -163,10 +170,12 @@
   padding: 12px 16px;
   background: var(--matte);
   border-bottom: 1px solid var(--diff-border);
+  font-family: 'Classy', sans-serif;
 }
 .diff-title {
   font-weight: 600;
   color: var(--color);
+  font-family: 'Classy', sans-serif;
 }
 .diff-stats {
   display: flex;
@@ -174,10 +183,11 @@
 }
 .diff-stat {
   display: flex;
-  align-items: left;
+  align-items: center;
   gap: 6px;
   font-size: 0.9rem;
   color: var(--color);
+  font-family: 'Classy', sans-serif;
 }
 .diff-panes {
   display: flex;
@@ -201,6 +211,7 @@
   overflow: auto;
   width: 100%;
   height: 100%;
+  font-family: 'Source Code Pro', monospace !important;
 }
 .diff-pane-scroller::-webkit-scrollbar {
   width: 8px;
@@ -215,7 +226,6 @@
   width: 100%;
 }
 .diff-gutter-cell {
-  width: 50px;
   flex-shrink: 0;
   background: var(--matte);
   border-right: 1px solid var(--diff-border);
@@ -228,9 +238,11 @@
   align-items: flex-start;
   position: relative;
   color: var(--color);
+  min-width: 50px;
 }
 .diff-gutter-cell span {
   padding-top: 0.15rem;
+  font-family: 'Source Code Pro', monospace;
 }
 .diff-gutter-cell .swap-btn {
   position: absolute;
@@ -249,6 +261,7 @@
   font-size: 12px;
   opacity: 0;
   transition: opacity 0.2s;
+  font-family: 'Classy', sans-serif;
 }
 .diff-line-row:hover .diff-gutter-cell .swap-btn {
   opacity: 1;
@@ -326,6 +339,7 @@
   color: var(--color);
   display: flex;
   justify-content: space-between;
+  font-family: 'Classy', sans-serif;
 }
 .diff-sticky-controls {
   position: sticky;
@@ -340,6 +354,7 @@
   flex-wrap: wrap;
   box-shadow: 0 4px 6px rgba(0,0,0,0.05);
   backdrop-filter: blur(10px);
+  font-family: 'Classy', sans-serif;
 }
 .diff-select {
   padding: 6px 12px;
@@ -350,6 +365,7 @@
   font-size: 0.9rem;
   cursor: pointer;
   backdrop-filter: blur(5px);
+  font-family: 'Classy', sans-serif;
 }
 .diff-select:focus {
   outline: none;
@@ -360,7 +376,7 @@
   color: var(--color);
   font-style: italic;
   text-align: center;
-  font-family: 'classy', sans-serif;
+  font-family: 'Classy', sans-serif;
   opacity: 0.7;
 }
 .upload-btn {
@@ -373,11 +389,42 @@
   font-size: 0.8rem;
   backdrop-filter: blur(5px);
   transition: all var(--transition-speed);
+  font-family: 'Classy', sans-serif;
 }
 .upload-btn:hover {
   background: rgba(106, 90, 205, 0.1);
   border-color: var(--accent);
 }
 #text1, #text2, #linesLeft, #linesRight {
-  font-family: 'Source Code Pro', monospace;
+  font-family: 'Source Code Pro', monospace !important;
+}
+
+/* Responsive for diff */
+@media (max-width: 900px) {
+  .diff-panes {
+    height: 40vh;
+  }
+  .diff-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .diff-action-buttons {
+    justify-content: center;
+    margin-left: 0;
+  }
+}
+
+@media (max-width: 400px) {
+  .diff-panel-header {
+    padding: 8px 12px;
+    font-size: 0.9rem;
+  }
+  .diff-textarea {
+    min-height: 150px;
+    padding: 12px;
+    font-size: 12px;
+  }
+  .diff-panes {
+    height: 30vh;
+  }
 }
