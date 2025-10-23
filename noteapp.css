@@ -311,6 +311,7 @@ padding: 10px;
 }
 .welcome-message {
 font-size: 100%;
+color:red
 }
 .topbar {
 width: fit-content;
