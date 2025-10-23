@@ -310,8 +310,7 @@ overflow-x: auto;
 padding: 10px;
 }
 .welcome-message {
-font-size: 100%;
-color:red
+font-size: 150%;
 }
 .topbar {
 width: fit-content;
