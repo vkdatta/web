@@ -127,7 +127,7 @@ margin-left:8px;
   padding: 8px 16px;
   color: #888;
   font-size: 12px;
-  background: #1e1e1e;
+  background: #2d2d2d;
   border-top: 1px solid #333;
   font-family: "Source Code Pro", Monaco, Consolas, "Courier New", monospace;
 }
