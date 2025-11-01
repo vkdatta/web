@@ -8,7 +8,7 @@ const minifiedCSS = `
   margin: 20px auto;
   max-width: 80vw;
   font-size: 14px;
-  background: yellow;
+  background: #1e1e1e;
   border-radius: 8px;
   border: 1px solid #333;
   overflow: hidden;
@@ -29,7 +29,7 @@ const minifiedCSS = `
   color: #ccc;
   padding: 2px 8px;
   border-radius: 4px;
-  font-size: 34px;
+  font-size: 14px;
   font-weight: 500;
   text-transform: none;
   letter-spacing: 0.5px;
