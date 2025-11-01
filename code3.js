@@ -8,7 +8,7 @@ const minifiedCSS = `
   margin: 20px auto;
   max-width: 80vw;
   font-size: 14px;
-  background: #1e1e1e;
+  background: red;
   border-radius: 8px;
   border: 1px solid #333;
   overflow: hidden;
