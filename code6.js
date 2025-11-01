@@ -65,9 +65,7 @@ const minifiedCSS = `
   user-select: none;
 }
 .code-btn:hover {
-  background: rgba(255, 255, 255, 0.05);
-  color: #fff;
-}
+ }
 .code-btn:active {
   transform: none;
 }
