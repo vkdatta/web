@@ -30,7 +30,7 @@ margin-left:12px;
   color: #ccc;
   padding: 2px 8px;
   border-radius: 4px;
-  font-size: 12px;
+  font-size: 10px;
   font-weight: 500;
   text-transform: none;
   letter-spacing: 0.5px;
