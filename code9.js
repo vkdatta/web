@@ -19,7 +19,7 @@ const minifiedCSS = `
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 8px;
+  padding: 3px;
   background: #2d2d2d;
   border-bottom: 1px solid #404040;
   min-height: 20px;
