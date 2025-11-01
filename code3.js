@@ -2,7 +2,7 @@
 (function() {
     'use strict';
 
-    const minifiedCSS = `
+const minifiedCSS = `
 .code-container {
   position: relative;
   margin: 20px auto;
@@ -29,7 +29,7 @@
   color: #ccc;
   padding: 2px 8px;
   border-radius: 4px;
-  font-size: 14px;
+  font-size: 34px;
   font-weight: 500;
   text-transform: none;
   letter-spacing: 0.5px;
