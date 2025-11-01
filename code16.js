@@ -19,8 +19,8 @@ const minifiedCSS = `
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 3px;
-  background: #2d2d2d;
+  padding: 5px;
+  background: #1e1e1e;
   border-bottom: 1px solid #404040;
   min-height: 20px;
   font-family: "Source Code Pro", Monaco, Consolas, "Courier New", monospace;
