@@ -26,7 +26,7 @@ const minifiedCSS = `
   font-family: "Source Code Pro", Monaco, Consolas, "Courier New", monospace;
 }
 .language-badge {
-margin-left:10px;
+margin-left:8px;
   color: #ccc;
   padding: 2px 8px;
   border-radius: 4px;
