@@ -22,7 +22,7 @@
   padding: 8px 12px;
   background: #2d2d2d;
   border-bottom: 1px solid #404040;
-  min-height: 27px;
+  min-height: 18px;
   font-family: "Source Code Pro", Monaco, Consolas, "Courier New", monospace;
 }
 .language-badge {
