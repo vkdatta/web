@@ -223,7 +223,7 @@
  width: 14px;
  height: 14px;
  background: red;
- color: var(--accent);
+ color: red;
  border: none;
  border-radius: 3px;
  cursor: pointer;
@@ -342,8 +342,8 @@
 .diff-initial-message {
  padding: 40px 20px;
  color: var(--color);
- font-style: italic;
- text-align: center;
+ font-style: normal;
+ text-align: left;
  font-family: 'classy', sans-serif;
  opacity: 0.7;
 }
