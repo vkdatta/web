@@ -67,7 +67,7 @@ Usage Example:
 ```<script>Fullscreen functionality is automatically initialized on page load</script>```
 
 - Works on desktops and mobile devices.
-- No extra setup required—just include the script.
+- No extra setup required. just include the script.
 
 ---
 
