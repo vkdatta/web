@@ -50,6 +50,7 @@ Automatically saves the values of <input>, <textarea>, and <radio> elements in l
 Usage Example:
 
 ```<input id="customername" placeholder="Enter customer name">```
+
 ```<textarea id="notes" placeholder="Write your notes"></textarea>```
 
 - Important: Each element must have a unique id for autosaving.
