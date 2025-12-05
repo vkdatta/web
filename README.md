@@ -80,11 +80,3 @@ A personal note-taking frontend app. Includes JS and CSS for layout and behavior
 ### 4. DiffApp
 
 Compare text differences directly in the browser. Includes JS and CSS.
-
----
-
-## Notes
-
-- All scripts save data locally in the browser—no server setup required.
-- Works best in modern browsers with localStorage support.
-- Unique IDs are mandatory for autosave functionality.
