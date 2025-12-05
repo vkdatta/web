@@ -6,7 +6,7 @@ This repository contains personal JavaScript utilities for frontend enhancements
 - **Fullscreen.js**: Enable fullscreen mode on double-tap anywhere.
 - **NoteApp**: Personal note-taking application.
 - **DiffApp**: Personal diff tool for comparing text.
-- **Codeblock.js**: syntax highlighting any language with minimal setup.
+- **Codeblock.js**: syntax highlight any language with minimal setup.
 
 All files are intended for **personal use** and can be directly included via CDN links.
 
