@@ -6,6 +6,7 @@ This repository contains personal JavaScript utilities for frontend enhancements
 - **Fullscreen.js**: Enable fullscreen mode on double-tap anywhere.
 - **NoteApp**: Personal note-taking application.
 - **DiffApp**: Personal diff tool for comparing text.
+- **Codeblock.js**: syntax highlighting any language with minimal setup.
 
 All files are intended for **personal use** and can be directly included via CDN links.
 
@@ -21,6 +22,10 @@ Include the scripts and stylesheets at the top of your HTML for easy usage:
 
 ```
 <script src="https://cdn.jsdelivr.net/gh/vkdatta/web@main/fullscreen.js"></script>
+```
+
+```
+<script src="https://cdn.jsdelivr.net/gh/vkdatta/web@main/codeblock.js"></script>
 ```
 
 ```
@@ -80,3 +85,15 @@ A personal note-taking frontend app. Includes JS and CSS for layout and behavior
 ### 4. DiffApp
 
 Compare text differences directly in the browser. Includes JS and CSS.
+
+### 5. codeblock.js
+
+No more complex Prism setup for syntax highlighting. Just paste the codeblock.js script into your template and let it do its work. Simply name the file extension, and the script will handle the highlighting automatically. No other Prism scripts are required. This uses Prism and performs syntax highlighting out of the box. There’s no need for <pre> tags or anything else. It supports almost all languages in Prism and uses dark mode by default. You can change the CSS using the !important directive if you want to use a light theme.
+
+Usage Example:
+
+```<code lang="py">your python code</code>```
+
+```<code lang="js">your javascript code</code>```
+
+> __Warning:__ This only supports adding code blocks in HTML. Directly injecting text into code blocks via JavaScript requires manipulating the .code-content query selector. You also need to use :not() to include unsupported languages.
