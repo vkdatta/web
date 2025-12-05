@@ -86,9 +86,11 @@ A personal note-taking frontend app. Includes JS and CSS for layout and behavior
 
 Compare text differences directly in the browser. Includes JS and CSS.
 
+---
+
 ### 5. codeblock.js
 
-No more complex Prism setup for syntax highlighting. Just paste the codeblock.js script into your template and let it do its work. Simply name the file extension, and the script will handle the highlighting automatically. No other Prism scripts are required. This uses Prism and performs syntax highlighting out of the box. There’s no need for <pre> tags or anything else. It supports almost all languages in Prism and uses dark mode by default. You can change the CSS using the !important directive if you want to use a light theme.
+No more complex Prism setup for syntax highlighting. Just paste the codeblock.js script into your template and let it do its work. Simply name the file extension, and the script will handle the highlighting automatically. No other Prism scripts are required. This uses Prism and performs syntax highlighting out of the box. There’s no need for pre tags or anything else. It supports almost all languages in Prism and uses dark mode by default. You can change the CSS using the !important directive if you want to use a light theme.
 
 Usage Example:
 
