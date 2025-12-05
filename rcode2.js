@@ -380,13 +380,56 @@ function fastEscapeHtml(text) {
   return div.innerHTML;
 }
 
-async function highlightCodeBlock(originalCode, newCodeElement) {
-  const langAttr = originalCode.getAttribute('lang') || 'txt';
+function findCodeContent(node) {
+  let current = node;
+  while (current) {
+    if (current.nodeType === Node.ELEMENT_NODE && current.classList && current.classList.contains('code-content')) {
+      return current;
+    }
+    current = current.parentNode;
+  }
+  return null;
+}
+
+async function reHighlightCodeContent(codeContent) {
+  const container = codeContent.closest('.code-container');
+  if (!container) return;
+  const langAttr = codeContent.dataset.lang || 'txt';
+  const lang = languageLoader.detectLanguageFromExtension(langAttr);
+  const codeText = codeContent.textContent.trim();
+  const lineCount = codeText.split('\n').length;
+  const indicator = container.querySelector('.hidden-lines-indicator span');
+  if (indicator) {
+    indicator.textContent = `${lineCount} lines hidden`;
+  }
+  if (lang !== "none") {
+    try {
+      await languageLoader.loadLanguage(lang);
+      if (window.Prism && languageLoader.isLanguageLoaded(lang)) {
+        codeContent.className = `code-content language-${lang}`;
+        Prism.highlightElement(codeContent);
+      } else {
+        codeContent.innerHTML = fastEscapeHtml(codeText);
+      }
+    } catch (error) {
+      console.warn(`Failed to highlight ${lang}:`, error);
+      codeContent.innerHTML = fastEscapeHtml(codeText);
+    }
+  } else {
+    codeContent.innerHTML = fastEscapeHtml(codeText);
+  }
+}
+
+async function highlightCodeBlock(originalCode, newCodeElement, langAttr) {
   const lang = languageLoader.detectLanguageFromExtension(langAttr);
   const displayName = languageLoader.getLanguageDisplayName(langAttr);
   const codeText = originalCode.textContent.trim();
   const lineCount = codeText.split('\n').length;
   newCodeElement.textContent = codeText;
+  newCodeElement.dataset.lang = langAttr;
+  if (originalCode.id) {
+    newCodeElement.id = originalCode.id;
+  }
   if (lang !== "none") {
     try {
       await languageLoader.loadLanguage(lang);
@@ -480,18 +523,21 @@ function createCodeBlockStructure(originalCode, codeContent, displayName, lineCo
 
 async function processCodeBlock(originalCode) {
   try {
+    const langAttr = originalCode.getAttribute('lang') || 'txt';
     const newCodeElement = document.createElement('code');
-    const { displayName, lineCount } = await highlightCodeBlock(originalCode, newCodeElement);
+    const { displayName, lineCount } = await highlightCodeBlock(originalCode, newCodeElement, langAttr);
     const container = createCodeBlockStructure(originalCode, newCodeElement, displayName, lineCount);
     originalCode.parentNode.replaceChild(container, originalCode);
   } catch (error) {
     console.error('Error processing code block:', error);
+    const langAttr = originalCode.getAttribute('lang') || 'txt';
+    const displayName = languageLoader.getLanguageDisplayName(langAttr);
+    const lineCount = originalCode.textContent.trim().split('\n').length;
     const container = document.createElement('div');
     container.className = 'code-container';
-    const lineCount = originalCode.textContent.trim().split('\n').length;
     container.innerHTML = ` 
       <div class="code-header"> 
-        <span class="language-badge">txt</span> 
+        <span class="language-badge">${displayName}</span> 
         <div class="code-toolbar"> 
           <span class="code-btn collapse-btn" title="Collapse code block"> 
             <i class="material-icons-round">unfold_less</i> 
@@ -504,14 +550,21 @@ async function processCodeBlock(originalCode) {
           </span> 
         </div> 
       </div> 
-      <pre class="code-pre">${fastEscapeHtml(originalCode.textContent)}</pre> 
+      <pre class="code-pre"></pre> 
       <div class="hidden-lines-indicator"> 
         <span>${lineCount} lines hidden</span> 
       </div> 
     `;
+    const codeElement = document.createElement('code');
+    codeElement.className = 'code-content';
+    codeElement.dataset.lang = langAttr;
+    if (originalCode.id) codeElement.id = originalCode.id;
+    codeElement.innerHTML = fastEscapeHtml(originalCode.textContent.trim());
+    const pre = container.querySelector('.code-pre');
+    pre.appendChild(codeElement);
     // Re-attach event listeners for the fallback container
     const copyBtn = container.querySelector('.copy-btn');
-    const codeToCopy = originalCode.textContent.trim();
+    const codeToCopy = codeElement.textContent;
     copyBtn.addEventListener('click', (e) => {
       e.stopPropagation();
       navigator.clipboard.writeText(codeToCopy).then(() => {
@@ -528,11 +581,11 @@ async function processCodeBlock(originalCode) {
       });
     });
     const wrapBtn = container.querySelector('.wrap-btn');
-    const pre = container.querySelector('.code-pre');
+    const preEl = container.querySelector('.code-pre');
     let isWrapped = false;
     wrapBtn.addEventListener('click', () => {
       isWrapped = !isWrapped;
-      pre.classList.toggle('line-wrap', isWrapped);
+      preEl.classList.toggle('line-wrap', isWrapped);
       wrapBtn.innerHTML = isWrapped ? '<i class="material-icons-round">code</i>' : '<i class="material-icons-round">wrap_text</i>';
       wrapBtn.title = isWrapped ? "Unwrap lines" : "Wrap lines";
     });
@@ -569,26 +622,55 @@ async function initCodeBlocks() {
     await processCodeBlock(originalCode);
   }
 
-  // Set up MutationObserver for dynamic injections
+  // Set up MutationObserver for dynamic injections and updates
   const observer = new MutationObserver((mutations) => {
-    let processed = false;
+    const codeContentsToRehighlight = new Set();
+    const newCodes = [];
     mutations.forEach((mutation) => {
-      if (mutation.type === 'childList' && !processed) {
+      if (mutation.type === 'childList') {
         mutation.addedNodes.forEach((node) => {
           if (node.nodeType === Node.ELEMENT_NODE) {
-            const codes = node.tagName === 'CODE' ? [node] : node.querySelectorAll('code');
-            codes.forEach((code) => {
-              if (!code.closest('.code-container')) {
-                processCodeBlock(code);
-              }
-            });
+            if (node.tagName === 'CODE' && !node.closest('.code-container')) {
+              newCodes.push(node);
+            }
+            if (node.querySelectorAll) {
+              const codes = node.querySelectorAll('code');
+              codes.forEach((code) => {
+                if (!code.closest('.code-container')) {
+                  newCodes.push(code);
+                }
+              });
+            }
+            // Check if added node affects a code-content
+            const cc = findCodeContent(node);
+            if (cc) {
+              codeContentsToRehighlight.add(cc);
+            }
           }
         });
-        processed = true; // Simple batching; process once per mutation batch
+        mutation.removedNodes.forEach((node) => {
+          if (node.nodeType === 1 || node.nodeType === 3) { // ELEMENT_NODE or TEXT_NODE
+            const cc = findCodeContent(node);
+            if (cc) {
+              codeContentsToRehighlight.add(cc);
+            }
+          }
+        });
+      } else if (mutation.type === 'characterData') {
+        const cc = findCodeContent(mutation.target);
+        if (cc) {
+          codeContentsToRehighlight.add(cc);
+        }
       }
     });
+    // Process new code blocks
+    newCodes.forEach((code) => processCodeBlock(code));
+    // Re-highlight updated code contents
+    codeContentsToRehighlight.forEach((codeContent) => {
+      reHighlightCodeContent(codeContent);
+    });
   });
-  observer.observe(document.body, { childList: true, subtree: true });
+  observer.observe(document.body, { childList: true, characterData: true, subtree: true });
 }
 
 if (document.readyState === 'loading') {
