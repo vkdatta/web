@@ -46,8 +46,7 @@ display: flex;
 gap: 10px;
 background: var(--primary);
 }
-.sidebar,
-.secondary-sidebar {
+.sidebar {
 width: 100vw;
 background: var(--primary);
 height: auto;
@@ -67,137 +66,6 @@ transform: translateX(-100%);
 }
 .sidebar.open {
 transform: translateX(0);
-}
-.secondary-sidebar {
-z-index: 50;
-display: grid;
-gap: 20px;
-padding: 20px;
-overflow: auto;
-transform: translateX(100%);
-}
-.secondary-sidebar.open {
-transform: translateX(0);
-}
-.secondary-sidebar {
-display: grid;
-grid-template-columns: repeat(4, 1fr);
-grid-template-rows: 1fr;
-}
-@media (max-width: 800px) {
-.secondary-sidebar {
-grid-template-columns: repeat(2, 1fr);
-grid-template-rows: auto;
-}
-}
-@media (max-width: 500px) {
-.secondary-sidebar {
-grid-template-columns: 1fr;
-grid-template-rows: repeat(4, 1fr);
-}
-}
-.secondary-sidebar > div {
-display: flex;
-flex-direction: column;
-width: 100%;
-}
-.secondary-sidebar-section {
-display: flex;
-flex-direction: column;
-align-items: center;
-text-align: center;
-width: 100%;
-height: 100%;
-}
-.secondary-sidebar-section h3 {
-margin-bottom: 15px;
-padding-bottom: 10px;
-border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-width: 100%;
-}
-.secondary-sidebar-item {
-padding: 10px;
-margin-bottom: 8px;
-background: var(--matte);
-border-radius: 8px;
-cursor: pointer;
-backdrop-filter: blur(5px);
-box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.05),
--2px -2px 5px rgba(255, 255, 255, 0.02);
-display: flex;
-align-items: center;
-justify-content: center;
-gap: 10px;
-width: 100%;
-text-align: center;
-}
-@media (max-width: 600px) {
-.secondary-sidebar-item i {
-font-size: 1rem;
-}
-}
-.secondary-sidebar-item:hover {
-background: rgba(0, 0, 0, 0.1);
-}
-.secondary-sidebar-grid {
-display: flex;
-border-radius: 56px;
-overflow: hidden;
-background: var(--matte);
-width: max-content;
-gap: 5px;
-border: 10px solid #000;
-}
-.secondary-sidebar-grid-item {
-cursor: pointer;
-display: flex;
-align-items: center;
-justify-content: center;
-margin: 2px;
-padding: 12px 14px;
-}
-.secondary-sidebar-grid-item:last-child {
-border-right: none;
-}
-.secondary-sidebar-item i {
-font-size: 1rem;
-}
-.info-item {
-display: flex;
-gap: 10px;
-width: content-fit;
-}
-.info {
-align-items: center;
-text-align: center;
-height: auto;
-display: block;
-margin-left: auto;
-margin-right: auto;
-align-items: center;
-justify-content: center;
-}
-.font-size-control {
-display: flex;
-align-items: center;
-justify-content: center;
-gap: 10px;
-width: 100%;
-}
-.font-size-control button {
-background: var(--matte);
-border: none;
-color: var(--color);
-cursor: pointer;
-width: 30px;
-height: 30px;
-border-radius: 50%;
-display: flex;
-align-items: center;
-justify-content: center;
-}
-.font-size-control span {
-font-size: 1rem;
 }
 .action-button {
 background: var(--matte);
@@ -412,7 +280,6 @@ text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3),
 animation: fadeInUp 0.8s ease-out forwards;
 font-size: 90%;
 }
-.secondary-sidebar-grid .material-symbols-rounded,
 .topbar .material-symbols-rounded {
 font-size: 20px;
 color: #999999;
@@ -803,7 +670,7 @@ background: rgba(128, 128, 128, 0.3);
 border-radius: 4px;
 }
 .note-backdrop::-webkit-scrollbar {
-display: none; /* Hide backdrop scrollbar visually, but keep for sync */
+display: none;
 }
 #noteTextarea,
 #noteBackdrop {
