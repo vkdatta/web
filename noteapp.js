@@ -3362,3 +3362,580 @@ applyFontSize();
 function escapeRegExp(string) {
   return string.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
+window.handleFetchSubmit = function () {
+  closeModal({
+    action: "submit",
+    fetchUrl: modalScope && modalScope.fetchUrlInput ? modalScope.fetchUrlInput.value.trim() : ""
+  });
+};
+
+window.fetchUrlToCurrentNote = async function (url) {
+  const API_URL = "https://fetch-300199660511.us-central1.run.app/fetch";
+  if (!currentNote || !noteTextarea) {
+    showNotification("No note selected or editor missing");
+    return;
+  }
+  if (!url) {
+    showNotification("Please enter a URL");
+    return;
+  }
+  showNotification("Fetching...");
+  try {
+    const resp = await window.fetch(API_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ url: url.trim() })
+    });
+    if (!resp.ok) {
+      showNotification("Fetch failed: " + resp.status + " " + resp.statusText);
+      return;
+    }
+    const data = await resp.json();
+    const source = data.source_url || data.source || data.html || null;
+    if (!source) {
+      showNotification("No source returned");
+      return;
+    }
+    const temp = document.createElement("div");
+    temp.innerHTML = source || "";
+    const html = temp.textContent || temp.innerText || "";
+    noteTextarea.value = (noteTextarea.value || "") + "\n\n<!-- appended from fetch -->\n\n" + html;
+    currentNote.extension = "html";
+    currentNote.lastEdited = new Date().toISOString();
+    const idx = notes.findIndex((n) => n.id === currentNote.id);
+    if (idx !== -1) {
+      notes[idx].extension = currentNote.extension;
+      notes[idx].lastEdited = currentNote.lastEdited;
+    }
+    if (typeof updateNoteMetadata === "function") updateNoteMetadata();
+    if (typeof populateNoteList === "function") populateNoteList();
+    if (typeof updateDocumentInfo === "function") updateDocumentInfo();
+    if (typeof immediatePlainRender === "function") immediatePlainRender();
+    if (typeof scheduleUpdate === "function") scheduleUpdate(true);
+    showNotification("Fetched and appended. Note extension set to .html");
+  } catch (err) {
+    showNotification("Request failed: " + (err && err.message ? err.message : err));
+  }
+};
+
+window.openFetchModal = function () {
+  return preserveSelection(async function () {
+    if (!currentNote || !noteTextarea) {
+      showNotification("No note selected or editor missing");
+      return;
+    }
+    const r = await showModal({
+      header: '<div class="modal-title">Fetch Website Source</div>',
+      body:
+        '<div style="display:flex;flex-direction:column;gap:8px;"><label class="modal-label">URL</label><input type="text" id="fetchUrlInput" placeholder="https://example.com" class="modal-input" /></div>',
+      footer: '<button onclick="closeModal()">Cancel</button><button onclick="handleFetchSubmit()" class="modal-btn">Fetch</button>',
+      html: true
+    });
+    if (!r || r.action !== "submit") return;
+    const url = (r.fetchUrl || "").trim();
+    if (!url) {
+      showNotification("Please enter a URL");
+      return;
+    }
+    await window.fetchUrlToCurrentNote(url);
+  })();
+};
+
+window.optimisejs = preserveSelection(async () => {
+  if (!currentNote || !noteTextarea) return;
+  try {
+    const src = noteTextarea.value || "";
+    const len = src.length;
+    let i = 0;
+    let out = "";
+    let inSingle = false;
+    let inDouble = false;
+    let inTemplate = false;
+    let inRegex = false;
+    let inLineComment = false;
+    let inBlockComment = false;
+    let prevChar = "";
+    let prevNonWS = "";
+    const canStartRegex = (c) => {
+      return c === "" || /[=(:,!&|?{};\n\t\0\[\-+*~^<>%]/.test(c);
+    };
+    const appendChar = (ch) => {
+      out += ch;
+      if (!/\s/.test(ch)) prevNonWS = ch;
+      prevChar = ch;
+    };
+    while (i < len) {
+      const ch = src[i];
+      const next = src[i + 1];
+      if (inLineComment) {
+        if (ch === "\n") {
+          inLineComment = false;
+          appendChar("\n");
+        }
+        i++;
+        continue;
+      }
+      if (inBlockComment) {
+        if (ch === "*" && next === "/") {
+          inBlockComment = false;
+          i += 2;
+        } else {
+          i++;
+        }
+        continue;
+      }
+      if (inRegex) {
+        if (ch === "\\" && i + 1 < len) {
+          appendChar(ch);
+          appendChar(src[i + 1]);
+          i += 2;
+          continue;
+        }
+        if (ch === "/" && prevChar !== "\\") {
+          appendChar(ch);
+          i++;
+          while (i < len && /[a-zA-Z]/.test(src[i])) {
+            appendChar(src[i]);
+            i++;
+          }
+          inRegex = false;
+          continue;
+        }
+        appendChar(ch);
+        i++;
+        continue;
+      }
+      if (inSingle || inDouble) {
+        if (ch === "\\" && i + 1 < len) {
+          appendChar(ch);
+          appendChar(src[i + 1]);
+          i += 2;
+          continue;
+        }
+        if ((inSingle && ch === "'") || (inDouble && ch === '"')) {
+          appendChar(ch);
+          if (inSingle) inSingle = false; else inDouble = false;
+          i++;
+          continue;
+        }
+        appendChar(ch);
+        i++;
+        continue;
+      }
+      if (inTemplate) {
+        if (ch === "$" && next === "{") {
+          appendChar(ch);
+          appendChar("{");
+          i += 2;
+          let depth = 1;
+          while (i < len && depth > 0) {
+            const c = src[i], n = src[i + 1];
+            if (c === "/" && n === "/") {
+              i += 2;
+              while (i < len && src[i] !== "\n") i++;
+              continue;
+            }
+            if (c === "/" && n === "*") {
+              i += 2;
+              while (i + 1 < len && !(src[i] === "*" && src[i + 1] === "/")) i++;
+              if (i + 1 < len) i += 2;
+              continue;
+            }
+            if (c === "'" || c === '"') {
+              const q = c;
+              appendChar(c); i++;
+              while (i < len) {
+                const cc = src[i];
+                appendChar(cc);
+                if (cc === "\\" && i + 1 < len) { appendChar(src[i + 1]); i += 2; continue; }
+                i++;
+                if (cc === q) break;
+              }
+              continue;
+            }
+            if (c === "/") {
+              const prev = (out && out.slice(-1)) || prevNonWS || "";
+              if (canStartRegex(prev) && src[i + 1] !== "/" && src[i + 1] !== "*") {
+                appendChar("/");
+                i++;
+                while (i < len) {
+                  const rc = src[i];
+                  appendChar(rc);
+                  if (rc === "\\" && i + 1 < len) { appendChar(src[i + 1]); i += 2; continue; }
+                  if (rc === "/") { i++; break; }
+                  i++;
+                }
+                while (i < len && /[a-zA-Z]/.test(src[i])) { appendChar(src[i]); i++; }
+                continue;
+              }
+            }
+            if (c === "{") { appendChar(c); i++; depth++; continue; }
+            if (c === "}") { appendChar(c); i++; depth--; continue; }
+            appendChar(c); i++;
+          }
+          continue;
+        }
+        if (ch === "`" && prevChar !== "\\") {
+          appendChar(ch);
+          inTemplate = false;
+          i++;
+          continue;
+        }
+        appendChar(ch);
+        i++;
+        continue;
+      }
+      if (ch === "/" && next === "/") {
+        if (prevNonWS === ":") {
+          appendChar(ch);
+          i++;
+          continue;
+        } else {
+          inLineComment = true;
+          i += 2;
+          continue;
+        }
+      }
+      if (ch === "/" && next === "*") {
+        inBlockComment = true;
+        i += 2;
+        continue;
+      }
+      if (ch === "'") { inSingle = true; appendChar(ch); i++; continue; }
+      if (ch === '"') { inDouble = true; appendChar(ch); i++; continue; }
+      if (ch === "`") { inTemplate = true; appendChar(ch); i++; continue; }
+      if (ch === "/") {
+        if (next !== "/" && next !== "*" && canStartRegex(prevNonWS)) {
+          inRegex = true;
+          appendChar(ch);
+          i++;
+          continue;
+        } else {
+          appendChar(ch);
+          i++;
+          continue;
+        }
+      }
+      appendChar(ch);
+      i++;
+    }
+    const cleaned = out
+      .replace(/\r\n?/g, "\n")
+      .split("\n")
+      .map(line => line.replace(/[ \t]+$/g, ""))
+      .filter(line => line.trim() !== "")
+      .join("\n") + "\n";
+    noteTextarea.value = cleaned;
+    updateNoteMetadata();
+    showNotification("Comments removed and code compacted.");
+  } catch (err) {
+    console.error("removeJsCommentsAndCompact error:", err);
+    showNotification("Failed to remove comments");
+  }
+});
+
+window.optimisecss = preserveSelection(async () => {
+  if (!currentNote || !noteTextarea) return;
+  try {
+    let css = noteTextarea.value || "";
+    css = css.replace(/\/\*[\s\S]*?\*\//g, "");
+    css = css.replace(/<!--[\s\S]*?-->/g, "");
+    css = css.replace(/(^|[^:])\/\/.*$/gm, (m, p1) => p1);
+    css = css.replace(/\r\n?/g, "\n");
+    function parseNodes(text, start = 0, end = text.length) {
+      const nodes = [];
+      let i = start;
+      const skipWhitespace = () => { while (i < end && /\s/.test(text[i])) i++; };
+      while (i < end) {
+        skipWhitespace();
+        if (i >= end) break;
+        if (text[i] === "@") {
+          const atStart = i;
+          while (i < end && text[i] !== "{" && text[i] !== ";") i++;
+          const header = text.slice(atStart, i).trim();
+          if (i < end && text[i] === ";") {
+            i++;
+            nodes.push({ type: "prelude", text: header + ";" });
+            continue;
+          }
+          if (i >= end || text[i] !== "{") {
+            nodes.push({ type: "prelude", text: text.slice(atStart).trim() });
+            break;
+          }
+          const braceOpen = i;
+          i++;
+          let depth = 1;
+          const bodyStart = i;
+          while (i < end && depth > 0) {
+            if (text[i] === "{") depth++;
+            else if (text[i] === "}") depth--;
+            i++;
+          }
+          if (depth !== 0) {
+            nodes.push({ type: "prelude", text: text.slice(atStart).trim() });
+            break;
+          }
+          const bodyEnd = i - 1;
+          const params = header.replace(/^\@/, "").trim();
+          const inner = parseNodes(text, bodyStart, bodyEnd);
+          nodes.push({ type: "atrule", header: header, params: params, children: inner });
+          continue;
+        }
+        const nextBrace = text.indexOf("{", i);
+        if (nextBrace === -1) {
+          const remainder = text.slice(i).trim();
+          if (remainder) nodes.push({ type: "prelude", text: remainder });
+          break;
+        }
+        const selectorText = text.slice(i, nextBrace).trim();
+        let j = nextBrace + 1;
+        let depth = 1;
+        while (j < end && depth > 0) {
+          if (text[j] === "{") depth++;
+          else if (text[j] === "}") depth--;
+          j++;
+        }
+        if (depth !== 0) {
+          const remainder = text.slice(i).trim();
+          nodes.push({ type: "prelude", text: remainder });
+          break;
+        }
+        const bodyText = text.slice(nextBrace + 1, j - 1);
+        const declParts = bodyText.split(";").map(s => s.trim()).filter(Boolean);
+        const decls = [];
+        for (const p of declParts) {
+          const colon = p.indexOf(":");
+          if (colon === -1) continue;
+          const prop = p.slice(0, colon).trim();
+          const val = p.slice(colon + 1).trim();
+          if (prop) decls.push({ prop, val });
+        }
+        nodes.push({ type: "rule", selectorText: selectorText, decls });
+        i = j;
+      }
+      return nodes;
+    }
+    const MAX_PAIRWISE = 120;
+    function processContainer(nodes) {
+      const preludeNodes = [];
+      const ruleNodes = [];
+      const atruleNodes = [];
+      for (const node of nodes) {
+        if (node.type === "atrule") {
+          node.children = processContainer(node.children);
+          atruleNodes.push(node);
+        } else if (node.type === "rule") {
+          ruleNodes.push(node);
+        } else {
+          preludeNodes.push(node);
+        }
+      }
+      const selectorOccs = new Map();
+      let ruleCounter = 0;
+      for (const rn of ruleNodes) {
+        const sls = rn.selectorText.split(",").map(s => s.trim()).filter(Boolean);
+        for (const s of sls) {
+          if (!selectorOccs.has(s)) selectorOccs.set(s, { occurrences: [], firstSeen: ruleCounter });
+          selectorOccs.get(s).occurrences.push({ decls: rn.decls, order: ruleCounter++ });
+        }
+        if (sls.length === 0) ruleCounter++;
+      }
+      const selectorMerged = new Map();
+      for (const [sel, info] of selectorOccs.entries()) {
+        const occs = info.occurrences;
+        const seen = new Set();
+        const merged = [];
+        for (let k = occs.length - 1; k >= 0; k--) {
+          const decls = occs[k].decls;
+          for (const d of decls) {
+            if (seen.has(d.prop)) continue;
+            seen.add(d.prop);
+            merged.push({ prop: d.prop, val: d.val, order: occs[k].order });
+          }
+        }
+        selectorMerged.set(sel, { mergedDecls: merged, firstSeen: info.firstSeen });
+      }
+      const sigMap = new Map();
+      for (const [sel, data] of selectorMerged.entries()) {
+        const sig = data.mergedDecls.map(d => d.prop + ":" + d.val).join(";;");
+        if (!sigMap.has(sig)) sigMap.set(sig, []);
+        sigMap.get(sig).push(sel);
+      }
+      let blocks = [];
+      for (const [sig, sels] of sigMap.entries()) {
+        if (!sels || sels.length === 0) continue;
+        const decls = selectorMerged.get(sels[0]).mergedDecls.slice();
+        const orderKey = Math.min(...sels.map(s => selectorMerged.get(s).firstSeen || 0));
+        blocks.push({ selectors: sels.slice(), decls, orderKey });
+      }
+      const allSels = Array.from(selectorMerged.keys());
+      if (allSels.length <= MAX_PAIRWISE) {
+        const selMap = new Map();
+        for (const s of allSels) {
+          const arr = selectorMerged.get(s).mergedDecls || [];
+          const m = new Map(arr.map(d => [d.prop, d.val]));
+          selMap.set(s, m);
+        }
+        const blockLen = (sels, decls) => {
+          const selText = sels.join(", ");
+          let body = "";
+          for (const d of decls) body += d.prop + ": " + d.val + ";";
+          return selText.length + 3 + body.length + 1;
+        };
+        for (let a = 0; a < allSels.length; a++) {
+          for (let b = a + 1; b < allSels.length; b++) {
+            const sa = allSels[a], sb = allSels[b];
+            const ma = selMap.get(sa);
+            const mb = selMap.get(sb);
+            if (!ma || !mb) continue;
+            const common = [];
+            for (const [p, v] of ma.entries()) {
+              if (mb.has(p) && mb.get(p) === v) common.push({ prop: p, val: v });
+            }
+            if (common.length === 0) continue;
+            const remainderA = [];
+            const remainderB = [];
+            for (const [p, v] of ma.entries()) if (!mb.has(p) || mb.get(p) !== v) remainderA.push({ prop: p, val: v });
+            for (const [p, v] of mb.entries()) if (!ma.has(p) || ma.get(p) !== v) remainderB.push({ prop: p, val: v });
+            const before = blockLen([sa], Array.from(ma.entries()).map(([p, v]) => ({ prop: p, val: v })))
+                         + blockLen([sb], Array.from(mb.entries()).map(([p, v]) => ({ prop: p, val: v })));
+            const after = blockLen([sa, sb], common)
+                        + (remainderA.length ? blockLen([sa], remainderA) : 0)
+                        + (remainderB.length ? blockLen([sb], remainderB) : 0);
+            if (after < before) {
+              for (const c of common) {
+                ma.delete(c.prop);
+                mb.delete(c.prop);
+              }
+              selMap.set(sa, ma);
+              selMap.set(sb, mb);
+              const rebuild = (sel, mapObj) => {
+                const orig = selectorMerged.get(sel).mergedDecls || [];
+                const arr = [];
+                for (const od of orig) if (mapObj.has(od.prop)) arr.push({ prop: od.prop, val: mapObj.get(od.prop) });
+                return arr;
+              };
+              selectorMerged.get(sa).mergedDecls = rebuild(sa, ma);
+              selectorMerged.get(sb).mergedDecls = rebuild(sb, mb);
+              const commonSig = common.map(d => d.prop + ":" + d.val).join(";;");
+              let found = blocks.find(bk => bk.decls.map(dd => dd.prop + ":" + dd.val).join(";;") === commonSig);
+              if (!found) {
+                blocks.push({ selectors: [sa, sb], decls: common.slice(), orderKey: Math.min(selectorMerged.get(sa).firstSeen || 0, selectorMerged.get(sb).firstSeen || 0) });
+              } else {
+                for (const s of [sa, sb]) if (!found.selectors.includes(s)) found.selectors.push(s);
+              }
+            }
+          }
+        }
+        const rebuilt = new Map();
+        for (const [sel, data] of selectorMerged.entries()) {
+          const decls = data.mergedDecls || [];
+          if (!decls.length) continue;
+          const sig = decls.map(d => d.prop + ":" + d.val).join(";;");
+          if (!rebuilt.has(sig)) rebuilt.set(sig, { selectors: [], decls: decls.slice(), orderKey: data.firstSeen || 0 });
+          rebuilt.get(sig).selectors.push(sel);
+        }
+        for (const blk of blocks) {
+          const sig = blk.decls.map(d => d.prop + ":" + d.val).join(";;");
+          if (!rebuilt.has(sig)) rebuilt.set(sig, { selectors: blk.selectors.slice(), decls: blk.decls.slice(), orderKey: blk.orderKey || 0 });
+          else {
+            const t = rebuilt.get(sig);
+            for (const s of blk.selectors) if (!t.selectors.includes(s)) t.selectors.push(s);
+            t.orderKey = Math.min(t.orderKey, blk.orderKey || 0);
+          }
+        }
+        blocks = Array.from(rebuilt.values());
+        blocks.sort((a, b) => (a.orderKey || 0) - (b.orderKey || 0));
+      }
+      const out = [];
+      for (const p of preludeNodes) out.push(p);
+      for (const ar of atruleNodes) out.push(ar);
+      for (const blk of blocks) {
+        out.push({ type: "rulegroup", selectors: blk.selectors.slice(), decls: blk.decls.slice() });
+      }
+      return out;
+    }
+    const rootNodes = parseNodes(css, 0, css.length);
+    const processed = processContainer(rootNodes);
+    function serialize(nodes) {
+      const lines = [];
+      for (const node of nodes) {
+        if (!node) continue;
+        if (node.type === "prelude") {
+          lines.push(node.text);
+          continue;
+        }
+        if (node.type === "atrule") {
+          lines.push(node.header + " {");
+          const inner = serialize(node.children || []);
+          if (inner) {
+            lines.push(inner.trim());
+          }
+          lines.push("}");
+          continue;
+        }
+        if (node.type === "rulegroup") {
+          lines.push(node.selectors.join(", ") + " {");
+          for (const d of node.decls) {
+            lines.push(d.prop + ": " + d.val + ";");
+          }
+          lines.push("}");
+          continue;
+        }
+        if (node.text) lines.push(node.text);
+      }
+      return lines.join("\n");
+    }
+    const finalCss = serialize(processed).replace(/\n{2,}/g, "\n").trim() + (processed.length ? "\n" : "");
+    noteTextarea.value = finalCss;
+    updateNoteMetadata();
+    showNotification("CSS optimized including @-rules and @media blocks.");
+  } catch (err) {
+    console.error("optimizeCssWithAtRules error:", err);
+    showNotification("Failed to optimize CSS");
+  }
+});
+
+window.minifyjs = preserveSelection(async () => {
+  if (!currentNote || !noteTextarea) return;
+  const originalShowNotification = window.showNotification;
+  window.showNotification = () => {};
+  try {
+    if (typeof window.optimisejs === "function") {
+      await window.optimisejs();
+    } else {
+      throw new Error("optimisejs is not defined");
+    }
+    noteTextarea.value = noteTextarea.value
+      .replace(/\r\n|\r|\n/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+  } catch (err) {
+    console.error("minifyjs error:", err);
+  } finally {
+    window.showNotification = originalShowNotification;
+  }
+  showNotification("Minified JS");
+});
+
+window.minifycss = preserveSelection(async () => {
+  if (!currentNote || !noteTextarea) return;
+  const originalShowNotification = window.showNotification;
+  window.showNotification = () => {};
+  try {
+    if (typeof window.optimisecss === "function") {
+      await window.optimisecss();
+    } else {
+      throw new Error("optimisecss is not defined");
+    }
+    noteTextarea.value = noteTextarea.value
+      .replace(/\r\n|\r|\n/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+  } catch (err) {
+    console.error("minifycss error:", err);
+  } finally {
+    window.showNotification = originalShowNotification;
+  }
+  showNotification("Minified CSS");
+});
