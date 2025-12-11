@@ -3137,7 +3137,7 @@ function closeSidebar() {
 })();
 
 (function() {  
-  const container = document.querySelector('.secondary-sidebar-desc .info-name');  
+  const container = document.querySelector('.secondary-sidebar-desc .info-dex');  
   
   if (!container) return;  
   
