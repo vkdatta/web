@@ -1008,3 +1008,34 @@ color: #2ecc71 !important;
 color: #e74c3c !important;
 }
 
+@media (orientation: landscape), (min-aspect-ratio: 1/1) {
+  .secondary-sidebar {
+    flex-direction: row;
+    align-items: center;
+    overflow: scroll ;
+  }
+.secondary-sidebar-overlay {overflow: scroll;
+ }
+  .secondary-sidebar-main {
+    flex: 0 0 50%;
+    height: 100%;
+    padding: 16px;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .secondary-sidebar-card {
+    max-height: 100%;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  } 
+  .secondary-sidebar-overlay.visible {
+    pointer-events: none;
+  }
+  body {
+    overflow-y: auto !important;
+  }
+}
+
