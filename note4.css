@@ -477,7 +477,7 @@ cursor: pointer;
 font-size: 14px;
 transition: transform var(--transition-speed),
 box-shadow var(--transition-speed);
-background: #474747;
+background: #272727;
 color: #cacaca;
 }
 .modal-btn:focus {
