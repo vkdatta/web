@@ -1040,26 +1040,25 @@ color: #e74c3c !important;
 }
 
 .info-item{
-  display:inline-flex;
+  display:flex;
+  width:100%;
   gap:0.625rem;
   align-items:center;
-  white-space:nowrap;
-  vertical-align:middle;
   box-sizing:border-box;
 }
 .info{
   display:flex;
+  flex-direction:row;
   align-items:center;
   justify-content:center;
   text-align:center;
   margin-left:auto;
   margin-right:auto;
-  height:auto;
   width:100%;
   box-sizing:border-box;
 }
 #user-display-wrapper{
-  display:inline-flex;
+  display:flex;
   align-items:center;
   justify-content:center;
   gap:0.5rem;
