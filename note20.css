@@ -1039,46 +1039,18 @@ color: #e74c3c !important;
   }
 }
 
-.info-item{
-  display:flex;
-  width:100%;
-  gap:0.625rem;
-  align-items:center;
-  box-sizing:border-box;
-}
-.info{
-  display:flex;
-  flex-direction:row;
-  align-items:center;
-  justify-content:center;
-  text-align:center;
-  margin-left:auto;
-  margin-right:auto;
-  width:100%;
-  box-sizing:border-box;
-}
-#user-display-wrapper{
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  gap:0.5rem;
-  min-height:27px;
-  margin-bottom:8px;
-  visibility:hidden;
-}
-#user-display-wrapper.visible{
-  visibility:visible;
-}
-#user-display-wrapper img{
-  width:27px;
-  height:27px;
-  border-radius:50%;
-  object-fit:cover;
-  display:block;
-}
-.user-display-inline{
-  display:inline-flex;
-  align-items:center;
-  gap:0.5rem;
-  line-height:1;
-}
+.info-item {  
+display: flex;  
+gap: 10px;  
+width: fit-content;  
+}  
+.info {  
+align-items: center;  
+text-align: center;  
+height: auto;  
+display: block;  
+margin-left: auto;  
+margin-right: auto;  
+align-items: center;  
+justify-content: center;  
+}  
