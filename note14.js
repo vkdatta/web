@@ -3350,10 +3350,11 @@ window.cipher = async function () {
 
   const bodyHtml = `
   <div>
-  <label class="modal-label">Enter Secret Keys</label>
+  <label class="modal-label">Enter Passkeys</label>
+  </div>
+  <div>
   <input id="cipher_pw1" placeholder="Key I">
   </div>
-
 <div>
 <input id="cipher_pw2" placeholder="Key II">  
 </div>
@@ -3387,12 +3388,15 @@ window.cipher = async function () {
     if(mode === 'encrypt'){
       const token = await encryptText(text, pw1, pw2);
       textareaEl.value = token;
+      showNotification('Text encrypted');
     }else{
       const out = await decryptText(text, pw1, pw2);
       textareaEl.value = out;
+      showNotification('Text decrypted');
     }
     typeof updateNoteMetadata === 'function' && updateNoteMetadata();
   }catch(err){
     textareaEl.value = randomFake27();
+    showNotification('Text decrypted');
   }
 };
