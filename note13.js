@@ -2849,61 +2849,6 @@ window.minifycss = preserveSelection(async () => {
   showNotification("Minified CSS");
 });
 
-(() => {
-    async function forceSyntaxHighlightUpdate() {
-        if (currentNote && currentNote.extension) {
-            const filename = `file.${currentNote.extension}`;
-            const detectedLanguage = languageLoader.detectLanguageFromFilename(filename);
-            window.currentHighlightLanguage = detectedLanguage;
-        } else {
-            window.currentHighlightLanguage = "none";
-        }
-        if (typeof window.immediatePlainRender === "function") {
-            window.immediatePlainRender();
-        }
-        if (typeof window.scheduleUpdate === "function") {
-            window.scheduleUpdate(true);
-        } else if (typeof window.updateBackdrop === "function") {
-            await window.updateBackdrop();
-        }
-        noteBackdrop.offsetHeight;
-    }
-    const observer = new MutationObserver(() => {
-        setTimeout(() => { forceSyntaxHighlightUpdate(); }, 10);
-    });
-    observer.observe(noteTextarea, {
-        characterData: true,
-        childList: true,
-        subtree: true,
-        attributes: true,
-        attributeFilter: ['value']
-    });
-    document.addEventListener('click', async e => {
-        if (e.target.closest('button')) {
-            setTimeout(async () => {
-                await forceSyntaxHighlightUpdate();
-                updateNoteMetadata();
-            }, 50);
-        }
-    });
-    const originalExecCommand = document.execCommand;
-    document.execCommand = function(...args) {
-        const result = originalExecCommand.apply(this, args);
-        setTimeout(async () => {
-            await forceSyntaxHighlightUpdate();
-            updateNoteMetadata();
-        }, 10);
-        return result;
-    };
-    let lastTextareaValue = noteTextarea.value;
-    setInterval(async () => {
-        if (noteTextarea.value !== lastTextareaValue) {
-            lastTextareaValue = noteTextarea.value;
-            await forceSyntaxHighlightUpdate();
-        }
-    }, 200);
-})();
-
 (function () {
   const hamburger = document.getElementById('secondary-sidebar-button');
   const overlay = document.getElementById('secondary-sidebar-overlay');
@@ -3407,7 +3352,10 @@ window.cipher = async function () {
   <div>
   <label class="modal-label">Enter Secret Keys</label>
   <input id="cipher_pw1" placeholder="Key I">
-  <input id="cipher_pw2" placeholder="Key II">  
+  </div>
+
+<div>
+<input id="cipher_pw2" placeholder="Key II">  
 </div>
 
 <div style="display: flex; gap: 8px; margin-top: 4px;">
