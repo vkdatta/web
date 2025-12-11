@@ -1,10 +1,3 @@
-const css = ``;
-if (!document.getElementById("modal-dark-css")) {
-  const s = document.createElement("style");
-  s.id = "modal-dark-css";
-  s.textContent = css;
-  document.head.appendChild(s);
-}
 function renderDropdownMenuPortal(trigger, options, callback) {
   document
     .querySelectorAll(".custom-dropdown-portal-menu")
