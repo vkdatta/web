@@ -3164,7 +3164,7 @@ function closeSidebar() {
       ? `<div style="display:flex !important; align-items:center !important; gap:8px !important;">  
            <img src="${user.photoURL || 'default-profile.png'}"   
                 alt="Profile Picture"   
-                style="width:20px !important; height:20px !important; border-radius:50% !important; object-fit:cover !important;">  
+                style="width:23px !important; height:23px !important; border-radius:50% !important; object-fit:cover !important;">  
          </div>`  
       : `<div style="display:flex !important; align-items:center !important; gap:8px !important; font-size:14px !important; color:#cacaca !important;">  
            <span class="material-symbols-rounded" style="font-size:18px !important;">account_circle</span>  
