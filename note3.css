@@ -301,7 +301,7 @@ display: flex;
 .modal-window {
 width: 780px;
 max-width: calc(100% - 40px);
-background: #272727;
+background: #181c1f;
 color: #eeeeee;
 border-radius: var(--radius);
 overflow: hidden;
