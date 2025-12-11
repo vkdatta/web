@@ -1029,12 +1029,3 @@ margin-right: auto;
 align-items: center;  
 justify-content: center;  
 }  
-.info-item {  
-gap: 10px;  
-width: fit-content;  
-font-family: classy;
-display: inline-block;
-color: #cacaca;
-font-size: 90%;
-letter-spacing: 1.7px
-}
