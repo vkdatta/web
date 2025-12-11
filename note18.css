@@ -1038,3 +1038,48 @@ color: #e74c3c !important;
     overflow-y: auto !important;
   }
 }
+
+.info-item{
+  display:inline-flex;
+  gap:0.625rem;
+  align-items:center;
+  white-space:nowrap;
+  vertical-align:middle;
+  box-sizing:border-box;
+}
+.info{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  margin-left:auto;
+  margin-right:auto;
+  height:auto;
+  width:100%;
+  box-sizing:border-box;
+}
+#user-display-wrapper{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:0.5rem;
+  min-height:27px;
+  margin-bottom:8px;
+  visibility:hidden;
+}
+#user-display-wrapper.visible{
+  visibility:visible;
+}
+#user-display-wrapper img{
+  width:27px;
+  height:27px;
+  border-radius:50%;
+  object-fit:cover;
+  display:block;
+}
+.user-display-inline{
+  display:inline-flex;
+  align-items:center;
+  gap:0.5rem;
+  line-height:1;
+}
