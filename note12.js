@@ -3397,26 +3397,24 @@ window.cipher = async function () {
     if(mode === 'encrypt'){
       encBtn.classList.add('active');
       decBtn.classList.remove('active');
-      encBtn.style.background = '#1f6feb';
-      encBtn.style.color = '#fff';
-      decBtn.style.background = '#ddd';
-      decBtn.style.color = '#111';
     } else {
       decBtn.classList.add('active');
       encBtn.classList.remove('active');
-      decBtn.style.background = '#1f6feb';
-      decBtn.style.color = '#fff';
-      encBtn.style.background = '#ddd';
-      encBtn.style.color = '#111';
     }
   };
 
-  const bodyHtml = `<div style="display:flex;flex-direction:column;gap:10px;min-width:320px">
-    <input id="cipher_pw1" placeholder="Password 1">
-    <input id="cipher_pw2" placeholder="Password 2">
-      <button type="button" id="cipher_mode_encrypt" class="modal-btn active" onclick="window._cipherToggleMode('encrypt')">Encrypt</button>
-      <button type="button" id="cipher_mode_decrypt" class="modal-btn" onclick="window._cipherToggleMode('decrypt')">Decrypt</button>
-    </div>`;
+  const bodyHtml = `
+  <div>
+  <label class="modal-label">Enter Secret Keys</label>
+  <input id="cipher_pw1" placeholder="Key I">
+  <input id="cipher_pw2" placeholder="Key II">  
+</div>
+
+<div style="display: flex; gap: 8px; margin-top: 4px;">
+<button type="button" id="cipher_mode_encrypt" class="modal-btn active" onclick="window._cipherToggleMode('encrypt')">Encrypt</button>
+<button type="button" id="cipher_mode_decrypt" class="modal-btn" onclick="window._cipherToggleMode('decrypt')">Decrypt</button>
+</div>
+`;
 
   const footerHtml = `<button onclick="closeModal()">Cancel</button><button onclick="window.cipherSubmit()" class="modal-btn">Cipher</button>`;
 
