@@ -3412,18 +3412,16 @@ window.cipher = async function () {
   };
 
   const bodyHtml = `<div style="display:flex;flex-direction:column;gap:10px;min-width:320px">
-    <input id="cipher_pw1" placeholder="Password 1" style="padding:8px;border-radius:6px;border:1px solid #cfd6e6;text-align:center">
-    <input id="cipher_pw2" placeholder="Password 2" style="padding:8px;border-radius:6px;border:1px solid #cfd6e6;text-align:center">
-    <div style="display:flex;gap:8px;justify-content:center;margin-top:6px">
-      <button type="button" id="cipher_mode_encrypt" class="modal-btn active" onclick="window._cipherToggleMode('encrypt')" style="padding:8px 12px;border-radius:6px;border:none;background:#1f6feb;color:#fff">Encrypt</button>
-      <button type="button" id="cipher_mode_decrypt" class="modal-btn" onclick="window._cipherToggleMode('decrypt')" style="padding:8px 12px;border-radius:6px;border:none;background:#ddd;color:#111">Decrypt</button>
-    </div>
+    <input id="cipher_pw1" placeholder="Password 1">
+    <input id="cipher_pw2" placeholder="Password 2">
+      <button type="button" id="cipher_mode_encrypt" class="modal-btn active" onclick="window._cipherToggleMode('encrypt')">Encrypt</button>
+      <button type="button" id="cipher_mode_decrypt" class="modal-btn" onclick="window._cipherToggleMode('decrypt')">Decrypt</button>
     </div>`;
 
   const footerHtml = `<button onclick="closeModal()">Cancel</button><button onclick="window.cipherSubmit()" class="modal-btn">Cipher</button>`;
 
   const r = await showModal({
-    header: `<div class="modal-title">Cipher — two passwords</div>`,
+    header: `<div class="modal-title">Cipher</div>`,
     body: bodyHtml,
     footer: footerHtml
   });
