@@ -3191,46 +3191,51 @@ function closeSidebar() {
   });
 })();
 
-(function() {
-  const container = document.querySelector('.secondary-sidebar-desc .info-name');
-
-  if (!container) return;
-
-  const userDisplayWrapper = document.createElement('div');
-  userDisplayWrapper.id = 'user-display-wrapper';
-  userDisplayWrapper.style.cssText = `
-    width: 100% !important;
-    display: flex !important;
-    justify-content: center !important;
-    align-items: center !important;
-    text-align: center !important;
-    margin-bottom: 8px !important;
-  `;
-
-  function capitalizeName(name) {
-    return name
-      .split(' ')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(' ');
+(function(){
+  function init(){
+    var container=document.querySelector('.secondary-sidebar-desc .info-name');
+    if(!container) return;
+    var wrapper=document.createElement('div');
+    wrapper.id='user-display-wrapper';
+    container.parentNode.insertBefore(wrapper,container);
+    function render(user){
+      if(user && user.photoURL){
+        wrapper.innerHTML='<div class="user-display-inline"><img src="'+user.photoURL+'" alt="Profile Picture"></div>';
+      }else{
+        wrapper.innerHTML='<div class="user-display-inline placeholder"><span class="material-symbols-rounded" aria-hidden="true">star_shine</span></div>';
+      }
+      wrapper.classList.add('visible');
+    }
+    if(typeof auth!=='undefined' && auth && typeof auth.onAuthStateChanged==='function'){
+      try{
+        render(auth.currentUser);
+      }catch(e){
+        render(null);
+      }
+      auth.onAuthStateChanged(function(user){
+        render(user);
+      });
+    }else{
+      render(null);
+      var observer=new MutationObserver(function(){
+        if(typeof auth!=='undefined' && auth && typeof auth.onAuthStateChanged==='function'){
+          try{
+            render(auth.currentUser);
+          }catch(e){
+            render(null);
+          }
+          auth.onAuthStateChanged(function(user){
+            render(user);
+          });
+          observer.disconnect();
+        }
+      });
+      observer.observe(document.documentElement,{childList:true,subtree:true});
+    }
   }
-
-  function renderUserDisplay(user) {
-    userDisplayWrapper.innerHTML = user
-      ? `<div style="display:flex !important; align-items:center !important; gap:8px !important;">
-           <img src="${user.photoURL || 'default-profile.png'}" 
-                alt="Profile Picture" 
-                style="width:27px !important; height:27px !important; border-radius:50% !important; object-fit:cover !important;">
-         </div>`
-      : `<div style="display:flex !important; align-items:center !important; gap:8px !important; font-size:14px !important; color:#cacaca !important;">
-           <span class="material-symbols-rounded" style="font-size:24px !important;">star_shine</span>
-         </div>`;
+  if(document.readyState==='loading'){
+    document.addEventListener('DOMContentLoaded',init);
+  }else{
+    init();
   }
-  container.parentNode.insertBefore(userDisplayWrapper, container);
-  renderUserDisplay(auth.currentUser);
-  auth.onAuthStateChanged(user => {
-    renderUserDisplay(user);
-  });
 })();
-
-
-
