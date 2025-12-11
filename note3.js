@@ -1235,7 +1235,7 @@ window.handleRename = function () {
           "&quot;"
         )}"></div></div>`,
         footer:
-          '<button onclick="closeModal()">Cancel</button><button onclick="handleRenameSubmit()" class="modal-btn">OK</button>'
+          '<button onclick="closeModal()">Cancel</button><button onclick="handleRenameSubmit()" class="modal-btn">Rename</button>'
       });
     if (!o || "OK" !== o.action) return;
     let a = String(o.newTitle || "").trim(),
@@ -1977,7 +1977,7 @@ window.handleAdd = async () => {
   const r = await showModal({
     header: `<div class="modal-title">Add Text to Lines</div>`,
     body: `<div style="display:flex;flex-direction:column;gap:10px;"><div><label class="modal-label">Insert text</label><input type="text" id="insertText" class="modal-input" placeholder="Text to insert (use %L for line number, %N for new line)" data-skip-validation></div><div><label class="modal-label">Insert position</label><div class="custom-dropdown"><div id="insertPosition" class="custom-dropdown-trigger modal-input" data-options='[{"label":"Insert at start of line","value":"start"},{"label":"Insert at end of line","value":"end"},{"label":"Insert at specific column","value":"column"}]' data-value="start">Insert at start of line</div></div></div><div id="colContainer" style="display:none"><label class="modal-label">Column number</label><input type="number" id="columnNumber" class="modal-input" placeholder="Column number (1-based)" min="1"></div></div>`,
-    footer: `<button onclick="closeModal()">Cancel</button><button onclick="handleAddSubmit()" style="background: var(--accent2); color: #cacaca;">Add</button>`,
+    footer: `<button onclick="closeModal()">Cancel</button><button onclick="handleAddSubmit()">Add</button>`,
     html: true
   });
   if (!r || r.action !== "submit") return;
@@ -2033,7 +2033,7 @@ window.handleCleanupText = async () => {
   const r = await showModal({
     header: `<div class="modal-title">Cleanup Text</div>`,
     body: `<div style="display:flex;flex-direction:column;gap:10px;"><div><label class="modal-label">Choose Cleanup Style</label><div class="custom-dropdown"><div id="cleanupStyle" class="custom-dropdown-trigger modal-input" data-options='[{"label":"Select CleanUp Style","value":""},{"label":"Remove Linebreaks","value":"remove_linebreaks"},{"label":"Remove Parabreaks","value":"remove_parabreaks"},{"label":"Remove Both Line & Para Breaks","value":"remove_both"},{"label":"Whitespace Cleanup","value":"whitespace_cleanup"},{"label":"Trim Columns","value":"trim_columns"},{"label":"Tidy Lines","value":"tidy_lines"}]' data-value="">Select CleanUp Style</div></div></div><div id="trimContainer" style="display:none;flex-direction:column;gap:10px;"><div><label class="modal-label">Number of Columns</label><input type="number" id="trimNumber" class="modal-input" value="1" min="1"></div><div><label class="modal-label">Trim Side</label><div class="custom-dropdown"><div id="trimSide" class="custom-dropdown-trigger modal-input" data-options='[{"label":"Left","value":"left"},{"label":"Right","value":"right"}]' data-value="left">Left</div></div></div></div></div>`,
-    footer: `<button onclick="closeModal()">Cancel</button><button onclick="handleCleanupSubmit()" style="background: var(--accent2); color: #cacaca;">Cleanup</button>`,
+    footer: `<button onclick="closeModal()">Cancel</button><button onclick="handleCleanupSubmit()">Cleanup</button>`,
     html: true
   });
   if (!r || r.action !== "submit") return;
