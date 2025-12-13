@@ -408,4 +408,78 @@ window.handlePasteNote = function () {
     }
   };
   r();
-};
+}; 
+
+window.reverseText = preserveSelection(async () => {
+  if (!currentNote || !noteTextarea) return;
+  let s = noteTextarea.selectionStart,
+    e = noteTextarea.selectionEnd;
+  if (s === e)
+    noteTextarea.value = noteTextarea.value.split("").reverse().join("");
+  else {
+    let t = noteTextarea.value,
+      n = t.substring(s, e),
+      r = n.split("").reverse().join("");
+    noteTextarea.value = t.substring(0, s) + r + t.substring(e);
+  }
+  try {
+    updateNoteMetadata();
+    showNotification("Text reversed!");
+  } catch (err) {
+    console.error("Error updating note metadata:", err);
+    showNotification("Failed to update note metadata");
+  }
+});
+window.reverseWords = preserveSelection(async () => {
+  if (!currentNote || !noteTextarea) return;
+  const s = noteTextarea.selectionStart;
+  const e = noteTextarea.selectionEnd;
+  if (s === e) {
+    noteTextarea.value = noteTextarea.value.split(/\s+/).reverse().join(" ");
+  } else {
+    const t = noteTextarea.value;
+    const n = t.substring(s, e);
+    const r = n.split(/\s+/).reverse().join(" ");
+    noteTextarea.value = t.substring(0, s) + r + t.substring(e);
+  }
+  updateNoteMetadata();
+  showNotification("Words reversed!");
+});
+window.capitalizeWords = preserveSelection(async () => {
+  if (!currentNote || !noteTextarea) return;
+  const s = noteTextarea.selectionStart;
+  const e = noteTextarea.selectionEnd;
+  if (s === e) {
+    noteTextarea.value = noteTextarea.value.replace(
+      /\b\w+/g,
+      (t) => t.charAt(0).toUpperCase() + t.slice(1).toLowerCase()
+    );
+  } else {
+    const t = noteTextarea.value;
+    const n = t.substring(s, e);
+    const r = n.replace(
+      /\b\w+/g,
+      (t) => t.charAt(0).toUpperCase() + t.slice(1).toLowerCase()
+    );
+    noteTextarea.value = t.substring(0, s) + r + t.substring(e);
+  }
+  updateNoteMetadata();
+  showNotification("Words capitalized!");
+});
+window.capitalizeSentences = preserveSelection(async () => {
+  if (!currentNote || !noteTextarea) return;
+  const s = noteTextarea.selectionStart;
+  const e = noteTextarea.selectionEnd;
+  if (s === e) {
+    noteTextarea.value = noteTextarea.value
+      .toLowerCase()
+      .replace(/(^\s*[a-z])|([.!?]\s*[a-z])/g, (t) => t.toUpperCase());
+  } else {
+    const t = noteTextarea.value;
+    const n = t.substring(s, e).toLowerCase();
+    const r = n.replace(/(^\s*[a-z])|([.!?]\s*[a-z])/g, (t) => t.toUpperCase());
+    noteTextarea.value = t.substring(0, s) + r + t.substring(e);
+  }
+  updateNoteMetadata();
+  showNotification("Sentences capitalized!");
+});
