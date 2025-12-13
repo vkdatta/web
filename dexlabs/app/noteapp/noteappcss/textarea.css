@@ -113,3 +113,8 @@ color: #fff;
 z-index: 1;
 pointer-events: none;
 }
+@media (max-width: 600px) {
+.note-textarea {
+padding: 24px;
+}
+}
