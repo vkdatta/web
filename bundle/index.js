@@ -1,3 +1,3 @@
-import "./autosave.js"
-import "./codeblock.js"
-import "./fullscreen.js"
+import "./list/autosave.js"
+import "./list/codeblock.js"
+import "./list/fullscreen.js"
