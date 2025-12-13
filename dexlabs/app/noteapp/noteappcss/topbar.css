@@ -41,3 +41,13 @@ color: #999999;
 width: fit-content;
 }
 }
+@media (max-width: 600px) {
+.topbar {
+width: fit-content;
+padding: 12px 24px;
+}
+.topbar-button {
+width: 40px;
+height: 40px;
+}
+}
