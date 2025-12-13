@@ -1,10 +1,3 @@
-const css = ``;
-if (!document.getElementById("modal-dark-css")) {
-  const s = document.createElement("style");
-  s.id = "modal-dark-css";
-  s.textContent = css;
-  document.head.appendChild(s);
-}
 function renderDropdownMenuPortal(trigger, options, callback) {
   document
     .querySelectorAll(".custom-dropdown-portal-menu")
@@ -1235,7 +1228,7 @@ window.handleRename = function () {
           "&quot;"
         )}"></div></div>`,
         footer:
-          '<button onclick="closeModal()">Cancel</button><button onclick="handleRenameSubmit()" class="modal-btn">OK</button>'
+          '<button onclick="closeModal()">Cancel</button><button onclick="handleRenameSubmit()" class="modal-btn">Rename</button>'
       });
     if (!o || "OK" !== o.action) return;
     let a = String(o.newTitle || "").trim(),
@@ -1977,7 +1970,7 @@ window.handleAdd = async () => {
   const r = await showModal({
     header: `<div class="modal-title">Add Text to Lines</div>`,
     body: `<div style="display:flex;flex-direction:column;gap:10px;"><div><label class="modal-label">Insert text</label><input type="text" id="insertText" class="modal-input" placeholder="Text to insert (use %L for line number, %N for new line)" data-skip-validation></div><div><label class="modal-label">Insert position</label><div class="custom-dropdown"><div id="insertPosition" class="custom-dropdown-trigger modal-input" data-options='[{"label":"Insert at start of line","value":"start"},{"label":"Insert at end of line","value":"end"},{"label":"Insert at specific column","value":"column"}]' data-value="start">Insert at start of line</div></div></div><div id="colContainer" style="display:none"><label class="modal-label">Column number</label><input type="number" id="columnNumber" class="modal-input" placeholder="Column number (1-based)" min="1"></div></div>`,
-    footer: `<button onclick="closeModal()">Cancel</button><button onclick="handleAddSubmit()" style="background: var(--accent2); color: #cacaca;">Add</button>`,
+    footer: `<button onclick="closeModal()">Cancel</button><button onclick="handleAddSubmit()">Add</button>`,
     html: true
   });
   if (!r || r.action !== "submit") return;
@@ -2033,7 +2026,7 @@ window.handleCleanupText = async () => {
   const r = await showModal({
     header: `<div class="modal-title">Cleanup Text</div>`,
     body: `<div style="display:flex;flex-direction:column;gap:10px;"><div><label class="modal-label">Choose Cleanup Style</label><div class="custom-dropdown"><div id="cleanupStyle" class="custom-dropdown-trigger modal-input" data-options='[{"label":"Select CleanUp Style","value":""},{"label":"Remove Linebreaks","value":"remove_linebreaks"},{"label":"Remove Parabreaks","value":"remove_parabreaks"},{"label":"Remove Both Line & Para Breaks","value":"remove_both"},{"label":"Whitespace Cleanup","value":"whitespace_cleanup"},{"label":"Trim Columns","value":"trim_columns"},{"label":"Tidy Lines","value":"tidy_lines"}]' data-value="">Select CleanUp Style</div></div></div><div id="trimContainer" style="display:none;flex-direction:column;gap:10px;"><div><label class="modal-label">Number of Columns</label><input type="number" id="trimNumber" class="modal-input" value="1" min="1"></div><div><label class="modal-label">Trim Side</label><div class="custom-dropdown"><div id="trimSide" class="custom-dropdown-trigger modal-input" data-options='[{"label":"Left","value":"left"},{"label":"Right","value":"right"}]' data-value="left">Left</div></div></div></div></div>`,
-    footer: `<button onclick="closeModal()">Cancel</button><button onclick="handleCleanupSubmit()" style="background: var(--accent2); color: #cacaca;">Cleanup</button>`,
+    footer: `<button onclick="closeModal()">Cancel</button><button onclick="handleCleanupSubmit()">Cleanup</button>`,
     html: true
   });
   if (!r || r.action !== "submit") return;
@@ -2855,3 +2848,555 @@ window.minifycss = preserveSelection(async () => {
   }
   showNotification("Minified CSS");
 });
+
+(function () {
+  const hamburger = document.getElementById('secondary-sidebar-button');
+  const overlay = document.getElementById('secondary-sidebar-overlay');
+  const sidebar = document.getElementById('secondary-sidebar');
+  const productCard = document.getElementById('secondary-sidebar-card');
+  const cardScroll = document.getElementById('secondary-sidebar-scroll');
+  const focusableSelector = 'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])';
+  let lastFocused = null;
+  
+  function getTransitionMs() {
+    const val = getComputedStyle(document.documentElement).getPropertyValue('--transition-duration').trim();
+    return Math.round((parseFloat(val) || 0.32) * 1000);
+  }
+  
+ function openSidebar() {
+  sidebar.classList.add('open');
+  sidebar.setAttribute('aria-hidden', 'false');
+  hamburger.setAttribute('aria-expanded', 'true');
+  hamburger.innerHTML = '<i class="material-symbols-rounded">close</i>';
+}
+
+function closeSidebar() {
+  sidebar.classList.remove('open');
+  sidebar.setAttribute('aria-hidden', 'true');
+  hamburger.setAttribute('aria-expanded', 'false');
+  hamburger.innerHTML = '<i class="material-symbols-rounded">view_cozy</i>';
+}
+
+  hamburger.addEventListener('click', (e) => {
+    e.stopPropagation();
+    sidebar.classList.contains('open') ? closeSidebar() : openSidebar();
+  });
+
+  sidebar.addEventListener('click', (e) => e.stopPropagation());
+
+  document.addEventListener('click', (e) => {
+    if (!sidebar.classList.contains('open')) return;
+    if (!sidebar.contains(e.target) && !hamburger.contains(e.target)) {
+      closeSidebar();
+    }
+  });
+ 
+  function collapse(elem, done) {
+    elem.style.overflow = 'hidden';
+    elem.style.height = elem.scrollHeight + 'px';
+    elem.getBoundingClientRect();
+    requestAnimationFrame(() => { elem.style.height = '0'; });
+    setTimeout(() => {
+      elem.style.height = '';
+      elem.setAttribute('aria-hidden','true');
+      elem.style.overflow = 'hidden';
+      if (done) done();
+    }, getTransitionMs() + 20);
+  }
+  
+  function expand(elem, done) {
+    elem.style.height = '0';
+    elem.setAttribute('aria-hidden','false');
+    elem.getBoundingClientRect();
+    const target = elem.scrollHeight + 'px';
+    requestAnimationFrame(() => { elem.style.height = target; });
+    setTimeout(() => {
+      elem.style.height = 'auto';
+      elem.style.overflow = 'auto';
+      if (done) done();
+    }, getTransitionMs() + 20);
+  }
+  
+  function buildTopLevel(container, dataContainer, depth = 0) {
+    const baseLeft = 12;
+    const indentUnit = 20;
+    const indent = depth * indentUnit;
+    const totalLeft = baseLeft + indent;
+    
+    Array.from(dataContainer.children).forEach(dataDiv => {
+      const isCollapse = dataDiv.classList.contains('collapse');
+      const text = dataDiv.getAttribute('text');
+      const icon = dataDiv.getAttribute('icon');
+      const vlineLeft = (totalLeft + 7) + 'px';
+      
+      const group = document.createElement('div');
+      group.className = `secondary-sidebar-category-group${isCollapse && dataDiv.classList.contains('open') ? ' open' : ''}`;
+      
+      const header = document.createElement('button');
+      header.type = 'button';
+      header.className = 'secondary-sidebar-category-header';
+      header.style.paddingLeft = totalLeft + 'px';
+      
+      const left = document.createElement('span');
+      left.className = 'secondary-sidebar-left';
+      
+      const i = document.createElement('span');
+      i.className = 'material-symbols-rounded';
+      i.textContent = icon;
+      
+      const l = document.createElement('span');
+      l.className = 'secondary-sidebar-label';
+      l.textContent = text;
+      
+      left.append(i, l);
+      header.append(left);
+      
+      if (isCollapse) {
+        group.classList.add('has-line');
+        group.style.setProperty('--vline-left', vlineLeft);
+        
+        const ch = document.createElement('span');
+        ch.className = 'material-symbols-rounded secondary-sidebar-chevron';
+        ch.textContent = 'expand_more';
+        header.append(ch);
+        
+        header.onclick = () => toggleGroup(header);
+        header.setAttribute('aria-expanded', dataDiv.classList.contains('open') ? 'true' : 'false');
+        
+        const content = document.createElement('div');
+        content.className = 'secondary-sidebar-category-content';
+        content.setAttribute('aria-hidden', dataDiv.classList.contains('open') ? 'false' : 'true');
+        
+        group.append(header, content);
+        buildSubLevel(content, dataDiv, depth + 1);
+      } else {
+        const onclickAttr = dataDiv.getAttribute('onclick');
+        if (onclickAttr) {
+          header.setAttribute('onclick', onclickAttr);
+        }
+        group.append(header);
+      }
+      
+      container.append(group);
+    });
+  }
+  
+  function buildSubLevel(container, dataContainer, depth) {
+    const baseLeft = 12;
+    const indentUnit = 20;
+    const indent = depth * indentUnit;
+    const totalLeft = baseLeft + indent;
+    
+    Array.from(dataContainer.children).forEach(dataDiv => {
+      const isCollapse = dataDiv.classList.contains('collapse');
+      const text = dataDiv.getAttribute('text');
+      const icon = dataDiv.getAttribute('icon');
+      const vlineLeft = (totalLeft + 7) + 'px';
+      
+      if (isCollapse) {
+        const group = document.createElement('div');
+        group.className = `secondary-sidebar-nav-item-group${dataDiv.classList.contains('open') ? ' open' : ''}`;
+        group.classList.add('has-line');
+        group.style.setProperty('--vline-left', vlineLeft);
+        
+        const toggle = document.createElement('button');
+        toggle.type = 'button';
+        toggle.className = 'secondary-sidebar-nav-toggle';
+        toggle.style.paddingLeft = totalLeft + 'px';
+        
+        const left = document.createElement('span');
+        left.className = 'secondary-sidebar-left';
+        
+        const i = document.createElement('span');
+        i.className = 'material-symbols-rounded';
+        i.textContent = icon;
+        
+        const l = document.createElement('span');
+        l.className = 'secondary-sidebar-label';
+        l.textContent = text;
+        
+        left.append(i, l);
+        toggle.append(left);
+        
+        const ch = document.createElement('span');
+        ch.className = 'material-symbols-rounded secondary-sidebar-chevron';
+        ch.textContent = 'expand_more';
+        toggle.append(ch);
+        
+        toggle.onclick = () => toggleGroup(toggle);
+        toggle.setAttribute('aria-expanded', dataDiv.classList.contains('open') ? 'true' : 'false');
+        
+        const sublist = document.createElement('div');
+        sublist.className = 'secondary-sidebar-sub-list';
+        sublist.setAttribute('aria-hidden', dataDiv.classList.contains('open') ? 'false' : 'true');
+        
+        group.append(toggle, sublist);
+        container.append(group);
+        buildSubLevel(sublist, dataDiv, depth + 1);
+      } else {
+        const item = document.createElement('button');
+        item.type = 'button';
+        item.className = 'secondary-sidebar-sub-item';
+        item.style.paddingLeft = totalLeft + 'px';
+        
+        const onclickAttr = dataDiv.getAttribute('onclick');
+        if (onclickAttr) {
+          item.setAttribute('onclick', onclickAttr);
+        }
+        const i = document.createElement('span');
+        i.className = 'material-symbols-rounded';
+        i.textContent = icon;
+        
+        item.append(i, document.createTextNode(text));
+        container.append(item);
+      }
+    });
+  }
+  
+  const products = cardScroll.querySelector('.secondary-sidebar-products');
+  if (products) {
+    buildTopLevel(cardScroll, products, 0);
+    products.remove();
+
+    document.querySelectorAll('.secondary-sidebar-category-group.has-line, .secondary-sidebar-nav-item-group.has-line').forEach(group => {
+      const header = group.querySelector('.secondary-sidebar-category-header, .secondary-sidebar-nav-toggle');
+      if (header) {
+        header.offsetHeight;
+        const headerHeight = header.offsetHeight;
+        group.style.setProperty('--line-top', headerHeight + 'px');
+      }
+    });
+  }
+  
+  window.toggleGroup = function(btn) {
+    const group = btn.closest('.secondary-sidebar-category-group, .secondary-sidebar-nav-item-group');
+    if (!group) return;
+    
+    const content = group.querySelector('.secondary-sidebar-category-content, .secondary-sidebar-sub-list');
+    if (!content) return;
+    
+    const isOpen = group.classList.contains('open');
+    
+    if (group.classList.contains('secondary-sidebar-category-group')) {
+      if (!isOpen) {
+        const others = Array.from(document.querySelectorAll('.secondary-sidebar-category-group.open'))
+          .filter(g => g !== group);
+        others.forEach(o => {
+          const c = o.querySelector('.secondary-sidebar-category-content');
+          const b = o.querySelector('.secondary-sidebar-category-header');
+          o.classList.remove('open');
+          if (b) b.setAttribute('aria-expanded','false');
+          if (c) collapse(c);
+        });
+        group.classList.add('open');
+        btn.setAttribute('aria-expanded','true');
+        expand(content);
+      } else {
+        group.classList.remove('open');
+        btn.setAttribute('aria-expanded','false');
+        collapse(content);
+      }
+      return;
+    }
+    
+    const parent = group.parentElement.closest('.secondary-sidebar-nav-item-group, .secondary-sidebar-category-group');
+    if (parent) {
+      const siblings = Array.from(parent.querySelectorAll('.secondary-sidebar-nav-item-group'));
+      siblings.forEach(sib => {
+        if (sib !== group && sib.classList.contains('open')) {
+          const sc = sib.querySelector('.secondary-sidebar-sub-list');
+          const sb = sib.querySelector('.secondary-sidebar-nav-toggle');
+          sib.classList.remove('open');
+          if (sb) sb.setAttribute('aria-expanded','false');
+          if (sc) collapse(sc);
+        }
+      });
+    }
+    
+    if (!isOpen) {
+      group.classList.add('open');
+      btn.setAttribute('aria-expanded','true');
+      expand(content);
+    } else {
+      group.classList.remove('open');
+      btn.setAttribute('aria-expanded','false');
+      collapse(content);
+    }
+  };
+  
+  document.querySelectorAll('.secondary-sidebar-category-group.open, .secondary-sidebar-nav-item-group.open').forEach(g => {
+    const content = g.querySelector('.secondary-sidebar-category-content, .secondary-sidebar-sub-list');
+    if (content) {
+      content.style.height = 'auto';
+      content.style.overflow = 'auto';
+      content.removeAttribute('aria-hidden');
+      const btn = g.querySelector('.secondary-sidebar-category-header, .secondary-sidebar-nav-toggle');
+      if (btn) btn.setAttribute('aria-expanded','true');
+    }
+  });
+})();
+
+(function() {  
+  const container = document.querySelector('.secondary-sidebar-desc .info-dex');  
+  
+  if (!container) return;  
+  
+  const userDisplayWrapper = document.createElement('div');  
+  userDisplayWrapper.id = 'user-display-wrapper';  
+  userDisplayWrapper.style.cssText = `  
+    width: 100% !important;  
+    display: flex !important;  
+    justify-content: center !important;  
+    align-items: center !important;  
+    text-align: center !important;  
+    margin-bottom: 8px !important;  
+  `;  
+  
+  function capitalizeName(name) {  
+    return name  
+      .split(' ')  
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))  
+      .join(' ');  
+  }  
+  
+  function renderUserDisplay(user) {  
+    userDisplayWrapper.innerHTML = user  
+      ? `<div style="display:flex !important; align-items:center !important; gap:8px !important;">  
+           <img src="${user.photoURL || 'default-profile.png'}"   
+                alt="Profile Picture"   
+                style="width:23px !important; height:23px !important; border-radius:50% !important; object-fit:cover !important;">  
+         </div>`  
+      : `<div style="display:flex !important; align-items:center !important; gap:8px !important; font-size:14px !important; color:#cacaca !important;">  
+           <span class="material-symbols-rounded" style="font-size:18px !important;">account_circle</span>  
+         </div>`;  
+  }  
+  container.parentNode.insertBefore(userDisplayWrapper, container);  
+  renderUserDisplay(auth.currentUser);  
+  auth.onAuthStateChanged(user => {  
+    renderUserDisplay(user);  
+  });  
+})();  
+
+window.cipher = async function () {
+  const ITERATIONS = 150000;
+  const ROUNDS = 64;
+  const SALT_BYTES = 16;
+  const IV_BYTES = 12;
+  const encoder = new TextEncoder();
+  const decoder = new TextDecoder();
+
+  function concatUint8(...parts){
+    const total = parts.reduce((s,p)=>s+p.length,0);
+    const out = new Uint8Array(total);
+    let offset=0;
+    for(const p of parts){ out.set(p, offset); offset += p.length; }
+    return out;
+  }
+  function uint32ToBE(n){
+    const b = new Uint8Array(4);
+    new DataView(b.buffer).setUint32(0, n, false);
+    return b;
+  }
+  function beToUint32(buf){
+    return new DataView(buf.buffer).getUint32(0, false);
+  }
+  function repeatToLength(src, len){
+    if(len===0) return new Uint8Array(0);
+    const out = new Uint8Array(len);
+    let i=0;
+    while(i<len){
+      const take = Math.min(src.length, len-i);
+      out.set(src.subarray(0, take), i);
+      i += take;
+    }
+    return out;
+  }
+  function rotateLeft(u8, r){
+    const n = u8.length;
+    if(n===0) return u8;
+    r = r % n;
+    if(r===0) return u8;
+    return concatUint8(u8.subarray(r), u8.subarray(0, r));
+  }
+  function rotateRight(u8, r){
+    const n = u8.length;
+    if(n===0) return u8;
+    r = r % n;
+    if(r===0) return u8;
+    return concatUint8(u8.subarray(n-r), u8.subarray(0, n-r));
+  }
+  function toBase64Url(u8){
+    let s='';
+    const chunk=0x8000;
+    for(let i=0;i<u8.length;i+=chunk) s+=String.fromCharCode.apply(null, u8.subarray(i, i+chunk));
+    const b64 = btoa(s);
+    return b64.replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+  }
+  function fromBase64Url(s){
+    s = s.replace(/-/g,'+').replace(/_/g,'/');
+    while(s.length % 4) s += '=';
+    const str = atob(s);
+    const arr = new Uint8Array(str.length);
+    for(let i=0;i<str.length;i++) arr[i] = str.charCodeAt(i);
+    return arr;
+  }
+  async function deriveBitsPBKDF2(password, salt, bits = 512){
+    const passKey = await crypto.subtle.importKey('raw', encoder.encode(password), {name:'PBKDF2'}, false, ['deriveBits']);
+    const buf = await crypto.subtle.deriveBits({name:'PBKDF2', salt, iterations:ITERATIONS, hash:'SHA-256'}, passKey, bits);
+    return new Uint8Array(buf);
+  }
+  async function deriveKeysFromTwoPasswords(pw1, pw2, salt1, salt2){
+    const bitsA = await deriveBitsPBKDF2(pw1, salt1, 512);
+    const bitsB = await deriveBitsPBKDF2(pw2, salt2, 512);
+    const combined = new Uint8Array(bitsA.length);
+    for(let i=0;i<combined.length;i++) combined[i] = bitsA[i] ^ bitsB[i];
+    const aesRaw = combined.subarray(0,32);
+    const hmacRaw = combined.subarray(32,64);
+    const aesKey = await crypto.subtle.importKey('raw', aesRaw, {name:'AES-GCM'}, false, ['encrypt','decrypt']);
+    const hmacKey = await crypto.subtle.importKey('raw', hmacRaw, {name:'HMAC', hash:'SHA-256'}, false, ['sign']);
+    return { aesKey, hmacKey };
+  }
+  async function roundHMAC(hmacKey, roundIndex){
+    const msg = concatUint8(encoder.encode('round'), uint32ToBE(roundIndex));
+    const sig = await crypto.subtle.sign('HMAC', hmacKey, msg);
+    return new Uint8Array(sig);
+  }
+  function sumBytes(u8){
+    let s=0;
+    for(let i=0;i<u8.length;i++) s += u8[i];
+    return s;
+  }
+  async function encryptText(plainText, pw1, pw2){
+    const salt1 = crypto.getRandomValues(new Uint8Array(SALT_BYTES));
+    const salt2 = crypto.getRandomValues(new Uint8Array(SALT_BYTES));
+    const iv = crypto.getRandomValues(new Uint8Array(IV_BYTES));
+    const { aesKey, hmacKey } = await deriveKeysFromTwoPasswords(pw1, pw2, salt1, salt2);
+    const data = encoder.encode(plainText);
+    const stateHeader = uint32ToBE(data.length);
+    let state = concatUint8(stateHeader, data);
+    for(let r=0;r<ROUNDS;r++){
+      const rk = await roundHMAC(hmacKey, r);
+      const ks = repeatToLength(concatUint8(rk, iv), state.length);
+      for(let i=0;i<state.length;i++) state[i] ^= ks[i];
+      const rot = sumBytes(rk) % (state.length || 1);
+      state = rotateLeft(state, rot);
+    }
+    const encrypted = new Uint8Array(await crypto.subtle.encrypt({name:'AES-GCM', iv}, aesKey, state.buffer));
+    const blob = concatUint8(salt1, salt2, iv, encrypted);
+    return toBase64Url(blob);
+  }
+  function randomFake27(){
+    const b = crypto.getRandomValues(new Uint8Array(20));
+    let s='';
+    const chunk=0x8000;
+    for(let i=0;i<b.length;i+=chunk) s+=String.fromCharCode.apply(null, b.subarray(i, i+chunk));
+    const b64 = btoa(s).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+    if(b64.length >= 27) return b64.slice(0,27);
+    while(b64.length < 27) b64 += '-';
+    return b64.slice(0,27);
+  }
+  async function decryptText(token, pw1, pw2){
+    try{
+      const blob = fromBase64Url(token);
+      if(blob.length < SALT_BYTES + SALT_BYTES + IV_BYTES + 1) return randomFake27();
+      const salt1 = blob.subarray(0, SALT_BYTES);
+      const salt2 = blob.subarray(SALT_BYTES, SALT_BYTES + SALT_BYTES);
+      const iv = blob.subarray(SALT_BYTES + SALT_BYTES, SALT_BYTES + SALT_BYTES + IV_BYTES);
+      const ciphertext = blob.subarray(SALT_BYTES + SALT_BYTES + IV_BYTES);
+      const { aesKey, hmacKey } = await deriveKeysFromTwoPasswords(pw1, pw2, salt1, salt2);
+      let state;
+      try{
+        const plainBuf = await crypto.subtle.decrypt({name:'AES-GCM', iv}, aesKey, ciphertext);
+        state = new Uint8Array(plainBuf);
+      }catch(e){
+        return randomFake27();
+      }
+      for(let r=ROUNDS-1;r>=0;r--){
+        const rk = await roundHMAC(hmacKey, r);
+        const rot = sumBytes(rk) % (state.length || 1);
+        state = rotateRight(state, rot);
+        const ks = repeatToLength(concatUint8(rk, iv), state.length);
+        for(let i=0;i<state.length;i++) state[i] ^= ks[i];
+      }
+      if(state.length < 4) return randomFake27();
+      const len = beToUint32(state.subarray(0,4));
+      const payload = state.subarray(4, 4 + len);
+      return decoder.decode(payload);
+    }catch(e){
+      return randomFake27();
+    }
+  }
+
+  window.cipherSubmit = function(){
+    const p1 = (document.getElementById('cipher_pw1') || {}).value || '';
+    const p2 = (document.getElementById('cipher_pw2') || {}).value || '';
+    const encBtn = document.getElementById('cipher_mode_encrypt');
+    const mode = encBtn && encBtn.classList.contains('active') ? 'encrypt' : 'decrypt';
+    closeModal({ action: 'submit', pw1: p1, pw2: p2, mode });
+  };
+
+  window._cipherToggleMode = function(mode){
+    const encBtn = document.getElementById('cipher_mode_encrypt');
+    const decBtn = document.getElementById('cipher_mode_decrypt');
+    if(!encBtn || !decBtn) return;
+    if(mode === 'encrypt'){
+      encBtn.classList.add('active');
+      decBtn.classList.remove('active');
+    } else {
+      decBtn.classList.add('active');
+      encBtn.classList.remove('active');
+    }
+  };
+
+  const bodyHtml = `
+  <div>
+  <label class="modal-label">Enter Passkeys</label>
+  </div>
+  <div>
+  <input id="cipher_pw1" placeholder="Key I">
+  </div>
+<div>
+<input id="cipher_pw2" placeholder="Key II">  
+</div>
+
+<div style="display: flex; gap: 8px; margin-top: 4px;">
+<button type="button" id="cipher_mode_encrypt" class="modal-btn active" onclick="window._cipherToggleMode('encrypt')">Encrypt</button>
+<button type="button" id="cipher_mode_decrypt" class="modal-btn" onclick="window._cipherToggleMode('decrypt')">Decrypt</button>
+</div>
+`;
+
+  const footerHtml = `<button onclick="closeModal()">Cancel</button><button onclick="window.cipherSubmit()" class="modal-btn">Cipher</button>`;
+
+  const r = await showModal({
+    header: `<div class="modal-title">Cipher</div>`,
+    body: bodyHtml,
+    footer: footerHtml
+  });
+
+  if(!r || r.action !== 'submit') return;
+  const pw1 = r.pw1 || '';
+  const pw2 = r.pw2 || '';
+  const mode = r.mode || 'encrypt';
+  const textareaEl = window.noteTextarea || document.querySelector('textarea');
+  if(!textareaEl) return;
+  const text = textareaEl.value || '';
+  if(!pw1 || !pw2){
+    showNotification && showNotification('Both passwords are required');
+    return;
+  }
+  try{
+    if(mode === 'encrypt'){
+      const token = await encryptText(text, pw1, pw2);
+      textareaEl.value = token;
+      showNotification('Text encrypted');
+    }else{
+      const out = await decryptText(text, pw1, pw2);
+      textareaEl.value = out;
+      showNotification('Text decrypted');
+    }
+    typeof updateNoteMetadata === 'function' && updateNoteMetadata();
+  }catch(err){
+    textareaEl.value = randomFake27();
+    showNotification('Text decrypted');
+  }
+};
