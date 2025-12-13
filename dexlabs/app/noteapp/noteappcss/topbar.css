@@ -36,3 +36,8 @@ margin: 4px;
 font-size: 20px;
 color: #999999;
 }
+@media (max-width: 1200px) {
+.topbar {
+width: fit-content;
+}
+}
