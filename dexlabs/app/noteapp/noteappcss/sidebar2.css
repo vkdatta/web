@@ -348,4 +348,12 @@ color: #cacaca;
 font-size: 80%;
 letter-spacing:1.3px
 }
-
+@media (max-width: 600px) {
+.font-size-control button {
+width: 34px;
+height: 34px;
+}
+.font-size-control span {
+font-size: 1.2rem;
+}
+}
