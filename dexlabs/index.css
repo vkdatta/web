@@ -1,1 +1,12 @@
-@import "./app/noteapp/noteappcss/sidebar.css"
+/* note app */
+
+@import "./app/noteapp/noteappcss/misc.css";
+@import "./app/noteapp/noteappcss/textarea.css";
+@import "./app/noteapp/noteappcss/topbar.css";
+@import "./app/noteapp/noteappcss/sidebar.css";
+@import "./app/noteapp/noteappcss/sidebar2.css";
+@import "./app/noteapp/noteappcss/modal.css";
+
+/* diff app */
+
+@import "./app/diffapp/diffappcss/diffapp.css";
