@@ -221,3 +221,35 @@ window.handleOpenFile = function () {
   };
   t.click();
 };
+ window.toggleFullscreen = function () {
+  const e = document.documentElement;
+  !document.fullscreenElement &&
+  !document.webkitFullscreenElement &&
+  !document.msFullscreenElement
+    ? e.requestFullscreen
+      ? e.requestFullscreen()
+      : e.webkitRequestFullscreen
+      ? e.webkitRequestFullscreen()
+      : e.msRequestFullscreen && e.msRequestFullscreen()
+    : document.exitFullscreen
+    ? document.exitFullscreen()
+    : document.webkitExitFullscreen
+    ? document.webkitExitFullscreen()
+    : document.msExitFullscreen && document.msExitFullscreen();
+};
+function applyFontSize() {
+  noteTextarea.style.fontSize = `${fontSize}px`;
+  noteBackdrop.style.fontSize = `${fontSize}px`;
+  localStorage.setItem("fontSize", fontSize);
+}
+window.increaseFontSize = () => {
+  fontSize = Math.min(fontSize + 2, 42);
+  applyFontSize();
+  showNotification(`Font size increased to ${fontSize}px`);
+};
+window.decreaseFontSize = () => {
+  fontSize = Math.max(fontSize - 2, 10);
+  applyFontSize();
+  showNotification(`Font size decreased to ${fontSize}px`);
+};
+applyFontSize();
