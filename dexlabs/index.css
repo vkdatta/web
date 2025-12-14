@@ -1,12 +1,12 @@
 /* note app */
 
-@import "https://cdn.jsdelivr.net/gh/vkdatta/web@main/dexlabs/app/noteapp/noteappcss/misc.css";
-@import "https://cdn.jsdelivr.net/gh/vkdatta/web@main/dexlabs/app/noteapp/noteappcss/textarea.css";
-@import "https://cdn.jsdelivr.net/gh/vkdatta/web@main/dexlabs/app/noteapp/noteappcss/topbar.css";
-@import "https://cdn.jsdelivr.net/gh/vkdatta/web@main/dexlabs/app/noteapp/noteappcss/sidebar.css";
-@import "https://cdn.jsdelivr.net/gh/vkdatta/web@main/dexlabs/app/noteapp/noteappcss/sidebar2.css";
-@import "https://cdn.jsdelivr.net/gh/vkdatta/web@main/dexlabs/app/noteapp/noteappcss/modal.css";
+@import url("https://cdn.jsdelivr.net/gh/vkdatta/web@main/dexlabs/app/noteapp/noteappcss/misc.css");
+@import url("https://cdn.jsdelivr.net/gh/vkdatta/web@main/dexlabs/app/noteapp/noteappcss/textarea.css");
+@import url("https://cdn.jsdelivr.net/gh/vkdatta/web@main/dexlabs/app/noteapp/noteappcss/topbar.css");
+@import url("https://cdn.jsdelivr.net/gh/vkdatta/web@main/dexlabs/app/noteapp/noteappcss/sidebar.css");
+@import url("https://cdn.jsdelivr.net/gh/vkdatta/web@main/dexlabs/app/noteapp/noteappcss/sidebar2.css");
+@import url("https://cdn.jsdelivr.net/gh/vkdatta/web@main/dexlabs/app/noteapp/noteappcss/modal.css");
 
 /* diff app */
 
-@import "https://cdn.jsdelivr.net/gh/vkdatta/web@main/dexlabs/app/diffapp/diffappcss/diffapp.css";
+@import url("https://cdn.jsdelivr.net/gh/vkdatta/web@main/dexlabs/app/diffapp/diffappcss/diffapp.css");
