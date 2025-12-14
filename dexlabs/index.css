@@ -1,12 +1,12 @@
 /* note app */
 
-@import "./app/noteapp/noteappcss/misc.css";
-@import "./app/noteapp/noteappcss/textarea.css";
-@import "./app/noteapp/noteappcss/topbar.css";
-@import "./app/noteapp/noteappcss/sidebar.css";
-@import "./app/noteapp/noteappcss/sidebar2.css";
-@import "./app/noteapp/noteappcss/modal.css";
+@import "https://cdn.jsdelivr.net/gh/vkdatta/web@main/app/noteapp/noteappcss/misc.css";
+@import "https://cdn.jsdelivr.net/gh/vkdatta/web@main/app/noteapp/noteappcss/textarea.css";
+@import "https://cdn.jsdelivr.net/gh/vkdatta/web@main/app/noteapp/noteappcss/topbar.css";
+@import "https://cdn.jsdelivr.net/gh/vkdatta/web@main/app/noteapp/noteappcss/sidebar.css";
+@import "https://cdn.jsdelivr.net/gh/vkdatta/web@main/app/noteapp/noteappcss/sidebar2.css";
+@import "https://cdn.jsdelivr.net/gh/vkdatta/web@main/app/noteapp/noteappcss/modal.css";
 
 /* diff app */
 
-@import "./app/diffapp/diffappcss/diffapp.css";
+@import "https://cdn.jsdelivr.net/gh/vkdatta/web@main/app/diffapp/diffappcss/diffapp.css";
