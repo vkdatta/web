@@ -94,6 +94,20 @@ function fastEscapeHtml(e) {
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#039;");
 }
+
+function syncTrailingNewlinePadding() {
+  if (!noteTextarea) return;
+
+  const endsWithNewline = noteTextarea.value.endsWith("\n");
+  const lineHeight = parseFloat(
+    getComputedStyle(noteTextarea).lineHeight
+  );
+
+  noteTextarea.style.paddingBottom = endsWithNewline
+    ? `${lineHeight}px`
+    : "";
+}
+
 window.syncScroll = function () {
   if (!noteTextarea) return;
   const top = noteTextarea.scrollTop;
@@ -122,6 +136,7 @@ window.immediatePlainRender = function () {
     (noteBackdrop.style.color = "var(--color)"),
     noteBackdrop.offsetHeight,
     noteTextarea.offsetHeight,
+    syncTrailingNewlinePadding();
     window.syncScroll();
 };
 window.scheduleUpdate = function (e = !1) {
@@ -185,7 +200,7 @@ window.updateBackdrop = async function () {
         })()),
  (noteTextarea.scrollTop = e);
 (noteTextarea.scrollLeft = t);
-
+syncTrailingNewlinePadding();
 if (noteBackdrop) {
   const maxTop =
     noteTextarea.scrollHeight - noteTextarea.clientHeight;
