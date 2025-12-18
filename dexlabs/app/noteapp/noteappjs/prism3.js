@@ -95,13 +95,25 @@ function fastEscapeHtml(e) {
     .replace(/'/g, "&#039;");
 }
 window.syncScroll = function () {
-  noteBackdrop &&
-    noteTextarea &&
-    ((noteBackdrop.scrollTop = noteTextarea.scrollTop),
-    (noteBackdrop.scrollLeft = noteTextarea.scrollLeft),
-    noteBackdrop.offsetHeight,
-    noteTextarea.offsetHeight);
+  if (!noteTextarea) return;
+  const top = noteTextarea.scrollTop;
+  const left = noteTextarea.scrollLeft;
+  if (noteBackdrop) {
+    const maxTop =
+      noteBackdrop.scrollHeight - noteBackdrop.clientHeight;
+    noteBackdrop.scrollTop = Math.min(top, maxTop);
+    noteBackdrop.scrollLeft = left;
+  }
+  const findBackdrop = document.getElementById("findBackdrop");
+  if (findBackdrop) {
+    const maxTop =
+      findBackdrop.scrollHeight - findBackdrop.clientHeight;
+    findBackdrop.scrollTop = Math.min(top, maxTop);
+    findBackdrop.scrollLeft = left;
+  }
 };
+
+
 window.immediatePlainRender = function () {
   const e = noteTextarea.value;
   let t = e;
