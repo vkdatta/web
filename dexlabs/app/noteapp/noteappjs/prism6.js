@@ -12,6 +12,7 @@ fetch("https://raw.githubusercontent.com/vkdatta/web/refs/heads/main/dexlabs/app
     console.log("Loaded languages from JSON");
   })
   .catch(console.error);
+  }
     
 detectLanguageFromFilename(filename) {
     if (!filename || !filename.includes(".")) {
