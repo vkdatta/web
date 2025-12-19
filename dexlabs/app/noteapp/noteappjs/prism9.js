@@ -119,7 +119,7 @@ window.scheduleUpdate = function (e = !1) {
       ? requestAnimationFrame(window.updateBackdrop)
       : (window.debounceTimer = setTimeout(() => {
           requestAnimationFrame(window.updateBackdrop);
-        }, 80));
+        }, 800));
 };
 window.updateBackdrop = async function () {
   (window.updateTimeout = null), (window.debounceTimer = null);
