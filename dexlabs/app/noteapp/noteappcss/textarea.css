@@ -104,7 +104,7 @@ left: 0;
 #noteTextarea {
 background: transparent;
 color: transparent;
-caret-color: #fff;
+caret-color: var(--color);
 z-index: 2;
 }
 #noteBackdrop {
