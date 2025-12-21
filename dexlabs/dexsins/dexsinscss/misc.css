@@ -196,3 +196,18 @@ iframe {
 .item-control {
   display: none;
 }
+ol,
+ul {
+  display: block;
+  width: 100%;
+  margin: 0 auto;
+  padding: 20px;
+  text-align: left;
+}
+ol li,
+ul li {
+  display: list-item;
+  text-align: left;
+  margin: 0 0 0 20px;
+  padding: 0;
+}
