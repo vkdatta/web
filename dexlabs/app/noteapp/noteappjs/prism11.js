@@ -1,4 +1,3 @@
-
 (() => {
     async function forceSyntaxHighlightUpdate() {
         if (currentNote && currentNote.extension) {
@@ -51,7 +50,7 @@
             lastTextareaValue = noteTextarea.value;
             await forceSyntaxHighlightUpdate();
         }
-    }, 200);
+    }, 50);
 })();
 
 class CompletePrismLanguageLoader {
