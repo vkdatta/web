@@ -1,61 +1,24 @@
-@font-face {
-  font-family: "dexy";
-  src: url("https://vkfonts.storage.googleapis.com/dexy.woff2") format("woff2");
-  font-weight: normal;
-  font-style: normal;
+::-webkit-scrollbar {
+  width: 0 !important;
+  height: 0 !important;
+  background: transparent !important;
 }
-@font-face {
-  font-family: "classy";
-  src: url("https://vkfonts.storage.googleapis.com/classy.woff2")
-    format("woff2");
-  font-weight: normal;
-  font-style: normal;
-}
-@font-face {
-  font-family: "flare";
-  src: url("https://vkfonts.storage.googleapis.com/flare.woff2") format("woff2");
-  font-weight: normal;
-  font-style: normal;
-}
-:root {
-  --violet: #ae00ff;
-  --purple: #8b78ff;
-  --purple-light: #b3b5e3;
-  --silver: #bec2cb;
-}
-body.item-view .Blog .post-outer {
-  border-radius: 0 !important;
-  box-shadow: none !important;
-  padding: 0 !important;
-  background: 0 !important;
-  text-align: justify;
-  border: none;
-}
-body.feed-view .post-outer-container {
-  margin-top: 55px;
-}
-@media (min-width: 969px) {
-  * {
-    font-size: 17px;
-  }
-  body.item-view .Blog .post-outer {
-    padding: 60px !important;
-  }
-  .blog-pager .blog-pager-newer-link,
-  .blog-pager .blog-pager-older-link {
-    margin: 60px !important;
-  }
+::selection {
+  color: #fff !important;
+  background: #272727 !important;
 }
 * {
   -webkit-tap-highlight-color: transparent;
   color: #cacaca;
   font-size: 16px;
   background: 0 0;
+  text-underline-offset: 5px;
 }
 html {
   font-family: dexy;
   -ms-text-size-adjust: 100%;
   -webkit-text-size-adjust: 100%;
+    scrollbar-width: none !important;
 }
 body {
   overflow-wrap: break-word;
@@ -145,9 +108,30 @@ a:visited {
 .post-title a {
   line-height: 3;
 }
-.no-posts-message {
-  margin: 32px;
+body.item-view .Blog .post-outer {
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  background: 0 !important;
+  text-align: justify;
+  border: none;
 }
+body.feed-view .post-outer-container {
+  margin-top: 55px;
+}
+@media (min-width: 969px) {
+  * {
+    font-size: 17px;
+  }
+  body.item-view .Blog .post-outer {
+    padding: 60px !important;
+  }
+  .blog-pager .blog-pager-newer-link,
+  .blog-pager .blog-pager-older-link {
+    margin: 60px !important;
+  }
+}
+
 body.item-view .Blog .post-title,
 body.item-view .Blog .post-title a {
   background: 0 0;
@@ -168,19 +152,6 @@ body.item-view .post-body {
 }
 body.item-view .Blog .post-body {
   margin-bottom: 0;
-}
-body.item-view blockquote {
-  font-style: normal;
-  quotes: "\201c""\201d""\2018""\2019";
-}
-body.item-view blockquote::before {
-  content: open-quote;
-}
-body.item-view blockquote::after {
-  content: close-quote;
-}
-.copyright {
-  text-align: center;
 }
 @media screen and (max-width: 968px) {
   body {
@@ -249,10 +220,6 @@ body.item-view blockquote::after {
 .material-symbols-rounded:visited {
   color: #909090;
 }
-.flogo {
-  width: 50px;
-  height: 50px;
-}
 body.item-view .post-body-container img {
   height: auto;
   max-width: 100%;
@@ -306,10 +273,6 @@ body.feed-view .post-outer a {
   color: #fff;
   font-size: 70% !important;
 }
-b {
-  font-family: dexy;
-  letter-spacing: 1px;
-}
 input {
   box-sizing: border-box;
   width: 100%;
@@ -318,17 +281,6 @@ input {
   border: none;
   font-family: classy;
 }
-
-.fc {
-  font-family: iceland;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  vertical-align: middle;
-  padding: 10px;
-  width: auto;
-}
-
 .blog-pager {
   display: flex;
   width: 90%;
@@ -336,77 +288,11 @@ input {
   justify-content: space-between;
 }
 
-.blog-pager .blog-pager-older-link,
-.blog-pager .blog-pager-newer-link {
-  width: 62px;
-  height: 62px;
-  border-radius: 66% 34% 24% 76% / 67% 55% 45% 33%;
-  border: none;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition-duration: 0.3s;
-  overflow: hidden;
-  position: relative;
-  font-family: dexy;
-  background-color: #111;
-  animation: morphing 5s infinite;
-}
-.blog-pager .blog-pager-older-link:hover,
-.blog-pager .blog-pager-newer-link:hover {
-  transition-duration: 0.3s;
-  background: #000;
-  align-items: center;
-}
-.blog-pager .blog-pager-older-link:hover .material-symbols-rounded,
-.blog-pager .blog-pager-newer-link:hover .material-symbols-rounded {
-  color: #606060;
-}
 
 :focus {
   outline: none;
 }
-.share {
-  background: #111;
-  position: fixed;
-  bottom: 15px;
-  right: 15px;
-  width: 62px;
-  height: 62px;
-  padding: 2px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 20;
-  border-radius: 66% 34% 24% 76% / 67% 55% 45% 33%;
-  -webkit-touch-callout: none;
-  -webkit-user-select: none;
-  -khtml-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-  user-select: none;
-  animation: morphing 5s infinite;
-}
-@keyframes morphing {
-  0% {
-    border-radius: 66% 34% 24% 76% / 67% 55% 45% 33%;
-  }
-  25% {
-    border-radius: 58% 42% 65% 25% / 66% 46% 54% 34%;
-  }
-  50% {
-    border-radius: 50% 50% 33% 67% / 55% 27% 73% 45%;
-  }
-  75% {
-    border-radius: 33% 67% 58% 42% / 63% 68% 32% 37%;
-  }
-}
 .material-symbols-rounded {
-  color: var(--purple);
-}
-.share:hover .material-symbols-rounded {
   color: var(--purple);
 }
 
@@ -425,10 +311,6 @@ input {
 .post-link:hover {
   cursor: pointer;
 }
-::selection {
-  color: #fff !important;
-  background: #272727 !important;
-}
 .post-body a {
   font-family: dexy;
   text-decoration: underline;
@@ -440,10 +322,6 @@ input {
   display: inline-block !important;
   text-decoration-style: dashed;
 }
-
-* {
-  text-underline-offset: 5px;
-}
 button a {
   text-decoration: none !important;
 }
@@ -451,14 +329,6 @@ button a {
   margin: 0 !important;
   padding: 0 !important;
   max-width: 100% !important;
-}
-::-webkit-scrollbar {
-  width: 0 !important;
-  height: 0 !important;
-  background: transparent !important;
-}
-html {
-  scrollbar-width: none !important;
 }
 
 body.item-view .Blog .post-title-container {
@@ -473,14 +343,6 @@ body.item-view .Blog .post-title-container * {
   text-align: left !important;
   letter-spacing: 2px;
   word-spacing: 5px;
-}
-h1,
-h2,
-h3,
-h4,
-.special-container {
-  margin: 2px 0 2px 0 !important;
-  font-family: dexy;
 }
 button {
   display: block;
