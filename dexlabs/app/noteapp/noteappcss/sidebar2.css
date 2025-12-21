@@ -357,3 +357,10 @@ height: 34px;
 font-size: 1.2rem;
 }
 }
+.secondary-sidebar button {
+  background: transparent;
+  border: 0;
+  color: inherit;
+  font: inherit;
+  cursor: pointer
+}
