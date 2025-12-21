@@ -1,0 +1,61 @@
+body.item-view .Blog .post-outer {
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  background: 0 !important;
+  text-align: justify;
+  border: none;
+}
+body.feed-view .post-outer-container {
+  margin-top: 55px;
+}
+.post-outer:has(.post-body) {
+  margin: 0 !important;
+  padding: 0 !important;
+  max-width: 100% !important;
+}
+.post-outer {
+  display: flex;
+  position: relative;
+  padding: 10px;
+  text-align: center;
+  margin: 20px;
+  background: linear-gradient(45deg, #111, #000, #000) padding-box,
+    linear-gradient(45deg, transparent 90%, #000, var(--purple)) border-box;
+  border: 3px solid transparent;
+  border-radius: 2px;
+  font-family: dexy !important;
+  clip-path: polygon(
+    30px 0%,
+    100% 0,
+    100% calc(100% - 30px),
+    calc(100% - 30px) 100%,
+    0 100%,
+    0% 30px
+  );
+}
+.post-outer:hover {
+  background: linear-gradient(145deg, #111, #000, #000) padding-box,
+    linear-gradient(45deg, transparent 90%, #000, #c70064) border-box;
+  border: 3px solid transparent;
+  border-radius: 2px;
+  font-family: dexy !important;
+  clip-path: polygon(
+    30px 0%,
+    100% 0,
+    100% calc(100% - 30px),
+    calc(100% - 30px) 100%,
+    0 100%,
+    0% 30px
+  );
+}
+@media screen and (max-width: 968px) {
+  .post-outer {
+    margin: 20px;
+  }
+}
+@media (min-width: 969px) {
+  body.item-view .Blog .post-outer {
+    padding: 60px !important;
+  }
+}
