@@ -240,6 +240,7 @@ window.handleOpenFile = function () {
 function applyFontSize() {
   noteTextarea.style.fontSize = `${fontSize}px`;
   noteBackdrop.style.fontSize = `${fontSize}px`;
+  findBackdrop.style.fontSize = `${fontSize}px`;
   localStorage.setItem("fontSize", fontSize);
 }
 window.increaseFontSize = () => {
