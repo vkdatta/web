@@ -211,3 +211,24 @@ ul li {
   margin: 0 0 0 20px;
   padding: 0;
 }
+.post-body h1,
+.post-body h2,
+.post-body h3,
+.post-body h4 {
+  position: relative;
+  padding-left: 1.27em;
+}
+
+.post-body h1::before,
+.post-body h2::before,
+.post-body h3::before,
+.post-body h4::before {
+  position: absolute;
+  left: 0;
+  color: var(--purple);
+}
+
+.post-body h1::before { content: "!1 "; }
+.post-body h2::before { content: "!2 "; }
+.post-body h3::before { content: "!3 "; }
+.post-body h4::before { content: "!4 "; }
