@@ -7,6 +7,9 @@
   color: #fff !important;
   background: #272727 !important;
 }
+:focus {
+  outline: none;
+}
 * {
   -webkit-tap-highlight-color: transparent;
   color: #cacaca;
@@ -110,26 +113,6 @@ body#layout .page {
 .post-title a {
   line-height: 3;
 }
-body.item-view .Blog .post-outer {
-  border-radius: 0 !important;
-  box-shadow: none !important;
-  padding: 0 !important;
-  background: 0 !important;
-  text-align: justify;
-  border: none;
-}
-body.feed-view .post-outer-container {
-  margin-top: 55px;
-}
-@media (min-width: 969px) {
-  body.item-view .Blog .post-outer {
-    padding: 60px !important;
-  }
-  .blog-pager .blog-pager-newer-link,
-  .blog-pager .blog-pager-older-link {
-    margin: 60px !important;
-  }
-}
 body.item-view .Blog .post-title,
 body.item-view .Blog .post-title a {
   background: 0 0;
@@ -165,32 +148,7 @@ body.item-view .Blog .post-body {
     margin-left: 24px;
     margin-right: 24px;
   }
-  .post-outer {
-    margin: 20px;
-  }
-}
-.material-symbols-rounded {
-  font-family: "Material Symbols Rounded";
-  font-style: normal;
-  font-size: 24px !important;
-  position: absolute;
-  padding: 15px;
-  display: inline-block;
-  line-height: 1;
-  -webkit-font-smoothing: antialiased;
-  text-rendering: optimizeLegibility;
-  -moz-osx-font-smoothing: grayscale;
-  font-feature-settings: "liga";
-  -webkit-font-feature-settings: "liga";
-  -webkit-font-smoothing: antialiased;
-  color: #909090;
-}
-.material-symbols-rounded:hover {
-  color: #606060;
-}
-.material-symbols-rounded:visited {
-  color: #909090;
-}
+ }
 body.item-view .post-body-container img {
   height: auto;
   max-width: 100%;
@@ -201,82 +159,12 @@ body.item-view .Blog .post-body-container {
   margin-bottom: 32px;
   padding: 0px 27px 27px 27px;
 }
-.post-outer {
-  display: flex;
-  position: relative;
-  padding: 10px;
-  text-align: center;
-  margin: 20px;
-  background: linear-gradient(45deg, #111, #000, #000) padding-box,
-    linear-gradient(45deg, transparent 90%, #000, var(--purple)) border-box;
-  border: 3px solid transparent;
-  border-radius: 2px;
-  font-family: dexy !important;
-  clip-path: polygon(
-    30px 0%,
-    100% 0,
-    100% calc(100% - 30px),
-    calc(100% - 30px) 100%,
-    0 100%,
-    0% 30px
-  );
-}
-.post-outer:hover {
-  background: linear-gradient(145deg, #111, #000, #000) padding-box,
-    linear-gradient(45deg, transparent 90%, #000, #c70064) border-box;
-  border: 3px solid transparent;
-  border-radius: 2px;
-  font-family: dexy !important;
-  clip-path: polygon(
-    30px 0%,
-    100% 0,
-    100% calc(100% - 30px),
-    calc(100% - 30px) 100%,
-    0 100%,
-    0% 30px
-  );
-}
-input {
-  box-sizing: border-box;
-  width: 100%;
-  padding: 5px;
-  outline: none;
-  border: none;
-  font-family: classy;
-}
 .blog-pager {
   display: flex;
   width: 90%;
   height: fit-content;
   justify-content: space-between;
 }
-:focus {
-  outline: none;
-}
-.material-symbols-rounded {
-  color: var(--purple);
-}
-.post-link {
-  display: block;
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  z-index: 10;
-  text-decoration: none;
-  color: inherit;
-}
-
-.post-link:hover {
-  cursor: pointer;
-}
-.post-outer:has(.post-body) {
-  margin: 0 !important;
-  padding: 0 !important;
-  max-width: 100% !important;
-}
-
 body.item-view .Blog .post-title-container {
   box-sizing: border-box;
   padding: 0px 40px 0px 40px !important;
@@ -289,38 +177,6 @@ body.item-view .Blog .post-title-container * {
   text-align: left !important;
   letter-spacing: 2px;
   word-spacing: 5px;
-}
-button {
-  display: block;
-  width: fit-content;
-  max-width: 100%;
-  margin: 0 auto;
-  font-family: dexy;
-  background: #181c1f;
-  color: #e0e0e0;
-  border: #171717;
-  padding: 14px;
-  border-radius: 50px;
-  letter-spacing: 2px;
-  cursor: pointer;
-  box-sizing: border-box;
-  text-align: center;
-  white-space: normal;
-  word-break: keep-all;
-  overflow-wrap: normal;
-  hyphens: none;
-  -webkit-hyphens: none;
-  -ms-hyphens: none;
-  flex-shrink: 0;
-  user-select: none;
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-  outline: none;
-  border: 3px solid #272727;
-}
-button:hover {
-  border: 3px solid #181c1f;
 }
 .post-body {
   line-height: 2;
