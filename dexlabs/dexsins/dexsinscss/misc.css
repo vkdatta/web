@@ -218,7 +218,6 @@ ul li {
   position: relative;
   padding-left: 1.27em;
 }
-
 .post-body h1::before,
 .post-body h2::before,
 .post-body h3::before,
@@ -227,8 +226,28 @@ ul li {
   left: 0;
   color: var(--purple);
 }
-
 .post-body h1::before { content: "!1 "; }
 .post-body h2::before { content: "!2 "; }
 .post-body h3::before { content: "!3 "; }
 .post-body h4::before { content: "!4 "; }
+h1,
+h2,
+h3,
+h4,
+.special-container {
+  margin: 2px 0 2px 0 !important;
+  font-family: dexy;
+}
+body.item-view blockquote {
+  font-style: normal;
+  quotes: "\201c""\201d""\2018""\2019";
+}
+body.item-view blockquote::before {
+  content: open-quote;
+}
+body.item-view blockquote::after {
+  content: close-quote;
+}
+.copyright {
+  text-align: center;
+}
