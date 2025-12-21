@@ -273,39 +273,3 @@ document.addEventListener("click", (e) => {
     trimContainer.style.display = value === "trim_columns" ? "flex" : "none";
   }
 });
-window.handleFindReplace = async function () {
-  if (!currentNote || !noteTextarea) return;
-  const r = await showModal({
-    header: `<div class="modal-title">Find and Replace</div>`,
-    body: `<div style="display: flex; gap: 10px; align-items: center;"><div style="flex: 1;"><label class="modal-label">Find</label><input type="text" id="findText" placeholder="Enter text to find"></div></div><div style="display: flex; gap: 10px; align-items: center;"><div style="flex: 1;"><label class="modal-label">Replace</label><input type="text" id="replaceText" placeholder="Enter replacement text" data-skip-validation></div></div><div style="display: flex; align-items: center; margin-top: 8px;"><input type="checkbox" id="caseSensitive" style="color: var(--accent2);margin-right: 6px"><label for="caseSensitive" class="modal-label">Case sensitive</label></div>`,
-    footer: `<button onclick="closeModal()">Cancel</button><button onclick="handleFindReplaceSubmit()" class="modal-btn">Replace</button>`
-  });
-  if (!r || r.action !== "Replace") return;
-  const f = r.findText.trim(),
-    p = r.replaceText,
-    c = r.caseSensitive === true;
-  if (!f) {
-    showNotification("Please enter text to find!");
-    return;
-  }
-  try {
-    const e = f.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"),
-      t = new RegExp(e, c ? "g" : "gi");
-    (noteTextarea.value = noteTextarea.value.replace(t, p)),
-      updateNoteMetadata(),
-      showNotification("Text replaced!");
-  } catch (e) {
-    showNotification("Error in find and replace!");
-  }
-};
-window.handleFindReplaceSubmit = function () {
-  const e = modalScope.findText ? modalScope.findText.value : "",
-    t = modalScope.replaceText ? modalScope.replaceText.value : "",
-    c = modalScope.caseSensitive ? modalScope.caseSensitive.checked : false;
-  closeModal({
-    action: "Replace",
-    findText: e,
-    replaceText: t,
-    caseSensitive: c
-  });
-};
