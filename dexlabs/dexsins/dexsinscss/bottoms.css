@@ -77,3 +77,6 @@
 .share:hover .material-symbols-rounded {
   color: var(--purple);
 }
+.footer {
+  background: 0 0;
+}
