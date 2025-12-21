@@ -72,18 +72,6 @@ body#layout .page {
   vertical-align: top;
   width: 540px;
 }
-.action-link,
-a {
-  color: #00ffd5;
-  cursor: pointer;
-  text-decoration: none;
-}
-.action-link:hover,
-.action-link:visited,
-a:hover,
-a:visited {
-  color: #00ffd5;
-}
 .post-content {
   -webkit-box-flex: 0;
   -webkit-flex: 0 1 auto;
@@ -157,8 +145,7 @@ body.item-view .Blog .post-body {
   body {
     font-size: 16px;
   }
-  .post-title,
-  .post-title a {
+  .post-title {
     font-size: 16px;
   }
   .post-filter-message {
@@ -265,14 +252,6 @@ body.item-view .Blog .post-body-container {
     0% 30px
   );
 }
-body.feed-view .post-outer a {
-  font-family: dexy !important;
-  letter-spacing: 5px;
-  text-transform: uppercase;
-  font-weight: normal !important;
-  color: #fff;
-  font-size: 70% !important;
-}
 input {
   box-sizing: border-box;
   width: 100%;
@@ -310,20 +289,6 @@ input {
 
 .post-link:hover {
   cursor: pointer;
-}
-.post-body a {
-  font-family: dexy;
-  text-decoration: underline;
-  font-size: 90%;
-  color: #909090;
-  padding: 0;
-  margin: 0;
-  letter-spacing: 2px;
-  display: inline-block !important;
-  text-decoration-style: dashed;
-}
-button a {
-  text-decoration: none !important;
 }
 .post-outer:has(.post-body) {
   margin: 0 !important;
