@@ -251,3 +251,10 @@ body.item-view blockquote::after {
 .copyright {
   text-align: center;
 }
+.no-posts-message {
+  margin: 32px;
+}
+b {
+  font-family: dexy;
+  letter-spacing: 1px;
+}
