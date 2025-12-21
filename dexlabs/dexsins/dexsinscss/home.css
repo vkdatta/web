@@ -1,0 +1,100 @@
+.labels-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0px;
+  padding: 30px;
+  width: 85vw;
+  position: relative;
+  overflow: hidden;
+  margin: 0 auto;
+}
+
+.labels-container a {
+  font-family: dexy;
+  font-size: 90%;
+  color: #909090;
+  padding: 12px 30px;
+  margin: 0;
+  letter-spacing: 2px;
+  display: inline-block !important;
+  text-decoration-style: dashed;
+}
+
+.first-button {
+  margin: 5px;
+  transition: all 0.3s ease;
+  position: relative;
+  background: rgba(30, 30, 30, 0.9);
+}
+
+.buttons-grid {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center; /* auto centers odd/even rows */
+  gap: 15px;
+  max-width: calc((170px * 6) + (15px * 5)); /* cap width for 6 buttons max */
+  margin: 0 auto;
+}
+
+.label-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 30px;
+  width: fit-content; /* keep natural size */
+  max-width: 100%; /* prevent overflow */
+  background: rgba(30, 30, 30, 0.9);
+  border: 2px dashed var(--purple);
+  border-radius: 50px;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.label-button:hover {
+  background: #000;
+  color: #fff;
+}
+
+@media (max-width: 900px) {
+  .buttons-grid {
+    max-width: calc((170px * 4) + (15px * 3));
+  }
+}
+
+@media (max-width: 700px) {
+  .buttons-grid {
+    max-width: calc((170px * 3) + (15px * 2));
+  }
+}
+
+@media (max-width: 500px) {
+  .buttons-grid {
+    max-width: 100%;
+    flex-direction: column;
+    align-items: center;
+  }
+}
+.buttons-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.row {
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+}
+
+.label-button {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.5s, transform 0.5s;
+}
+
+.label-button.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
