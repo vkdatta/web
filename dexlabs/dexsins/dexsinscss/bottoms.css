@@ -80,3 +80,9 @@
 .footer {
   background: 0 0;
 }
+@media (min-width: 969px) {
+  .blog-pager .blog-pager-newer-link,
+  .blog-pager .blog-pager-older-link {
+    margin: 60px !important;
+  }
+}
