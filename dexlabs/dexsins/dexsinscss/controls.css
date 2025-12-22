@@ -10,10 +10,6 @@ button {
   border: 1px solid rgba(255, 255, 255, 0.06);
   outline: none;
   border-radius: 8px;
-  hyphens: none;
-  -webkit-hyphens: none;
-  -ms-hyphens: none;
-  flex-shrink: 0;
   user-select: none;
   -webkit-user-select: none;
   -moz-user-select: none;
