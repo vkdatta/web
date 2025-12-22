@@ -17,17 +17,17 @@
   text-underline-offset: 5px;
 }
 @media (max-width: 600px) {
-  * {
+  *,html,body,.post-body {
     font-size: 12px !important;
   }
 }
 @media (min-width: 601px) and (max-width: 968px) {
-  * {
+  *,html,body,.post-body {
     font-size: 14px !important;
   }
 }
 @media (min-width: 969px) {
-  * {
+  *,html,body,.post-body {
     font-size: 17px !important;
   }
 }
