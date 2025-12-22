@@ -35,7 +35,13 @@
   justify-content: center;
   padding: 16px;
 }
-
+.secondary-sidebar button {
+  background: transparent;
+  border: 0;
+  color: inherit;
+  font: inherit;
+  cursor: pointer
+}
 .secondary-sidebar-card {
   width: var(--category-box-width);
   max-width: calc(100% - 32px);
@@ -356,11 +362,4 @@ height: 34px;
 .font-size-control span {
 font-size: 1.2rem;
 }
-}
-.secondary-sidebar button {
-  background: transparent;
-  border: 0;
-  color: inherit;
-  font: inherit;
-  cursor: pointer
 }
