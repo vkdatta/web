@@ -12,40 +12,6 @@ All files are intended for **personal use** and can be directly included via CDN
 
 ---
 
-## CDN Links
-
-Include the scripts and stylesheets at the top of your HTML for easy usage:
-
-```
-<script src="https://cdn.jsdelivr.net/gh/vkdatta/web@main/autosave.js"></script>
-```
-
-```
-<script src="https://cdn.jsdelivr.net/gh/vkdatta/web@main/fullscreen.js"></script>
-```
-
-```
-<script src="https://cdn.jsdelivr.net/gh/vkdatta/web@main/codeblock.js"></script>
-```
-
-```
-<script src="https://cdn.jsdelivr.net/gh/vkdatta/web@main/noteapp.js"></script>
-```
-
-```
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/vkdatta/web@main/noteapp.css">
-```
-
-```
-<script src="https://cdn.jsdelivr.net/gh/vkdatta/web@main/diffapp.js"></script>
-```
-
-```
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/vkdatta/web@main/diffapp.css">
-```
-
----
-
 ## Features & Usage
 
 ### 1. Autosave.js
