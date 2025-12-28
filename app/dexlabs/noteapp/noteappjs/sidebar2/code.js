@@ -1,4 +1,4 @@
- var generateMD5 = function (d) { var r = M(V(Y(X(d), 8 * d.length))); return r.toLowerCase(); }; function M(d) { for (var _, m = "0123456789ABCDEF", f = "", r = 0; r < d.length; r++) (_ = d.charCodeAt(r)), (f += m.charAt((_ >>> 4) & 15) + m.charAt(15 & _)); return f; } function X(d) { for (var _ = Array(d.length >> 2), m = 0; m < _.length; m++) _[m] = 0; for (m = 0; m < 8 * d.length; m += 8) _[m >> 5] |= (255 & d.charCodeAt(m / 8)) << m % 32; return _; } function V(d) { for (var _ = "", m = 0; m < 32 * d.length; m += 8) _ += String.fromCharCode((d[m >> 5] >>> m % 32) & 255); return _; } function Y(d, _) { (d[_ >> 5] |= 128 << _ % 32), (d[14 + (((_ + 64) >>> 9) << 4)] = _); for ( var m = 1732584193, f = -271733879, r = -1732584194, i = 271733878, n = 0; n < d.length; n += 16 ) { var h = m, t = f, g = r, e = i; (f = md5_ii( (f = md5_ii( (f = md5_ii( (f = md5_ii( (f = md5_hh( (f = md5_hh( (f = md5_hh( (f = md5_hh( (f = md5_gg( (f = md5_gg( (f = md5_gg( (f = md5_gg( (f = md5_ff( (f = md5_ff( (f = md5_ff( (f = md5_ff( f, (r = md5_ff( r, (i = md5_ff( i, (m = md5_ff( m, f, r, i, d[n + 0], 7, -680876936 )), f, r, d[n + 1], 12, -389564586 )), m, f, d[n + 2], 17, 606105819 )), i, m, d[n + 3], 22, -1044525330 )), (r = md5_ff( r, (i = md5_ff( i, (m = md5_ff( m, f, r, i, d[n + 4], 7, -176418897 )), f, r, d[n + 5], 12, 1200080426 )), m, f, d[n + 6], 17, -1473231341 )), i, m, d[n + 7], 22, -45705983 )), (r = md5_ff( r, (i = md5_ff( i, (m = md5_ff( m, f, r, i, d[n + 8], 7, 1770035416 )), f, r, d[n + 9], 12, -1958414417 )), m, f, d[n + 10], 17, -42063 )), i, m, d[n + 11], 22, -1990404162 )), (r = md5_ff( r, (i = md5_ff( i, (m = md5_ff( m, f, r, i, d[n + 12], 7, 1804603682 )), f, r, d[n + 13], 12, -40341101 )), m, f, d[n + 14], 17, -1502002290 )), i, m, d[n + 15], 22, 1236535329 )), (r = md5_gg( r, (i = md5_gg( i, (m = md5_gg( m, f, r, i, d[n + 1], 5, -165796510 )), f, r, d[n + 6], 9, -1069501632 )), m, f, d[n + 11], 14, 643717713 )), i, m, d[n + 0], 20, -373897302 )), (r = md5_gg( r, (i = md5_gg( i, (m = md5_gg(m, f, r, i, d[n + 5], 5, -701558691)), f, r, d[n + 10], 9, 38016083 )), m, f, d[n + 15], 14, -660478335 )), i, m, d[n + 4], 20, -405537848 )), (r = md5_gg( r, (i = md5_gg( i, (m = md5_gg(m, f, r, i, d[n + 9], 5, 568446438)), f, r, d[n + 14], 9, -1019803690 )), m, f, d[n + 3], 14, -187363961 )), i, m, d[n + 8], 20, 1163531501 )), (r = md5_gg( r, (i = md5_gg( i, (m = md5_gg(m, f, r, i, d[n + 13], 5, -1444681467)), f, r, d[n + 2], 9, -51403784 )), m, f, d[n + 7], 14, 1735328473 )), i, m, d[n + 12], 20, -1926607734 )), (r = md5_hh( r, (i = md5_hh( i, (m = md5_hh(m, f, r, i, d[n + 5], 4, -378558)), f, r, d[n + 8], 11, -2022574463 )), m, f, d[n + 11], 16, 1839030562 )), i, m, d[n + 14], 23, -35309556 )), (r = md5_hh( r, (i = md5_hh( i, (m = md5_hh(m, f, r, i, d[n + 1], 4, -1530992060)), f, r, d[n + 4], 11, 1272893353 )), m, f, d[n + 7], 16, -155497632 )), i, m, d[n + 10], 23, -1094730640 )), (r = md5_hh( r, (i = md5_hh( i, (m = md5_hh(m, f, r, i, d[n + 13], 4, 681279174)), f, r, d[n + 0], 11, -358537222 )), m, f, d[n + 3], 16, -722521979 )), i, m, d[n + 6], 23, 76029189 )), (r = md5_hh( r, (i = md5_hh( i, (m = md5_hh(m, f, r, i, d[n + 9], 4, -640364487)), f, r, d[n + 12], 11, -421815835 )), m, f, d[n + 15], 16, 530742520 )), i, m, d[n + 2], 23, -995338651 )), (r = md5_ii( r, (i = md5_ii( i, (m = md5_ii(m, f, r, i, d[n + 0], 6, -198630844)), f, r, d[n + 7], 10, 1126891415 )), m, f, d[n + 14], 15, -1416354905 )), i, m, d[n + 5], 21, -57434055 )), (r = md5_ii( r, (i = md5_ii( i, (m = md5_ii(m, f, r, i, d[n + 12], 6, 1700485571)), f, r, d[n + 3], 10, -1894986606 )), m, f, d[n + 10], 15, -1051523 )), i, m, d[n + 1], 21, -2054922799 )), (r = md5_ii( r, (i = md5_ii( i, (m = md5_ii(m, f, r, i, d[n + 8], 6, 1873313359)), f, r, d[n + 15], 10, -30611744 )), m, f, d[n + 6], 15, -1560198380 )), i, m, d[n + 13], 21, 1309151649 )), (r = md5_ii( r, (i = md5_ii( i, (m = md5_ii(m, f, r, i, d[n + 4], 6, -145523070)), f, r, d[n + 11], 10, -1120210379 )), m, f, d[n + 2], 15, 718787259 )), i, m, d[n + 9], 21, -343485551 )), (m = safe_add(m, h)), (f = safe_add(f, t)), (r = safe_add(r, g)), (i = safe_add(i, e)); } return Array(m, f, r, i); } function md5_cmn(d, _, m, f, r, i) { return safe_add(bit_rol(safe_add(safe_add(_, d), safe_add(f, i)), r), m); } function md5_ff(d, _, m, f, r, i, n) { return md5_cmn((_ & m) | (~_ & f), d, _, r, i, n); } function md5_gg(d, _, m, f, r, i, n) { return md5_cmn((_ & f) | (m & ~f), d, _, r, i, n); } function md5_hh(d, _, m, f, r, i, n) { return md5_cmn(_ ^ m ^ f, d, _, r, i, n); } function md5_ii(d, _, m, f, r, i, n) { return md5_cmn(m ^ (_ | ~f), d, _, r, i, n); } function safe_add(d, _) { var m = (65535 & d) + (65535 & _); return (((d >> 16) + (_ >> 16) + (m >> 16)) << 16) | (65535 & m); } function bit_rol(d, _) { return (d << _) | (d >>> (32 - _)); }
+var generateMD5 = function (d) { var r = M(V(Y(X(d), 8 * d.length))); return r.toLowerCase(); }; function M(d) { for (var _, m = "0123456789ABCDEF", f = "", r = 0; r < d.length; r++) (_ = d.charCodeAt(r)), (f += m.charAt((_ >>> 4) & 15) + m.charAt(15 & _)); return f; } function X(d) { for (var _ = Array(d.length >> 2), m = 0; m < _.length; m++) _[m] = 0; for (m = 0; m < 8 * d.length; m += 8) _[m >> 5] |= (255 & d.charCodeAt(m / 8)) << m % 32; return _; } function V(d) { for (var _ = "", m = 0; m < 32 * d.length; m += 8) _ += String.fromCharCode((d[m >> 5] >>> m % 32) & 255); return _; } function Y(d, _) { (d[_ >> 5] |= 128 << _ % 32), (d[14 + (((_ + 64) >>> 9) << 4)] = _); for ( var m = 1732584193, f = -271733879, r = -1732584194, i = 271733878, n = 0; n < d.length; n += 16 ) { var h = m, t = f, g = r, e = i; (f = md5_ii( (f = md5_ii( (f = md5_ii( (f = md5_ii( (f = md5_hh( (f = md5_hh( (f = md5_hh( (f = md5_hh( (f = md5_gg( (f = md5_gg( (f = md5_gg( (f = md5_gg( (f = md5_ff( (f = md5_ff( (f = md5_ff( (f = md5_ff( f, (r = md5_ff( r, (i = md5_ff( i, (m = md5_ff( m, f, r, i, d[n + 0], 7, -680876936 )), f, r, d[n + 1], 12, -389564586 )), m, f, d[n + 2], 17, 606105819 )), i, m, d[n + 3], 22, -1044525330 )), (r = md5_ff( r, (i = md5_ff( i, (m = md5_ff( m, f, r, i, d[n + 4], 7, -176418897 )), f, r, d[n + 5], 12, 1200080426 )), m, f, d[n + 6], 17, -1473231341 )), i, m, d[n + 7], 22, -45705983 )), (r = md5_ff( r, (i = md5_ff( i, (m = md5_ff( m, f, r, i, d[n + 8], 7, 1770035416 )), f, r, d[n + 9], 12, -1958414417 )), m, f, d[n + 10], 17, -42063 )), i, m, d[n + 11], 22, -1990404162 )), (r = md5_ff( r, (i = md5_ff( i, (m = md5_ff( m, f, r, i, d[n + 12], 7, 1804603682 )), f, r, d[n + 13], 12, -40341101 )), m, f, d[n + 14], 17, -1502002290 )), i, m, d[n + 15], 22, 1236535329 )), (r = md5_gg( r, (i = md5_gg( i, (m = md5_gg( m, f, r, i, d[n + 1], 5, -165796510 )), f, r, d[n + 6], 9, -1069501632 )), m, f, d[n + 11], 14, 643717713 )), i, m, d[n + 0], 20, -373897302 )), (r = md5_gg( r, (i = md5_gg( i, (m = md5_gg(m, f, r, i, d[n + 5], 5, -701558691)), f, r, d[n + 10], 9, 38016083 )), m, f, d[n + 15], 14, -660478335 )), i, m, d[n + 4], 20, -405537848 )), (r = md5_gg( r, (i = md5_gg( i, (m = md5_gg(m, f, r, i, d[n + 9], 5, 568446438)), f, r, d[n + 14], 9, -1019803690 )), m, f, d[n + 3], 14, -187363961 )), i, m, d[n + 8], 20, 1163531501 )), (r = md5_gg( r, (i = md5_gg( i, (m = md5_gg(m, f, r, i, d[n + 13], 5, -1444681467)), f, r, d[n + 2], 9, -51403784 )), m, f, d[n + 7], 14, 1735328473 )), i, m, d[n + 12], 20, -1926607734 )), (r = md5_hh( r, (i = md5_hh( i, (m = md5_hh(m, f, r, i, d[n + 5], 4, -378558)), f, r, d[n + 8], 11, -2022574463 )), m, f, d[n + 11], 16, 1839030562 )), i, m, d[n + 14], 23, -35309556 )), (r = md5_hh( r, (i = md5_hh( i, (m = md5_hh(m, f, r, i, d[n + 1], 4, -1530992060)), f, r, d[n + 4], 11, 1272893353 )), m, f, d[n + 7], 16, -155497632 )), i, m, d[n + 10], 23, -1094730640 )), (r = md5_hh( r, (i = md5_hh( i, (m = md5_hh(m, f, r, i, d[n + 13], 4, 681279174)), f, r, d[n + 0], 11, -358537222 )), m, f, d[n + 3], 16, -722521979 )), i, m, d[n + 6], 23, 76029189 )), (r = md5_hh( r, (i = md5_hh( i, (m = md5_hh(m, f, r, i, d[n + 9], 4, -640364487)), f, r, d[n + 12], 11, -421815835 )), m, f, d[n + 15], 16, 530742520 )), i, m, d[n + 2], 23, -995338651 )), (r = md5_ii( r, (i = md5_ii( i, (m = md5_ii(m, f, r, i, d[n + 0], 6, -198630844)), f, r, d[n + 7], 10, 1126891415 )), m, f, d[n + 14], 15, -1416354905 )), i, m, d[n + 5], 21, -57434055 )), (r = md5_ii( r, (i = md5_ii( i, (m = md5_ii(m, f, r, i, d[n + 12], 6, 1700485571)), f, r, d[n + 3], 10, -1894986606 )), m, f, d[n + 10], 15, -1051523 )), i, m, d[n + 1], 21, -2054922799 )), (r = md5_ii( r, (i = md5_ii( i, (m = md5_ii(m, f, r, i, d[n + 8], 6, 1873313359)), f, r, d[n + 15], 10, -30611744 )), m, f, d[n + 6], 15, -1560198380 )), i, m, d[n + 13], 21, 1309151649 )), (r = md5_ii( r, (i = md5_ii( i, (m = md5_ii(m, f, r, i, d[n + 4], 6, -145523070)), f, r, d[n + 11], 10, -1120210379 )), m, f, d[n + 2], 15, 718787259 )), i, m, d[n + 9], 21, -343485551 )), (m = safe_add(m, h)), (f = safe_add(f, t)), (r = safe_add(r, g)), (i = safe_add(i, e)); } return Array(m, f, r, i); } function md5_cmn(d, _, m, f, r, i) { return safe_add(bit_rol(safe_add(safe_add(_, d), safe_add(f, i)), r), m); } function md5_ff(d, _, m, f, r, i, n) { return md5_cmn((_ & m) | (~_ & f), d, _, r, i, n); } function md5_gg(d, _, m, f, r, i, n) { return md5_cmn((_ & f) | (m & ~f), d, _, r, i, n); } function md5_hh(d, _, m, f, r, i, n) { return md5_cmn(_ ^ m ^ f, d, _, r, i, n); } function md5_ii(d, _, m, f, r, i, n) { return md5_cmn(m ^ (_ | ~f), d, _, r, i, n); } function safe_add(d, _) { var m = (65535 & d) + (65535 & _); return (((d >> 16) + (_ >> 16) + (m >> 16)) << 16) | (65535 & m); } function bit_rol(d, _) { return (d << _) | (d >>> (32 - _)); }
 window.MD5 = () => {
   if (!noteTextarea) return;
   noteTextarea.value = generateMD5(noteTextarea.value);
@@ -281,264 +281,338 @@ window.optimisejs = preserveSelection(async () => {
 });
 
 window.optimisecss = preserveSelection(async () => {
-  if (!currentNote || !noteTextarea) return;
-  try {
-    let css = noteTextarea.value || "";
-    css = css.replace(/\/\*[\s\S]*?\*\//g, "");
-    css = css.replace(/<!--[\s\S]*?-->/g, "");
-    css = css.replace(/(^|[^:])\/\/.*$/gm, (m, p1) => p1);
-    css = css.replace(/\r\n?/g, "\n");
-    function parseNodes(text, start = 0, end = text.length) {
-      const nodes = [];
-      let i = start;
-      const skipWhitespace = () => { while (i < end && /\s/.test(text[i])) i++; };
-      while (i < end) {
-        skipWhitespace();
-        if (i >= end) break;
-        if (text[i] === "@") {
-          const atStart = i;
-          while (i < end && text[i] !== "{" && text[i] !== ";") i++;
-          const header = text.slice(atStart, i).trim();
-          if (i < end && text[i] === ";") {
-            i++;
-            nodes.push({ type: "prelude", text: header + ";" });
-            continue;
+if (!currentNote || !noteTextarea) return;
+  function extractStyleBlocks(text) {
+    if (!text) return "";
+    const styleRE = /<style\b[^>]*>([\s\S]*?)<\/style\s*>/gi;
+    const matches = [];
+    let m;
+    while ((m = styleRE.exec(text)) !== null) matches.push(m[1]);
+    if (matches.length) return matches.join("\n\n");
+    return text;
+  }
+  class Tokenizer {
+    constructor(css) {
+      this.css = css || "";
+      this.len = this.css.length;
+      this.pos = 0;
+    }
+    eof() { return this.pos >= this.len; }
+    peek(n = 0) { return this.css[this.pos + n]; }
+    next() { const c = this.css[this.pos]; this.pos++; return c; }
+    isWhitespace(ch) {
+      if (!ch) return false;
+      return ch === ' ' || ch === '\t' || ch === '\n' || ch === '\r' || ch === '\f';
+    }
+    skipWhitespaceAndComments() {
+      while (!this.eof()) {
+        const ch = this.peek();
+        if (this.isWhitespace(ch)) { this.pos++; continue; }
+        if (ch === '/' && this.peek(1) === '*') {
+          this.pos += 2;
+          while (!this.eof()) {
+            if (this.peek() === '*' && this.peek(1) === '/') { this.pos += 2; break; }
+            this.pos++;
           }
-          if (i >= end || text[i] !== "{") {
-            nodes.push({ type: "prelude", text: text.slice(atStart).trim() });
-            break;
-          }
-          const braceOpen = i;
-          i++;
-          let depth = 1;
-          const bodyStart = i;
-          while (i < end && depth > 0) {
-            if (text[i] === "{") depth++;
-            else if (text[i] === "}") depth--;
-            i++;
-          }
-          if (depth !== 0) {
-            nodes.push({ type: "prelude", text: text.slice(atStart).trim() });
-            break;
-          }
-          const bodyEnd = i - 1;
-          const params = header.replace(/^\@/, "").trim();
-          const inner = parseNodes(text, bodyStart, bodyEnd);
-          nodes.push({ type: "atrule", header: header, params: params, children: inner });
           continue;
         }
-        const nextBrace = text.indexOf("{", i);
-        if (nextBrace === -1) {
-          const remainder = text.slice(i).trim();
-          if (remainder) nodes.push({ type: "prelude", text: remainder });
-          break;
-        }
-        const selectorText = text.slice(i, nextBrace).trim();
-        let j = nextBrace + 1;
-        let depth = 1;
-        while (j < end && depth > 0) {
-          if (text[j] === "{") depth++;
-          else if (text[j] === "}") depth--;
-          j++;
-        }
-        if (depth !== 0) {
-          const remainder = text.slice(i).trim();
-          nodes.push({ type: "prelude", text: remainder });
-          break;
-        }
-        const bodyText = text.slice(nextBrace + 1, j - 1);
-        const declParts = bodyText.split(";").map(s => s.trim()).filter(Boolean);
-        const decls = [];
-        for (const p of declParts) {
-          const colon = p.indexOf(":");
-          if (colon === -1) continue;
-          const prop = p.slice(0, colon).trim();
-          const val = p.slice(colon + 1).trim();
-          if (prop) decls.push({ prop, val });
-        }
-        nodes.push({ type: "rule", selectorText: selectorText, decls });
-        i = j;
+        break;
       }
-      return nodes;
     }
-    const MAX_PAIRWISE = 120;
-    function processContainer(nodes) {
-      const preludeNodes = [];
-      const ruleNodes = [];
-      const atruleNodes = [];
-      for (const node of nodes) {
-        if (node.type === "atrule") {
-          node.children = processContainer(node.children);
-          atruleNodes.push(node);
-        } else if (node.type === "rule") {
-          ruleNodes.push(node);
-        } else {
-          preludeNodes.push(node);
-        }
-      }
-      const selectorOccs = new Map();
-      let ruleCounter = 0;
-      for (const rn of ruleNodes) {
-        const sls = rn.selectorText.split(",").map(s => s.trim()).filter(Boolean);
-        for (const s of sls) {
-          if (!selectorOccs.has(s)) selectorOccs.set(s, { occurrences: [], firstSeen: ruleCounter });
-          selectorOccs.get(s).occurrences.push({ decls: rn.decls, order: ruleCounter++ });
-        }
-        if (sls.length === 0) ruleCounter++;
-      }
-      const selectorMerged = new Map();
-      for (const [sel, info] of selectorOccs.entries()) {
-        const occs = info.occurrences;
-        const seen = new Set();
-        const merged = [];
-        for (let k = occs.length - 1; k >= 0; k--) {
-          const decls = occs[k].decls;
-          for (const d of decls) {
-            if (seen.has(d.prop)) continue;
-            seen.add(d.prop);
-            merged.push({ prop: d.prop, val: d.val, order: occs[k].order });
+    consumeString(quote) {
+      let out = quote;
+      this.pos++;
+      while (!this.eof()) {
+        const ch = this.next();
+        out += ch;
+        if (ch === '\\') {
+          if (!this.eof()) {
+            out += this.consumeEscapeForString();
           }
+        } else if (ch === quote) {
+          break;
         }
-        selectorMerged.set(sel, { mergedDecls: merged, firstSeen: info.firstSeen });
-      }
-      const sigMap = new Map();
-      for (const [sel, data] of selectorMerged.entries()) {
-        const sig = data.mergedDecls.map(d => d.prop + ":" + d.val).join(";;");
-        if (!sigMap.has(sig)) sigMap.set(sig, []);
-        sigMap.get(sig).push(sel);
-      }
-      let blocks = [];
-      for (const [sig, sels] of sigMap.entries()) {
-        if (!sels || sels.length === 0) continue;
-        const decls = selectorMerged.get(sels[0]).mergedDecls.slice();
-        const orderKey = Math.min(...sels.map(s => selectorMerged.get(s).firstSeen || 0));
-        blocks.push({ selectors: sels.slice(), decls, orderKey });
-      }
-      const allSels = Array.from(selectorMerged.keys());
-      if (allSels.length <= MAX_PAIRWISE) {
-        const selMap = new Map();
-        for (const s of allSels) {
-          const arr = selectorMerged.get(s).mergedDecls || [];
-          const m = new Map(arr.map(d => [d.prop, d.val]));
-          selMap.set(s, m);
-        }
-        const blockLen = (sels, decls) => {
-          const selText = sels.join(", ");
-          let body = "";
-          for (const d of decls) body += d.prop + ": " + d.val + ";";
-          return selText.length + 3 + body.length + 1;
-        };
-        for (let a = 0; a < allSels.length; a++) {
-          for (let b = a + 1; b < allSels.length; b++) {
-            const sa = allSels[a], sb = allSels[b];
-            const ma = selMap.get(sa);
-            const mb = selMap.get(sb);
-            if (!ma || !mb) continue;
-            const common = [];
-            for (const [p, v] of ma.entries()) {
-              if (mb.has(p) && mb.get(p) === v) common.push({ prop: p, val: v });
-            }
-            if (common.length === 0) continue;
-            const remainderA = [];
-            const remainderB = [];
-            for (const [p, v] of ma.entries()) if (!mb.has(p) || mb.get(p) !== v) remainderA.push({ prop: p, val: v });
-            for (const [p, v] of mb.entries()) if (!ma.has(p) || ma.get(p) !== v) remainderB.push({ prop: p, val: v });
-            const before = blockLen([sa], Array.from(ma.entries()).map(([p, v]) => ({ prop: p, val: v })))
-                         + blockLen([sb], Array.from(mb.entries()).map(([p, v]) => ({ prop: p, val: v })));
-            const after = blockLen([sa, sb], common)
-                        + (remainderA.length ? blockLen([sa], remainderA) : 0)
-                        + (remainderB.length ? blockLen([sb], remainderB) : 0);
-            if (after < before) {
-              for (const c of common) {
-                ma.delete(c.prop);
-                mb.delete(c.prop);
-              }
-              selMap.set(sa, ma);
-              selMap.set(sb, mb);
-              const rebuild = (sel, mapObj) => {
-                const orig = selectorMerged.get(sel).mergedDecls || [];
-                const arr = [];
-                for (const od of orig) if (mapObj.has(od.prop)) arr.push({ prop: od.prop, val: mapObj.get(od.prop) });
-                return arr;
-              };
-              selectorMerged.get(sa).mergedDecls = rebuild(sa, ma);
-              selectorMerged.get(sb).mergedDecls = rebuild(sb, mb);
-              const commonSig = common.map(d => d.prop + ":" + d.val).join(";;");
-              let found = blocks.find(bk => bk.decls.map(dd => dd.prop + ":" + dd.val).join(";;") === commonSig);
-              if (!found) {
-                blocks.push({ selectors: [sa, sb], decls: common.slice(), orderKey: Math.min(selectorMerged.get(sa).firstSeen || 0, selectorMerged.get(sb).firstSeen || 0) });
-              } else {
-                for (const s of [sa, sb]) if (!found.selectors.includes(s)) found.selectors.push(s);
-              }
-            }
-          }
-        }
-        const rebuilt = new Map();
-        for (const [sel, data] of selectorMerged.entries()) {
-          const decls = data.mergedDecls || [];
-          if (!decls.length) continue;
-          const sig = decls.map(d => d.prop + ":" + d.val).join(";;");
-          if (!rebuilt.has(sig)) rebuilt.set(sig, { selectors: [], decls: decls.slice(), orderKey: data.firstSeen || 0 });
-          rebuilt.get(sig).selectors.push(sel);
-        }
-        for (const blk of blocks) {
-          const sig = blk.decls.map(d => d.prop + ":" + d.val).join(";;");
-          if (!rebuilt.has(sig)) rebuilt.set(sig, { selectors: blk.selectors.slice(), decls: blk.decls.slice(), orderKey: blk.orderKey || 0 });
-          else {
-            const t = rebuilt.get(sig);
-            for (const s of blk.selectors) if (!t.selectors.includes(s)) t.selectors.push(s);
-            t.orderKey = Math.min(t.orderKey, blk.orderKey || 0);
-          }
-        }
-        blocks = Array.from(rebuilt.values());
-        blocks.sort((a, b) => (a.orderKey || 0) - (b.orderKey || 0));
-      }
-      const out = [];
-      for (const p of preludeNodes) out.push(p);
-      for (const ar of atruleNodes) out.push(ar);
-      for (const blk of blocks) {
-        out.push({ type: "rulegroup", selectors: blk.selectors.slice(), decls: blk.decls.slice() });
       }
       return out;
     }
-    const rootNodes = parseNodes(css, 0, css.length);
-    const processed = processContainer(rootNodes);
-    function serialize(nodes) {
-      const lines = [];
-      for (const node of nodes) {
-        if (!node) continue;
-        if (node.type === "prelude") {
-          lines.push(node.text);
-          continue;
+    consumeEscapeForString() {
+      if (this.eof()) return '';
+      const hexMatch = /^[0-9A-Fa-f]$/.test(this.peek()) ? true : false;
+      let acc = '';
+      if (hexMatch) {
+        let count = 0;
+        while (!this.eof() && count < 6 && /^[0-9A-Fa-f]$/.test(this.peek())) {
+          acc += this.next();
+          count++;
         }
-        if (node.type === "atrule") {
-          lines.push(node.header + " {");
-          const inner = serialize(node.children || []);
-          if (inner) {
-            lines.push(inner.trim());
-          }
-          lines.push("}");
-          continue;
+        if (!this.eof() && this.isWhitespace(this.peek())) {
+          acc += this.next();
         }
-        if (node.type === "rulegroup") {
-          lines.push(node.selectors.join(", ") + " {");
-          for (const d of node.decls) {
-            lines.push(d.prop + ": " + d.val + ";");
-          }
-          lines.push("}");
-          continue;
-        }
-        if (node.text) lines.push(node.text);
+        return acc;
+      } else {
+        acc += this.next();
+        return acc;
       }
-      return lines.join("\n");
     }
-    const finalCss = serialize(processed).replace(/\n{2,}/g, "\n").trim() + (processed.length ? "\n" : "");
+    consumeUntil(delimiters = []) {
+      let out = '';
+      while (!this.eof()) {
+        const ch = this.peek();
+        if (delimiters.includes(ch)) break;
+        if (ch === '\\') {
+          out += this.next();
+          out += this.consumeEscapeForString();
+          continue;
+        }
+        if (ch === '"' || ch === "'") {
+          out += this.consumeString(ch);
+          continue;
+        }
+        if (ch === '(') {
+          out += this.next();
+          let depth = 1;
+          while (!this.eof() && depth > 0) {
+            const c2 = this.peek();
+            if (c2 === '"' || c2 === "'") {
+              out += this.consumeString(this.peek());
+            } else {
+              if (c2 === '(') depth++;
+              if (c2 === ')') depth--;
+              out += this.next();
+            }
+          }
+          continue;
+        }
+        out += this.next();
+      }
+      return out.trim();
+    }
+  }
+  class Parser extends Tokenizer {
+    constructor(css) { super(css); }
+    parseDeclarations() {
+      const decls = [];
+      while (!this.eof()) {
+        this.skipWhitespaceAndComments();
+        if (this.eof()) break;
+        const ch = this.peek();
+        if (ch === '}') break;
+        const rawProp = this.consumeUntil([':', ';', '}']);
+        if (this.eof()) break;
+        if (this.peek() !== ':') {
+          if (this.peek() === ';') { this.next(); continue; }
+          while (!this.eof() && this.peek() !== ';' && this.peek() !== '}') this.pos++;
+          if (this.peek() === ';') this.next();
+          continue;
+        }
+        this.next();
+        const rawVal = this.consumeUntil([';', '}']);
+        if (this.peek() === ';') this.next();
+        let prop = rawProp.trim();
+        let val = rawVal.trim();
+        if (!prop) continue;
+        let important = false;
+        const impIdx = val.toLowerCase().lastIndexOf('!important');
+        if (impIdx !== -1 && val.slice(impIdx).toLowerCase().startsWith('!important')) {
+          important = true;
+          val = val.slice(0, impIdx).trim();
+        }
+        decls.push({ prop: prop.toLowerCase(), val, important });
+      }
+      return decls;
+    }
+    parseKeyframesBody() {
+      const frames = [];
+      while (!this.eof()) {
+        this.skipWhitespaceAndComments();
+        if (this.eof()) break;
+        if (this.peek() === '}') break;
+        const selector = this.consumeUntil(['{']);
+        if (this.peek() !== '{') {
+          while (!this.eof() && this.peek() !== '{' && this.peek() !== '}') this.pos++;
+          if (this.peek() !== '{') continue;
+        }
+        this.next();
+        const decls = this.parseDeclarations();
+        frames.push({ selector: selector.trim(), decls });
+        if (this.peek() === '}') this.next();
+      }
+      return frames;
+    }
+    parseBlock() {
+      const nodes = [];
+      while (!this.eof()) {
+        this.skipWhitespaceAndComments();
+        if (this.eof()) break;
+        if (this.peek() === '}') break;
+        const header = this.consumeUntil(['{', ';', '}']);
+        if (this.peek() === ';') {
+          this.next();
+          nodes.push({ type: 'stmt', header: header.trim() });
+          continue;
+        }
+        if (this.peek() === '{') {
+          this.next();
+          const hLower = header.trim().toLowerCase();
+          const isKeyframes = hLower.startsWith('@keyframes') || hLower.startsWith('@-webkit-keyframes') || hLower.startsWith('@-moz-keyframes');
+          const isAtRule = header.trim().startsWith('@');
+          if (isKeyframes) {
+            const children = this.parseKeyframesBody();
+            nodes.push({ type: 'keyframes', header: header.trim(), children });
+            if (this.peek() === '}') this.next();
+            continue;
+          }
+          if (isAtRule) {
+            if (hLower.startsWith('@font-face') || hLower.startsWith('@page')) {
+              const decls = this.parseDeclarations();
+              nodes.push({ type: 'rule', selector: header.trim(), decls });
+              if (this.peek() === '}') this.next();
+            } else {
+              const children = this.parseBlock();
+              nodes.push({ type: 'at-block', header: header.trim(), children });
+              if (this.peek() === '}') this.next();
+            }
+            continue;
+          }
+          const decls = this.parseDeclarations();
+          nodes.push({ type: 'rule', selector: header.trim(), decls });
+          if (this.peek() === '}') this.next();
+          continue;
+        }
+        this.pos++;
+      }
+      return nodes;
+    }
+  }
+  function hasCustomPropertyOrVarUsage(decls) {
+    for (const d of decls) {
+      if (d.prop && d.prop.startsWith('--')) return true;
+      if (d.val && /\bvar\s*\(/.test(d.val)) return true;
+    }
+    return false;
+  }
+  function declSignature(decls) {
+    return decls.map(d => `${d.prop}:${d.val}${d.important ? '!imp' : ''}`).join(';');
+  }
+  function shallowCloneDecl(d) { return { prop: d.prop, val: d.val, important: !!d.important }; }
+  function optimizeNodes(nodes) {
+    const out = [];
+    for (const node of nodes) {
+      if (node.type === 'at-block') {
+        node.children = optimizeNodes(node.children || []);
+        out.push(node);
+        continue;
+      }
+      if (node.type === 'stmt' || node.type === 'keyframes') {
+        out.push(node);
+        continue;
+      }
+      if (node.type === 'rule') {
+        const seenIndex = new Map();
+        const resultDecls = [];
+        for (const d of node.decls) {
+          const prop = d.prop;
+          if (seenIndex.has(prop)) {
+            const idx = seenIndex.get(prop);
+            const existing = resultDecls[idx];
+            if (existing.important && !d.important) {
+              continue;
+            }
+            resultDecls[idx] = shallowCloneDecl(d);
+            continue;
+          } else {
+            seenIndex.set(prop, resultDecls.length);
+            resultDecls.push(shallowCloneDecl(d));
+          }
+        }
+        node.decls = resultDecls;
+        if (node.decls.length === 0) continue;
+        const prev = out.length ? out[out.length - 1] : null;
+        if (prev && prev.type === 'rule' && prev.selector === node.selector) {
+          for (const d of node.decls) {
+            const idx = prev.decls.findIndex(p => p.prop === d.prop);
+            if (idx >= 0) {
+              const existing = prev.decls[idx];
+              if (existing.important && !d.important) {
+                continue;
+              } else {
+                prev.decls[idx] = shallowCloneDecl(d);
+              }
+            } else {
+              prev.decls.push(shallowCloneDecl(d));
+            }
+          }
+          continue;
+        }
+        if (prev && prev.type === 'rule') {
+          if (!hasCustomPropertyOrVarUsage(prev.decls) && !hasCustomPropertyOrVarUsage(node.decls)) {
+            const sigPrev = declSignature(prev.decls);
+            const sigNode = declSignature(node.decls);
+            if (sigPrev === sigNode) {
+              prev.selector = `${prev.selector}, ${node.selector}`;
+              continue;
+            }
+          }
+        }
+        out.push(node);
+      }
+    }
+    return out;
+  }
+  function serialize(nodes, depth = 0) {
+    const indent = ' '.repeat(depth);
+    let out = '';
+    for (const node of nodes) {
+      if (node.type === 'stmt') {
+        out += `${indent}${node.header};\n`;
+      } else if (node.type === 'keyframes') {
+        out += `${indent}${node.header} {\n`;
+        for (const frame of node.children) {
+          out += `${indent}  ${frame.selector} {\n`;
+          for (const d of frame.decls) {
+            out += `${indent}    ${d.prop}: ${d.val}${d.important ? ' !important' : ''};\n`;
+          }
+          out += `${indent}  }\n`;
+        }
+        out += `${indent}}\n`;
+      } else if (node.type === 'at-block') {
+        out += `${indent}${node.header} {\n`;
+        out += serialize(node.children, depth + 1);
+        out += `${indent}}\n`;
+      } else if (node.type === 'rule') {
+        const sel = node.selector.split(',').map(s => s.trim()).filter(Boolean).join(', ');
+        out += `${indent}${sel} {\n`;
+        for (const d of node.decls) {
+          out += `${indent}  ${d.prop}: ${d.val}${d.important ? ' !important' : ''};\n`;
+        }
+        out += `${indent}}\n`;
+      }
+    }
+    return out;
+  }
+  try {
+    if (!noteTextarea) {
+      const msg = 'No textarea found to optimize.';
+      if (typeof showNotification === 'function') showNotification(msg);
+      else console.warn(msg);
+      return;
+    }
+    let input = noteTextarea.value || '';
+    input = extractStyleBlocks(input);
+    const parser = new Parser(input);
+    const ast = parser.parseBlock();
+    const optimizedAst = optimizeNodes(ast);
+    let finalCss = serialize(optimizedAst);
+    finalCss = finalCss.replace(/\n{3,}/g, '\n\n').trim() + '\n';
     noteTextarea.value = finalCss;
-    updateNoteMetadata();
-    showNotification("CSS optimized including @-rules and @media blocks.");
+    if (typeof updateNoteMetadata === 'function') {
+      try { updateNoteMetadata(); } catch (e) {  }
+    }
+    if (typeof showNotification === 'function') showNotification('CSS optimized (safe mode)');
+    else console.info('CSS optimized (safe mode)');
   } catch (err) {
-    console.error("optimizeCssWithAtRules error:", err);
-    showNotification("Failed to optimize CSS");
+    console.error('Optimizer error:', err);
+    if (typeof showNotification === 'function') showNotification('CSS optimization failed: ' + (err && err.message ? err.message : String(err)));
   }
 });
 
