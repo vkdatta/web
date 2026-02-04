@@ -280,6 +280,106 @@ window.optimisejs = preserveSelection(async () => {
   }
 });
 
+window.optimisecss = preserveSelection(async () => { if (!currentNote || !noteTextarea) return; function extractStyleBlocks(text) { if (!text) return ""; const styleRE = /<style\b[^>]*>([\s\S]*?)<\/style\s*>/gi; const matches = []; let m; while ((m = styleRE.exec(text)) !== null) matches.push(m[1]); if (matches.length) return matches.join("\n\n"); return text; } class Tokenizer { constructor(css) { this.css = css || ""; this.len = this.css.length; this.pos = 0; } eof() { return this.pos >= this.len; } peek(n = 0) { return this.css[this.pos + n]; } next() { const c = this.css[this.pos]; this.pos++; return c; } isWhitespace(ch) { if (!ch) return false; return ch === ' ' || ch === '\t' || ch === '\n' || ch === '\r' || ch === '\f'; } skipWhitespaceAndComments() { while (!this.eof()) { const ch = this.peek(); if (this.isWhitespace(ch)) { this.pos++; continue; } if (ch === '/' && this.peek(1) === '*') { this.pos += 2; while (!this.eof()) { if (this.peek() === '*' && this.peek(1) === '/') { this.pos += 2; break; } this.pos++; } continue; } break; } } consumeString(quote) { let out = quote; this.pos++; while (!this.eof()) { const ch = this.next(); out += ch; if (ch === '\\') { if (!this.eof()) { out += this.consumeEscapeForString(); } } else if (ch === quote) { break; } } return out; } consumeEscapeForString() { if (this.eof()) return ''; const hexMatch = /^[0-9A-Fa-f]$/.test(this.peek()) ? true : false; let acc = ''; if (hexMatch) { let count = 0; while (!this.eof() && count < 6 && /^[0-9A-Fa-f]$/.test(this.peek())) { acc += this.next(); count++; } if (!this.eof() && this.isWhitespace(this.peek())) { acc += this.next(); } return acc; } else { acc += this.next(); return acc; } } consumeUntil(delimiters = []) { let out = ''; while (!this.eof()) { const ch = this.peek(); if (delimiters.includes(ch)) break; if (ch === '\\') { out += this.next(); out += this.consumeEscapeForString(); continue; } if (ch === '"' || ch === "'") { out += this.consumeString(ch); continue; } if (ch === '(') { out += this.next(); let depth = 1; while (!this.eof() && depth > 0) { const c2 = this.peek(); if (c2 === '"' || c2 === "'") { out += this.consumeString(this.peek()); } else { if (c2 === '(') depth++; if (c2 === ')') depth--; out += this.next(); } } continue; } out += this.next(); } return out.trim(); } } class Parser extends Tokenizer { constructor(css) { super(css); } parseDeclarations() { const decls = []; while (!this.eof()) { this.skipWhitespaceAndComments(); if (this.eof()) break; const ch = this.peek(); if (ch === '}') break; const rawProp = this.consumeUntil([':', ';', '}']); if (this.eof()) break; if (this.peek() !== ':') { if (this.peek() === ';') { this.next(); continue; } while (!this.eof() && this.peek() !== ';' && this.peek() !== '}') this.pos++; if (this.peek() === ';') this.next(); continue; } this.next(); const rawVal = this.consumeUntil([';', '}']); if (this.peek() === ';') this.next(); let prop = rawProp.trim(); let val = rawVal.trim(); if (!prop) continue; let important = false; const impIdx = val.toLowerCase().lastIndexOf('!important'); if (impIdx !== -1 && val.slice(impIdx).toLowerCase().startsWith('!important')) { important = true; val = val.slice(0, impIdx).trim(); } decls.push({ prop: prop.toLowerCase(), val, important }); } return decls; } parseKeyframesBody() { const frames = []; while (!this.eof()) { this.skipWhitespaceAndComments(); if (this.eof()) break; if (this.peek() === '}') break; const selector = this.consumeUntil(['{']); if (this.peek() !== '{') { while (!this.eof() && this.peek() !== '{' && this.peek() !== '}') this.pos++; if (this.peek() !== '{') continue; } this.next(); const decls = this.parseDeclarations(); frames.push({ selector: selector.trim(), decls }); if (this.peek() === '}') this.next(); } return frames; } parseBlock() { const nodes = []; while (!this.eof()) { this.skipWhitespaceAndComments(); if (this.eof()) break; if (this.peek() === '}') break; const header = this.consumeUntil(['{', ';', '}']); if (this.peek() === ';') { this.next(); nodes.push({ type: 'stmt', header: header.trim() }); continue; } if (this.peek() === '{') { this.next(); const hLower = header.trim().toLowerCase(); const isKeyframes = hLower.startsWith('@keyframes') || hLower.startsWith('@-webkit-keyframes') || hLower.startsWith('@-moz-keyframes'); const isAtRule = header.trim().startsWith('@'); if (isKeyframes) { const children = this.parseKeyframesBody(); nodes.push({ type: 'keyframes', header: header.trim(), children }); if (this.peek() === '}') this.next(); continue; } if (isAtRule) { if (hLower.startsWith('@font-face') || hLower.startsWith('@page')) { const decls = this.parseDeclarations(); nodes.push({ type: 'rule', selector: header.trim(), decls }); if (this.peek() === '}') this.next(); } else { const children = this.parseBlock(); nodes.push({ type: 'at-block', header: header.trim(), children }); if (this.peek() === '}') this.next(); } continue; } const decls = this.parseDeclarations(); nodes.push({ type: 'rule', selector: header.trim(), decls }); if (this.peek() === '}') this.next(); continue; } this.pos++; } return nodes; } } function hasCustomPropertyOrVarUsage(decls) { for (const d of decls) { if (d.prop && d.prop.startsWith('--')) return true; if (d.val && /\bvar\s*\(/.test(d.val)) return true; } return false; } function declSignature(decls) { return decls.map(d => `${d.prop}:${d.val}${d.important ? '!imp' : ''}`).join(';'); } function shallowCloneDecl(d) { return { prop: d.prop, val: d.val, important: !!d.important }; } function optimizeNodes(nodes) { const out = []; for (const node of nodes) { if (node.type === 'at-block') { node.children = optimizeNodes(node.children || []); out.push(node); continue; } if (node.type === 'stmt' || node.type === 'keyframes') { out.push(node); continue; } if (node.type === 'rule') { const seenIndex = new Map(); const resultDecls = []; for (const d of node.decls) { const prop = d.prop; if (seenIndex.has(prop)) { const idx = seenIndex.get(prop); const existing = resultDecls[idx]; if (existing.important && !d.important) { continue; } resultDecls[idx] = shallowCloneDecl(d); continue; } else { seenIndex.set(prop, resultDecls.length); resultDecls.push(shallowCloneDecl(d)); } } node.decls = resultDecls; if (node.decls.length === 0) continue; const prev = out.length ? out[out.length - 1] : null; if (prev && prev.type === 'rule' && prev.selector === node.selector) { for (const d of node.decls) { const idx = prev.decls.findIndex(p => p.prop === d.prop); if (idx >= 0) { const existing = prev.decls[idx]; if (existing.important && !d.important) { continue; } else { prev.decls[idx] = shallowCloneDecl(d); } } else { prev.decls.push(shallowCloneDecl(d)); } } continue; } if (prev && prev.type === 'rule') { if (!hasCustomPropertyOrVarUsage(prev.decls) && !hasCustomPropertyOrVarUsage(node.decls)) { const sigPrev = declSignature(prev.decls); const sigNode = declSignature(node.decls); if (sigPrev === sigNode) { prev.selector = `${prev.selector}, ${node.selector}`; continue; } } } out.push(node); } } return out; } function serialize(nodes, depth = 0) { const indent = ' '.repeat(depth); let out = ''; for (const node of nodes) { if (node.type === 'stmt') { out += `${indent}${node.header};\n`; } else if (node.type === 'keyframes') { out += `${indent}${node.header} {\n`; for (const frame of node.children) { out += `${indent} ${frame.selector} {\n`; for (const d of frame.decls) { out += `${indent} ${d.prop}: ${d.val}${d.important ? ' !important' : ''};\n`; } out += `${indent} }\n`; } out += `${indent}}\n`; } else if (node.type === 'at-block') { out += `${indent}${node.header} {\n`; out += serialize(node.children, depth + 1); out += `${indent}}\n`; } else if (node.type === 'rule') { const sel = node.selector.split(',').map(s => s.trim()).filter(Boolean).join(', '); out += `${indent}${sel} {\n`; for (const d of node.decls) { out += `${indent} ${d.prop}: ${d.val}${d.important ? ' !important' : ''};\n`; } out += `${indent}}\n`; } } return out; } try { if (!noteTextarea) { const msg = 'No textarea found to optimize.'; if (typeof showNotification === 'function') showNotification(msg); else console.warn(msg); return; } let input = noteTextarea.value || ''; input = extractStyleBlocks(input); const parser = new Parser(input); const ast = parser.parseBlock(); const optimizedAst = optimizeNodes(ast); let finalCss = serialize(optimizedAst); finalCss = finalCss.replace(/\n{3,}/g, '\n\n').trim() + '\n'; noteTextarea.value = finalCss; if (typeof updateNoteMetadata === 'function') { try { updateNoteMetadata(); } catch (e) { } } if (typeof showNotification === 'function') showNotification('CSS optimized (safe mode)'); else console.info('CSS optimized (safe mode)'); } catch (err) { console.error('Optimizer error:', err); if (typeof showNotification === 'function') showNotification('CSS optimization failed: ' + (err && err.message ? err.message : String(err))); } });
+
+window.removehtml = preserveSelection(async () => { if (!currentNote || !noteTextarea) return;
+
+function htmlToPlainText(html) { if (!html) return '';
+
+const parser = new DOMParser();
+const doc = parser.parseFromString(html, 'text/html');
+
+doc.querySelectorAll('script, style, noscript, template').forEach(el => el.remove());
+
+const state = {
+  olCounters: [],
+  inPre: false,
+  out: '',
+  lastWasNewline: true
+};
+
+function append(text) {
+  if (!text) return;
+  if (state.inPre) {
+    state.out += text;
+    state.lastWasNewline = text.endsWith('\n');
+    return;
+  }
+  state.out += text;
+  state.lastWasNewline = state.out.endsWith('\n');
+}
+
+function ensureNewline(count = 1) {
+  if (!state.lastWasNewline) {
+    state.out += '\n'.repeat(count);
+    state.lastWasNewline = true;
+  } else if (count > 1) {
+    const trailing = state.out.match(/\n+$/);
+    const have = trailing ? trailing[0].length : 0;
+    if (have < count) state.out += '\n'.repeat(count - have);
+  }
+}
+
+function walk(node, depth = 0) {
+  if (!node) return;
+  const nodeType = node.nodeType;
+  if (nodeType === Node.TEXT_NODE) {
+    let text = node.nodeValue;
+    if (!text) return;
+    if (state.inPre) {
+      append(text);
+      return;
+    }
+    text = text.replace(/\s+/g, ' ');
+    if (state.lastWasNewline) text = text.replace(/^\s+/, '');
+    append(text);
+    return;
+  }
+
+  if (nodeType === Node.ELEMENT_NODE) {
+    const tag = node.tagName.toLowerCase();
+    switch (tag) {
+      case 'title': ensureNewline(0); append(node.textContent.trim()); ensureNewline(2); break;
+      case 'h1': case 'h2': case 'h3': case 'h4': case 'h5': case 'h6': ensureNewline(0); append(node.textContent.trim()); ensureNewline(2); break;
+      case 'p': case 'div': case 'section': case 'article': case 'header': case 'footer': ensureNewline(0); for (let ch = node.firstChild; ch; ch = ch.nextSibling) walk(ch, depth + 1); ensureNewline(2); break;
+      case 'br': append('\n'); ensureNewline(0); break;
+      case 'pre': ensureNewline(0); state.inPre = true; append(node.textContent.replace(/\r\n?/g, '\n')); state.inPre = false; ensureNewline(2); break;
+      case 'code': if (node.closest && node.closest('pre')) { for (let ch = node.firstChild; ch; ch = ch.nextSibling) walk(ch, depth + 1); } else { append('`' + node.textContent.trim() + '`'); } break;
+      case 'blockquote': ensureNewline(0); const quoteText = (function(){ const tmpState={out:'',inPre:false}; function tmpWalk(n){ if(n.nodeType===Node.TEXT_NODE) tmpState.out+=n.nodeValue.replace(/\s+/g,' '); else if(n.nodeType===Node.ELEMENT_NODE){ for(let c=n.firstChild;c;c=c.nextSibling) tmpWalk(c); } } tmpWalk(node); return tmpState.out.trim(); })(); quoteText.split(/\n+/).forEach(line=>{ if(line.trim()) append('> '+line.trim()+'\n'); }); ensureNewline(1); break;
+      case 'ul': for(let ch=node.firstChild;ch;ch=ch.nextSibling) walk(ch, depth+1); ensureNewline(0); break;
+      case 'ol': state.olCounters.push(0); for(let ch=node.firstChild;ch;ch=ch.nextSibling) walk(ch, depth+1); state.olCounters.pop(); ensureNewline(0); break;
+      case 'li': const parentTag=node.parentElement?node.parentElement.tagName.toLowerCase():''; if(parentTag==='ol'){ if(state.olCounters.length===0) state.olCounters.push(0); state.olCounters[state.olCounters.length-1]++; const numbering=state.olCounters.join('.')+'.'; const indent='  '.repeat(state.olCounters.length-1); append(indent+numbering+' '); for(let ch=node.firstChild;ch;ch=ch.nextSibling) walk(ch,depth+1); ensureNewline(1); } else { let level=0; let p=node.parentElement; while(p){if(p.tagName&&p.tagName.toLowerCase()==='ul') level++;p=p.parentElement;} const indent='  '.repeat(Math.max(0,level-1)); append(indent+'• '); for(let ch=node.firstChild;ch;ch=ch.nextSibling) walk(ch,depth+1); ensureNewline(1); } break;
+      case 'table': ensureNewline(0); for(let r of node.querySelectorAll('tr')){ const cells=[]; for(let c of r.children) cells.push(c.textContent.replace(/\s+/g,' ').trim()); append(cells.join('\t')+'\n'); } ensureNewline(1); break;
+      case 'a': const href=node.getAttribute('href'); const anchorText=node.textContent.replace(/\s+/g,' ').trim(); if(href) append(anchorText+' ('+href+')'); else append(anchorText); break;
+      case 'img': const alt=node.getAttribute('alt'); if(alt) append(alt); break;
+      default: for(let ch=node.firstChild;ch;ch=ch.nextSibling) walk(ch,depth+1); break;
+    }
+  }
+}
+
+const title=(doc.querySelector('title')&&doc.querySelector('title').textContent)||'';
+if(title.trim()){ append(title.trim()); ensureNewline(2); }
+
+walk(doc.body||doc.documentElement,0);
+
+let out=state.out||'';
+out=out.replace(/\r\n|\r/g,'\n');
+out=out.replace(/[ \t]+/g,' ');
+out=out.replace(/\n{3,}/g,'\n\n');
+out=out.trim();
+out=out.replace(/&#(\d+);/g,(_,d)=>String.fromCharCode(parseInt(d,10)));
+
+return out;
+
+}
+
+try{ const input=noteTextarea.value||''; const cleaned=htmlToPlainText(input); noteTextarea.value=cleaned;
+
+if(typeof updateNoteMetadata==='function'){try{updateNoteMetadata();}catch(e){} }
+if(typeof showNotification==='function') showNotification('HTML removed and text cleaned'); else console.info('HTML removed and text cleaned');
+
+}catch(err){ console.error('RemoveHTML error:',err); if(typeof showNotification==='function') showNotification('RemoveHTML failed: '+(err&&err.message?err.message:String(err))); } });
+
 
 window.minifyjs = preserveSelection(async () => {
   if (!currentNote || !noteTextarea) return;
