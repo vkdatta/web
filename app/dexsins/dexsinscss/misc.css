@@ -224,12 +224,12 @@ ul li {
 .post-body h4::before {
   position: absolute;
   left: 0;
-  color: var(--purple);
+  color: var(--silver);
 }
-.post-body h1::before { content: "!1 "; }
-.post-body h2::before { content: "!2 "; }
-.post-body h3::before { content: "!3 "; }
-.post-body h4::before { content: "!4 "; }
+.post-body h1::before { content: "1 "; }
+.post-body h2::before { content: "2 "; }
+.post-body h3::before { content: "3 "; }
+.post-body h4::before { content: "4 "; }
 h1,
 h2,
 h3,
