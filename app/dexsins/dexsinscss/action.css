@@ -1,6 +1,6 @@
 .action-link,
 a {
-  color: #00ffd5;
+/* color: #00ffd5; */
   cursor: pointer;
   text-decoration: none;
 }
@@ -8,7 +8,7 @@ a {
 .action-link:visited,
 a:hover,
 a:visited {
-  color: #00ffd5;
+/* color: #00ffd5; */
 }
 @media screen and (max-width: 968px) {
   .post-title a {
