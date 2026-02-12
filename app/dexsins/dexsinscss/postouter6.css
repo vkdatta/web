@@ -1,12 +1,7 @@
 body.feed-view .post-outer-container {
   margin-top: 55px;
 }
-.post-outer:has(.post-body) {
-  margin: 0 !important;
-  padding: 0 !important;
-  max-width: 100% !important;
-}
-.post-outer {
+body.feed-view .post-outer {
   display: flex;
   position: relative;
   padding: 10px;
@@ -27,7 +22,7 @@ body.feed-view .post-outer-container {
   );
   box-sizing: border-box;
 }
-.post-outer:hover {
+body.feed-view .post-outer:hover {
   background: linear-gradient(145deg, #111, #000, #000) padding-box,
     linear-gradient(45deg, transparent 90%, #000, #c70064) border-box;
   border-radius: 2px;
@@ -42,11 +37,7 @@ body.feed-view .post-outer-container {
     0% 30px
   );
 }
-@media screen and (max-width: 968px) {
-  .post-outer {
-    margin: 20px;
-  }
-}
+/*
 body.item-view .Blog .post-outer {
   border-radius: 0 !important;
   box-shadow: none !important;
@@ -56,3 +47,9 @@ body.item-view .Blog .post-outer {
   border: none;
   clip-path:none
 }
+.post-outer:has(.post-body) {
+  margin: 0 !important;
+  padding: 0 !important;
+  max-width: 100% !important;
+}
+*/
