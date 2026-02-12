@@ -18,17 +18,17 @@
 }
 @media (max-width: 600px) {
   *,html,body {
-    font-size: 14px !important;
+    font-size: 13px !important;
   }
 }
 @media (min-width: 601px) and (max-width: 968px) {
   *,html,body {
-    font-size: 16px !important;
+    font-size: 14px !important;
   }
 }
 @media (min-width: 969px) {
   *,html,body {
-    font-size: 18px !important;
+    font-size: 17px !important;
   }
 }
 html {
