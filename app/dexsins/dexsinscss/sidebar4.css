@@ -165,6 +165,7 @@
   height: 40px;
   display: flex;
   vertical-align: middle;
+  left: 10%;
 }
 #searchinput {
   width: 87.25%;
