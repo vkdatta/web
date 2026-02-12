@@ -53,6 +53,7 @@ body {
   -webkit-box-direction: normal;
   -ms-flex-direction: column;
   flex-direction: column;
+  background:#cacaca
 }
 .centered-top-container {
   box-sizing: border-box;
