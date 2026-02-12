@@ -159,13 +159,18 @@
 #searchbox {
   width: 70vw;
   position: relative;
-  overflow-x: hidden;
   background: 0;
   top: 29px;
   height: 40px;
   display: flex;
   vertical-align: middle;
-  left: 10%;
+ }
+#searchbox {
+  width: 70vw;
+  position: relative;
+  left: 50%;
+  transform: translateX(-50%);
+  overflow: hidden;
 }
 #searchinput {
   width: 87.25%;
