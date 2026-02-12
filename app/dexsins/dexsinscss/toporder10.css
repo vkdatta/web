@@ -60,6 +60,7 @@ body {
   margin: 0 auto;
   max-width: inherit;
   width: 100%;
+  background:gold
 }
 .main_content_container {
   -webkit-box-flex: 0;
@@ -91,6 +92,7 @@ body#layout .page {
   position: relative;
   vertical-align: top;
   width: 540px;
+  background: violet;
 }
 .post-content {
   -webkit-box-flex: 0;
