@@ -107,12 +107,6 @@ body#layout .page {
 .post-title a {
   line-height: 3;
 }
-body.item-view .Blog .post-title,
-body.item-view .Blog .post-title a {
-  background: 0 0;
-  color: #cacaca;
-  line-height: 1.41667;
-}
 body.item-view .Blog {
   margin: 0;
   margin-bottom: 85px;
