@@ -1,11 +1,3 @@
-body.item-view .Blog .post-outer {
-  border-radius: 0 !important;
-  box-shadow: none !important;
-  padding: 0 !important;
-  background: 0 !important;
-  text-align: justify;
-  border: none;
-}
 body.feed-view .post-outer-container {
   margin-top: 55px;
 }
@@ -58,4 +50,13 @@ body.feed-view .post-outer-container {
   body.item-view .Blog .post-outer {
     padding: 60px !important;
   }
+}
+body.item-view .Blog .post-outer {
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  background: 0 !important;
+  text-align: justify;
+  border: none;
+  clip-path:none
 }
