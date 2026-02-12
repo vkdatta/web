@@ -49,5 +49,5 @@ body.item-view .Blog .post-outer {
 .post-outer:has(.post-body) {
   margin: 0 !important;
   padding: 0 !important;
-  max-width: 100% !important;
+  max-width: 100dvw !important;
 }
