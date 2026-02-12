@@ -40,7 +40,7 @@
 }
 #csactive:checked ~ .cswrap {
   clip-path: circle(200%);
-  background: #000;
+  background: red;
 }
 .csmenu {
   position: absolute;
