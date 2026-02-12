@@ -187,12 +187,6 @@ body.item-view .Blog .post-body-container {
   position: relative;
   margin-top: 0px;
 }
-body.item-view .Blog .post-title-container {
-  box-sizing: border-box;
-  display: block;
-  width: 100%;
-  margin-top:50px;
-}
 body.item-view .Blog .post-title-container * {
   text-align: left !important;
   letter-spacing: 2px;
@@ -202,12 +196,6 @@ body.item-view .Blog .post-title-container * {
 .post-title,
 .post-title a {
   line-height: 2;
-}
-body.item-view .Blog .post-title,
-body.item-view .Blog .post-title a,
-.post-body{
-  background:#000000;
-  border-radius:25px;
 }
 body.feed-view .Blog .post-title,
 body.feed-view .Blog .post-title a {
