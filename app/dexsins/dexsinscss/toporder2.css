@@ -153,17 +153,18 @@ body.item-view .post-body-container img {
   height: auto;
   max-width: 100%;
 }
-body.item-view .Blog .post-body-container {
-  position: relative;
-  margin-top: 0px;
-  margin-bottom: 32px;
-  padding: 0px 27px 27px 27px;
-}
 .blog-pager {
   display: flex;
   width: 90%;
   height: fit-content;
   justify-content: space-between;
+}
+body.item-view .Blog .post-body-container {
+  position: relative;
+  margin-top: 0px;
+  margin-bottom: 32px;
+  padding: 0px 27px 27px 27px;
+  background:yellow
 }
 body.item-view .Blog .post-title-container {
   box-sizing: border-box;
@@ -172,6 +173,7 @@ body.item-view .Blog .post-title-container {
   text-align: left !important;
   display: block;
   width: 100%;
+  background:green
 }
 body.item-view .Blog .post-title-container * {
   text-align: left !important;
@@ -191,4 +193,5 @@ body.item-view .Blog .post-title-container * {
   padding: 15px !important;
   box-sizing: border-box !important;
   letter-spacing: 1.7px;
+  background:blue
 }
