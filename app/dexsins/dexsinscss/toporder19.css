@@ -23,7 +23,7 @@
 }
 @media (min-width: 601px) and (max-width: 968px) {
   *,html,body {
-    font-size: 14px;
+    font-size: 34px;
   }
 }
 @media (min-width: 969px) {
