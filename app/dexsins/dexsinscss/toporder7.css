@@ -66,11 +66,13 @@ body {
   margin: 0 auto;
   max-width: inherit;
   width: 100%;
+  background:red
 }
 .overflowable-container {
   max-height: 50px;
   overflow: hidden;
   position: relative;
+  background:pink
 }
 .post-body img {
   max-width: 100%;
