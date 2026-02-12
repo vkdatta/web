@@ -46,11 +46,6 @@ body.feed-view .post-outer-container {
     margin: 20px;
   }
 }
-@media (min-width: 969px) {
-  body.item-view .Blog .post-outer {
-    padding: 60px !important;
-  }
-}
 body.item-view .Blog .post-outer {
   border-radius: 0 !important;
   box-shadow: none !important;
