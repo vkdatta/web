@@ -38,13 +38,17 @@ body.feed-view .post-outer:hover {
   );
 }
 body.item-view .Blog .post-outer {
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: none !important;
+  clip-path: none !important;
   border-radius: 0 !important;
   box-shadow: none !important;
-  padding: 0 !important;
   background: 0 !important;
   text-align: justify;
-  border: none;
-  clip-path:none
 }
 .post-outer:has(.post-body) {
   margin: 0 !important;
