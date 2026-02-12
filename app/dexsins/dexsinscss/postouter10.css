@@ -37,6 +37,15 @@ body.feed-view .post-outer:hover {
     0% 30px
   );
 }
+body.item-view .post-outer-container {
+  width: 100vw !important;
+  max-width: 100vw !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  position: relative;
+  left: 50%;
+  transform: translateX(-50%);
+}
 body.item-view .Blog .post-outer {
   width: 100% !important;
   max-width: 100% !important;
