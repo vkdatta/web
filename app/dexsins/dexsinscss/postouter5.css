@@ -15,6 +15,7 @@ body.feed-view .post-outer-container {
   background: linear-gradient(45deg, #111, #000, #000) padding-box,
     linear-gradient(45deg, transparent 90%, #000, var(--purple)) border-box;
   border-radius: 2px;
+  border: 3px solid transparent;
   font-family: dexy !important;
   clip-path: polygon(
     30px 0%,
@@ -24,11 +25,13 @@ body.feed-view .post-outer-container {
     0 100%,
     0% 30px
   );
+  box-sizing: border-box;
 }
 .post-outer:hover {
   background: linear-gradient(145deg, #111, #000, #000) padding-box,
     linear-gradient(45deg, transparent 90%, #000, #c70064) border-box;
   border-radius: 2px;
+  border: 3px solid transparent;
   font-family: dexy !important;
   clip-path: polygon(
     30px 0%,
