@@ -18,7 +18,7 @@
 }
 @media (max-width: 600px) {
   *,html,body,.post-body {
-    font-size: 12px !important;
+    font-size: 13px !important;
   }
 }
 @media (min-width: 601px) and (max-width: 968px) {
@@ -167,8 +167,8 @@ body.item-view .Blog .post-body-container {
 }
 body.item-view .Blog .post-title-container {
   box-sizing: border-box;
-  padding: 0px 40px 0px 40px !important;
-  font-size: 150%;
+  padding: 0px 27px 0px 27px !important;
+  font-size: 200%;
   text-align: left !important;
   display: block;
   width: 100%;
@@ -177,6 +177,7 @@ body.item-view .Blog .post-title-container * {
   text-align: left !important;
   letter-spacing: 2px;
   word-spacing: 5px;
+  font-size: 200%
 }
 .post-body {
   line-height: 2;
