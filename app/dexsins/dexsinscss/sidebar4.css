@@ -164,14 +164,8 @@
   height: 40px;
   display: flex;
   vertical-align: middle;
+  left:10%
  }
-#searchbox {
-  width: 70vw;
-  position: relative;
-  left: 50%;
-  transform: translateX(-50%);
-  overflow: hidden;
-}
 #searchinput {
   width: 87.25%;
   border: 3px solid #171717;
