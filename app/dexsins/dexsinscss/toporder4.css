@@ -159,38 +159,3 @@ body.item-view .post-body-container img {
   height: fit-content;
   justify-content: space-between;
 }
-body.item-view .Blog .post-body-container {
-  position: relative;
-  margin-top: 0px;
-  margin-bottom: 32px;
-  padding: 0px 27px 27px 27px;
-  background:yellow
-}
-body.item-view .Blog .post-title-container {
-  box-sizing: border-box;
-  padding: 0px 27px 0px 27px !important;
-  font-size: 200%;
-  text-align: left !important;
-  display: block;
-  width: 100%;
-  background:green
-}
-body.item-view .Blog .post-title-container * {
-  text-align: left !important;
-  letter-spacing: 2px;
-  word-spacing: 5px;
-  font-size: 200%
-}
-.post-body {
-  line-height: 2;
-  margin-bottom: 24px;
-  font-family: classy;
-  text-align: left;
-  word-spacing: 3px;
-  display: block !important;
-  width: 100% !important;
-  margin: 0 !important;
-  box-sizing: border-box !important;
-  letter-spacing: 1.7px;
-  background:blue
-}
