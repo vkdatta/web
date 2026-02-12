@@ -103,10 +103,6 @@ body#layout .page {
   margin-top: 48px;
   float: left;
 }
-.post-title,
-.post-title a {
-  line-height: 3;
-}
 body.item-view .Blog {
   margin: 0;
   margin-bottom: 85px;
@@ -143,12 +139,6 @@ body.item-view .Blog .post-body {
 html, body {
   overflow-x: hidden;
   max-width: 100%;
-}
-body.item-view .Blog .post-title-container * {
-  text-align: left !important;
-  letter-spacing: 2px;
-  word-spacing: 5px;
-  font-size: 140%!important;
 }
 .post-body {
   line-height: 2;
