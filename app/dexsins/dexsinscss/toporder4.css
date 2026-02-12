@@ -127,9 +127,6 @@ body.item-view .Blog {
 body.item-view .Blog .post-content {
   max-width: none;
 }
-body.item-view .post-body {
-  line-height: 2;
-}
 body.item-view .Blog .post-body {
   margin-bottom: 0;
 }
