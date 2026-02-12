@@ -72,11 +72,6 @@ body {
   overflow: hidden;
   position: relative;
 }
-.post-body img {
-  max-width: 100%;
-  border-radius: 20px;
-  size: medium;
-}
 body#layout .page_body {
   padding: 0;
   position: relative;
@@ -145,10 +140,6 @@ body.item-view .Blog .post-body {
     margin-right: 24px;
   }
  }
-body.item-view .post-body-container img {
-  height: auto;
-  max-width: 100%;
-}
 .blog-pager {
   display: flex;
   width: 90%;
