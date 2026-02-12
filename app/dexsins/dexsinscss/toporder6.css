@@ -127,7 +127,8 @@ body.item-view .Blog {
   max-width: 100% !important;
 }
 body.item-view .Blog .post-content {
-  max-width: none;
+  width: 100% !important;
+  max-width: 100% !important;
 }
 body.item-view .Blog .post-body {
   margin-bottom: 0;
