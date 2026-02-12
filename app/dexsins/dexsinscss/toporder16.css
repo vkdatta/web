@@ -150,18 +150,6 @@ html, body {
   overflow-x: hidden;
   max-width: 100%;
 }
-body.item-view .Blog .post-body-container {
-  position: relative;
-  margin-top: 0px;
-  margin-bottom: 32px;
-  padding: 0px calc(100dvw / 40) 0px calc(100dvw / 40);
-}
-body.item-view .Blog .post-title-container {
-  box-sizing: border-box;
-  padding: 0px calc(100dvw / 40) 0px calc(100dvw / 40) !important;
-  display: block;
-  width: 100%;
-}
 body.item-view .Blog .post-title-container * {
   text-align: left !important;
   letter-spacing: 2px;
