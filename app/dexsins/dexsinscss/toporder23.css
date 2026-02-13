@@ -187,6 +187,18 @@ body.item-view .Blog .post-body-container {
   position: relative;
   margin-top: 0px;
 }
+body.item-view .Blog .post-title-container {
+  box-sizing: border-box;
+  display: block;
+  width: 100%;
+  margin-top:48px;
+}
+body.item-view .Blog .post-title,
+body.item-view .Blog .post-title a,
+.post-body{
+  background:#171717;
+  border-radius:25px;
+}
 body.item-view .Blog .post-title-container * {
   text-align: left !important;
   letter-spacing: 2px;
