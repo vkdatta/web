@@ -92,16 +92,6 @@
  z-index: 1;
  outline: 0;
 }
-.material-symbols-rounded {
- font-size: 17px;
- color: #cacaca;
- -webkit-font-smoothing: antialiased;
- -moz-osx-font-smoothing: grayscale;
- display: inline-flex;
- align-items: center;
- justify-content: center;
- transition: transform var(--transition-speed);
-}
 .category-card .material-symbols-rounded {
  position: relative !important;
  display: inline-flex !important;
@@ -115,6 +105,11 @@
  line-height: 1 !important;
  top: auto !important;
  left: auto !important;
+ -webkit-font-smoothing: antialiased;
+ -moz-osx-font-smoothing: grayscale;
+ align-items: center;
+ justify-content: center;
+ transition: transform var(--transition-speed);
 }
 .category-card .chevron {
  margin-left: auto !important;
