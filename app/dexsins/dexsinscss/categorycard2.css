@@ -52,7 +52,6 @@
  font-weight: 700;
  width: 100%;
  text-align: left;
- z-index: 1;
 }
 .left {
  display: flex;
