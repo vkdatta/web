@@ -102,3 +102,8 @@ document.getElementById('diffOverlaySwapLine').onclick = () => {
     diffusion();
     diffHideOverlay();
   };
+
+
+ document.addEventListener('pointerdown', (e) => {
+    if (!diffElements.overlay.contains(e.target) && !e.target.closest('.diff-line-row')) diffHideOverlay();
+  });
