@@ -202,14 +202,6 @@ function diffusion() {
   document.getElementById('diffStatLine').textContent = Math.max(lines1.length, lines2.length);
   document.getElementById('diffStatStatus').textContent = diffCount === 0 ? 'Identical' : 'Differences Found';
 }
-  document.addEventListener('mousedown', (e) => {
-    if (!diffElements.overlay.contains(e.target) && !e.target.closest('.diff-line-row')) diffHideOverlay();
-  });
-  
-  document.addEventListener('touchstart', (e) => {
-    if (!diffElements.overlay.contains(e.target) && !e.target.closest('.diff-line-row')) diffHideOverlay();
-  });
-
   function diffGetLines(isRaw) {
     const text = isRaw ? diffElements.raw.value : diffElements.morph.value;
     return diffElements.optBreaks.checked ? text.split(/\r?\n/) : [text.replace(/\r?\n/g, ' ')];
