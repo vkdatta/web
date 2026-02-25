@@ -12,29 +12,6 @@
     optSync: document.getElementById('diffOptSyncScroll'),
     overlay: document.getElementById('diffCustomOverlay')
   };
-
-  function diffNavigate(viewId, btnElement) {
-    document.querySelectorAll('.diff-view').forEach(v => v.classList.remove('active'));
-    document.querySelectorAll('.diff-topbar-button').forEach(b => b.classList.remove('active'));
-    document.getElementById(viewId).classList.add('active');
-    
-    if (btnElement) btnElement.classList.add('active');
-    diffHideOverlay();
-
-    if (diffElements.optSync.checked) {
-      requestAnimationFrame(() => {
-        const activeView = document.getElementById(viewId);
-        const target = activeView.querySelector('.diff-editor, .diff-lines-container');
-        if (target) {
-          diffIsSyncing = true;
-          target.scrollTop = diffGlobalScrollTop;
-          target.scrollLeft = diffGlobalScrollLeft;
-          requestAnimationFrame(() => { diffIsSyncing = false; });
-        }
-      });
-    }
-  }
-
 function myersDiff(old, newArr) {
   const n = old.length, m = newArr.length;
   const max = n + m;
