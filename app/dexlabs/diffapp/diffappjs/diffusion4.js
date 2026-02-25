@@ -76,58 +76,129 @@ document.addEventListener('contextmenu', e => {
     }
   }
 
-  function diffusion() {
-    let t1 = diffElements.raw.value || '';
-    let t2 = diffElements.morph.value || '';
-    const respect = diffElements.optBreaks.checked;
-    const inline = diffElements.optInline.checked;
-
-    diffUpdateGutter(diffElements.raw, diffElements.gRaw);
-    diffUpdateGutter(diffElements.morph, diffElements.gMorph);
-
-    if (!respect) {
-      t1 = t1.replace(/\r?\n/g, ' ');
-      t2 = t2.replace(/\r?\n/g, ' ');
-    }
-
-    const l1 = respect ? t1.split(/\r?\n/) : [t1];
-    const l2 = respect ? t2.split(/\r?\n/) : [t2];
-    const max = Math.max(l1.length, l2.length);
-    
-    let h1 = '', h2 = '', diffs = 0;
-
-    for (let i = 0; i < max; i++) {
-      const a = l1[i] || '';
-      const b = l2[i] || '';
-      const ln = i + 1;
-
-      if (a === b) {
-        const row = `<div class="diff-line-row" data-line="${i}"><div class="diff-gutter-cell">${ln}</div><div class="diff-content-cell">${diffEscapeHTML(a) || '&nbsp;'}</div></div>`;
-        h1 += row; h2 += row;
+  function myersDiff(old, newArr) {
+  const n = old.length, m = newArr.length;
+  const max = n + m;
+  const v = { 1: 0 };
+  const trace = [];
+  for (let d = 0; d <= max; d++) {
+    trace.push({ ...v });
+    for (let k = -d; k <= d; k += 2) {
+      let x;
+      if (k === -d || (k !== d && v[k - 1] < v[k + 1])) {
+        x = v[k + 1];
       } else {
-        diffs++;
-        if (inline && a.length + b.length < 800) {
-          const pre = diffCommonPrefix(a, b);
-          const suf = diffCommonSuffix(a, b);
-          const aMid = a.slice(pre.length, a.length - suf.length);
-          const bMid = b.slice(pre.length, b.length - suf.length);
-          
-          h1 += `<div class="diff-line-row diff-removed" data-line="${i}"><div class="diff-gutter-cell">${ln}</div><div class="diff-content-cell">${diffEscapeHTML(pre)}<span class="diff-word-removed-strong">${diffEscapeHTML(aMid)}</span>${diffEscapeHTML(suf)}</div></div>`;
-          h2 += `<div class="diff-line-row diff-added" data-line="${i}"><div class="diff-gutter-cell">${ln}</div><div class="diff-content-cell">${diffEscapeHTML(pre)}<span class="diff-word-added-strong">${diffEscapeHTML(bMid)}</span>${diffEscapeHTML(suf)}</div></div>`;
-        } else {
-          h1 += `<div class="diff-line-row diff-removed" data-line="${i}"><div class="diff-gutter-cell">${ln}</div><div class="diff-content-cell">${diffEscapeHTML(a) || '&nbsp;'}</div></div>`;
-          h2 += `<div class="diff-line-row diff-added" data-line="${i}"><div class="diff-gutter-cell">${ln}</div><div class="diff-content-cell">${diffEscapeHTML(b) || '&nbsp;'}</div></div>`;
+        x = v[k - 1] + 1;
+      }
+      let y = x - k;
+      while (x < n && y < m && old[x] === newArr[y]) {
+        x++; y++;
+      }
+      v[k] = x;
+      if (x >= n && y >= m) {
+        const script = [];
+        let i = n, j = m;
+        let dBack = d;
+        while (i > 0 || j > 0) {
+          const lastV = trace[dBack];
+          const kBack = i - j;
+          const prevK = (kBack === -dBack || (kBack !== dBack && lastV[kBack - 1] < lastV[kBack + 1]))
+            ? kBack + 1 : kBack - 1;
+          const prevX = lastV[prevK];
+          const prevY = prevX - prevK;
+          while (i > prevX && j > prevY) {
+            script.unshift({ type: 'equal', value: old[i - 1] });
+            i--; j--;
+          }
+          if (i > prevX) {
+            script.unshift({ type: 'delete', value: old[i - 1] });
+            i--;
+          } else if (j > prevY) {
+            script.unshift({ type: 'insert', value: newArr[j - 1] });
+            j--;
+          }
+          dBack--;
         }
+        return script;
       }
     }
-
-    diffElements.d1.innerHTML = h1 || '<div style="padding:0 16px; color:#666;">No content</div>';
-    diffElements.d2.innerHTML = h2 || '<div style="padding:0 16px; color:#666;">No content</div>';
-    
-    document.getElementById('diffStatDiff').textContent = diffs;
-    document.getElementById('diffStatLine').textContent = max;
-    document.getElementById('diffStatStatus').textContent = diffs === 0 ? 'Identical' : 'Differences Found';
   }
+  return [];
+}
+function buildDiffRows(script) {
+  const rows = [];
+  for (let i = 0; i < script.length; i++) {
+    const op = script[i];
+    if (op.type === 'equal') {
+      rows.push({ left: op.value, right: op.value });
+    } else if (op.type === 'delete') {
+      if (i + 1 < script.length && script[i + 1].type === 'insert') {
+        rows.push({ left: op.value, right: script[i + 1].value });
+        i++;
+      } else {
+        rows.push({ left: op.value, right: null });
+      }
+    } else {
+      rows.push({ left: null, right: op.value });
+    }
+  }
+  return rows;
+}
+function diffusion() {
+  let t1 = diffElements.raw.value || '';
+  let t2 = diffElements.morph.value || '';
+  const respect = diffElements.optBreaks.checked;
+  const inline = diffElements.optInline.checked;
+  diffUpdateGutter(diffElements.raw, diffElements.gRaw);
+  diffUpdateGutter(diffElements.morph, diffElements.gMorph);
+  if (!respect) {
+    t1 = t1.replace(/\r?\n/g, ' ');
+    t2 = t2.replace(/\r?\n/g, ' ');
+  }
+  const lines1 = respect ? t1.split(/\r?\n/) : [t1];
+  const lines2 = respect ? t2.split(/\r?\n/) : [t2];
+  const script = myersDiff(lines1, lines2);
+  const rows = buildDiffRows(script);
+  let h1 = '', h2 = '';
+  let leftNum = 1, rightNum = 1;
+  let diffCount = 0;
+  for (const row of rows) {
+    const leftLine = row.left;
+    const rightLine = row.right;
+    const leftClass = leftLine !== null && rightLine !== null
+      ? 'diff-replace'
+      : (leftLine !== null ? 'diff-removed' : '');
+    const rightClass = rightLine !== null && leftLine !== null
+      ? 'diff-replace'
+      : (rightLine !== null ? 'diff-added' : '');
+    if (leftLine !== rightLine) diffCount++;
+    let leftContent, rightContent;
+    if (leftLine !== null && rightLine !== null && inline && leftLine.length + rightLine.length < 800) {
+      const pre = diffCommonPrefix(leftLine, rightLine);
+      const suf = diffCommonSuffix(leftLine, rightLine);
+      const leftMid = leftLine.slice(pre.length, leftLine.length - suf.length);
+      const rightMid = rightLine.slice(pre.length, rightLine.length - suf.length);
+      leftContent = diffEscapeHTML(pre) + '<span class="diff-word-removed-strong">' + diffEscapeHTML(leftMid) + '</span>' + diffEscapeHTML(suf);
+      rightContent = diffEscapeHTML(pre) + '<span class="diff-word-added-strong">' + diffEscapeHTML(rightMid) + '</span>' + diffEscapeHTML(suf);
+    } else {
+      leftContent = leftLine !== null ? diffEscapeHTML(leftLine) : '&nbsp;';
+      rightContent = rightLine !== null ? diffEscapeHTML(rightLine) : '&nbsp;';
+    }
+    const leftGutter = leftLine !== null ? leftNum++ : '&nbsp;';
+    const rightGutter = rightLine !== null ? rightNum++ : '&nbsp;';
+    h1 += `<div class="diff-line-row ${leftClass}" data-line="${leftLine !== null ? leftNum - 1 : ''}">` +
+          `<div class="diff-gutter-cell">${leftGutter}</div>` +
+          `<div class="diff-content-cell">${leftContent}</div></div>`;
+    h2 += `<div class="diff-line-row ${rightClass}" data-line="${rightLine !== null ? rightNum - 1 : ''}">` +
+          `<div class="diff-gutter-cell">${rightGutter}</div>` +
+          `<div class="diff-content-cell">${rightContent}</div></div>`;
+  }
+  diffElements.d1.innerHTML = h1 || '<div style="padding:0 16px; color:#666;">No content</div>';
+  diffElements.d2.innerHTML = h2 || '<div style="padding:0 16px; color:#666;">No content</div>';
+  document.getElementById('diffStatDiff').textContent = diffCount;
+  document.getElementById('diffStatLine').textContent = Math.max(lines1.length, lines2.length);
+  document.getElementById('diffStatStatus').textContent = diffCount === 0 ? 'Identical' : 'Differences Found';
+}
 
   function diffHandleFile(input, type) {
     const file = input.files[0];
