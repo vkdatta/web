@@ -13,43 +13,6 @@
     overlay: document.getElementById('diffCustomOverlay')
   };
 
-  let diffSavedText = '';
-  let diffCurrentSelection = { viewId: null, startLine: -1, endLine: -1, text: '', isLineSelection: false, startOffset: 0, endOffset: 0 };
-
-  const diffScrollTargets = [diffElements.raw, diffElements.morph, diffElements.scrollD1, diffElements.scrollD2];
-  let diffIsSyncing = false;
-  let diffGlobalScrollTop = 0;
-  let diffGlobalScrollLeft = 0;
-
-  function diffUpdateGutter(textarea, gutter) {
-    const lines = textarea.value.split('\n').length;
-    let html = '';
-    for (let i = 1; i <= lines; i++) html += i + '<br>';
-    gutter.innerHTML = html;
-  }
-
-  diffScrollTargets.forEach(target => {
-    target.addEventListener('scroll', (e) => {
-      if (e.target === diffElements.raw) diffElements.gRaw.scrollTop = diffElements.raw.scrollTop;
-      if (e.target === diffElements.morph) diffElements.gMorph.scrollTop = diffElements.morph.scrollTop;
-
-      if (!diffElements.optSync.checked || diffIsSyncing) return;
-      diffIsSyncing = true;
-      
-      diffGlobalScrollTop = e.target.scrollTop;
-      diffGlobalScrollLeft = e.target.scrollLeft;
-
-      diffScrollTargets.forEach(t => {
-        if (t !== e.target && t.offsetParent !== null) {
-          t.scrollTop = diffGlobalScrollTop;
-          t.scrollLeft = diffGlobalScrollLeft;
-        }
-      });
-
-      requestAnimationFrame(() => { diffIsSyncing = false; });
-    });
-  });
-
   function diffNavigate(viewId, btnElement) {
     document.querySelectorAll('.diff-view').forEach(v => v.classList.remove('active'));
     document.querySelectorAll('.diff-topbar-button').forEach(b => b.classList.remove('active'));
