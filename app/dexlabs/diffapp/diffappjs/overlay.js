@@ -1,3 +1,6 @@
+  let diffSavedText = '';
+  let diffCurrentSelection = { viewId: null, startLine: -1, endLine: -1, text: '', isLineSelection: false, startOffset: 0, endOffset: 0 };
+
 document.addEventListener('contextmenu', e => {
     if (e.target.closest('body')) e.preventDefault();
   });
