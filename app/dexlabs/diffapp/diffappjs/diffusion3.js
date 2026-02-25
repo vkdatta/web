@@ -1,5 +1,4 @@
-
-  document.addEventListener('contextmenu', e => {
+document.addEventListener('contextmenu', e => {
     if (e.target.closest('body')) e.preventDefault();
   });
 
