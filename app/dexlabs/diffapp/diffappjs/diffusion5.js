@@ -76,7 +76,7 @@ document.addEventListener('contextmenu', e => {
     }
   }
 
-  function myersDiff(old, newArr) {
+function myersDiff(old, newArr) {
   const n = old.length, m = newArr.length;
   const max = n + m;
   const v = { 1: 0 };
@@ -98,12 +98,11 @@ document.addEventListener('contextmenu', e => {
       if (x >= n && y >= m) {
         const script = [];
         let i = n, j = m;
-        let dBack = d;
-        while (i > 0 || j > 0) {
+        for (let dBack = d; dBack > 0; dBack--) {
           const lastV = trace[dBack];
           const kBack = i - j;
-          const prevK = (kBack === -dBack || (kBack !== dBack && lastV[kBack - 1] < lastV[kBack + 1]))
-            ? kBack + 1 : kBack - 1;
+          const cameFromLeft = (kBack === -dBack || (kBack !== dBack && lastV[kBack - 1] < lastV[kBack + 1]));
+          const prevK = cameFromLeft ? kBack + 1 : kBack - 1;
           const prevX = lastV[prevK];
           const prevY = prevX - prevK;
           while (i > prevX && j > prevY) {
@@ -117,7 +116,10 @@ document.addEventListener('contextmenu', e => {
             script.unshift({ type: 'insert', value: newArr[j - 1] });
             j--;
           }
-          dBack--;
+        }
+        while (i > 0 && j > 0) {
+          script.unshift({ type: 'equal', value: old[i - 1] });
+          i--; j--;
         }
         return script;
       }
@@ -125,6 +127,7 @@ document.addEventListener('contextmenu', e => {
   }
   return [];
 }
+  
 function buildDiffRows(script) {
   const rows = [];
   for (let i = 0; i < script.length; i++) {
