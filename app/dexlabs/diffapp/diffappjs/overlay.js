@@ -1,3 +1,7 @@
+document.addEventListener('contextmenu', e => {
+    if (e.target.closest('body')) e.preventDefault();
+  });
+
 function diffHideOverlay() { diffElements.overlay.classList.remove('visible'); }
 
   document.addEventListener('selectionchange', () => {
