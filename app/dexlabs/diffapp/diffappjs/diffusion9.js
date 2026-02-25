@@ -12,6 +12,14 @@
     optSync: document.getElementById('diffOptSyncScroll'),
     overlay: document.getElementById('diffCustomOverlay')
   };
+
+ function diffUpdateGutter(textarea, gutter) {
+    const lines = textarea.value.split('\n').length;
+    let html = '';
+    for (let i = 1; i <= lines; i++) html += i + '<br>';
+    gutter.innerHTML = html;
+  }
+
 /*
 function myersDiff(old, newArr) {
   const n = old.length, m = newArr.length;
