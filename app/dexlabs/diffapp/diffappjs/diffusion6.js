@@ -1,7 +1,3 @@
-document.addEventListener('contextmenu', e => {
-    if (e.target.closest('body')) e.preventDefault();
-  });
-
   const diffElements = {
     raw: document.getElementById('diffRawInput'),
     morph: document.getElementById('diffMorphInput'),
