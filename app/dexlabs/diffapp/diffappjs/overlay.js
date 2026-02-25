@@ -5,6 +5,17 @@ document.addEventListener('contextmenu', e => {
     if (e.target.closest('body')) e.preventDefault();
   });
 
+function diffGetLines(isRaw) {
+    const text = isRaw ? diffElements.raw.value : diffElements.morph.value;
+    return diffElements.optBreaks.checked ? text.split(/\r?\n/) : [text.replace(/\r?\n/g, ' ')];
+  }
+
+  function diffSetLines(isRaw, linesArray) {
+    const result = linesArray.join('\n');
+    if (isRaw) diffElements.raw.value = result;
+    else diffElements.morph.value = result;
+  }
+
 function diffHideOverlay() { diffElements.overlay.classList.remove('visible'); }
 
   document.addEventListener('selectionchange', () => {
