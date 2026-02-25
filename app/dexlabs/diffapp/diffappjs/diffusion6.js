@@ -138,17 +138,6 @@ function diffusion() {
   document.getElementById('diffStatLine').textContent = Math.max(lines1.length, lines2.length);
   document.getElementById('diffStatStatus').textContent = diffCount === 0 ? 'Identical' : 'Differences Found';
 }
-  function diffGetLines(isRaw) {
-    const text = isRaw ? diffElements.raw.value : diffElements.morph.value;
-    return diffElements.optBreaks.checked ? text.split(/\r?\n/) : [text.replace(/\r?\n/g, ' ')];
-  }
-
-  function diffSetLines(isRaw, linesArray) {
-    const result = linesArray.join('\n');
-    if (isRaw) diffElements.raw.value = result;
-    else diffElements.morph.value = result;
-  }
-
   
   function diffEscapeHTML(s) { return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[m] || '&#039;'); }
   function diffCommonPrefix(a, b) { let i=0; while(i<a.length && i<b.length && a[i]===b[i]) i++; return a.slice(0,i); }
