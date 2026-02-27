@@ -10,7 +10,8 @@
     optBreaks: document.getElementById('diffOptBreaks'),
     optInline: document.getElementById('diffOptInline'),
     optSync: document.getElementById('diffOptSyncScroll'),
-    overlay: document.getElementById('diffCustomOverlay')
+    overlay: document.getElementById('diffCustomOverlay'),
+    inputType: document.getElementById('diffinputtype')
   };
 
  function diffUpdateGutter(textarea, gutter) {
