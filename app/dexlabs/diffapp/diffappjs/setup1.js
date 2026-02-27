@@ -23,3 +23,34 @@
     else diffElements.morph.value = '';
     diffusion();
   }
+
+async function diffCopyText(type) {
+  try {
+    const text = type === 'raw'
+      ? diffElements.raw.value
+      : diffElements.morph.value;
+
+    if (!text) return;
+
+    await navigator.clipboard.writeText(text);
+  } catch (err) {
+    console.error('Copy failed:', err);
+  }
+}
+
+async function diffPasteText(type) {
+  try {
+    const text = await navigator.clipboard.readText();
+    if (!text) return;
+
+    if (type === 'raw') {
+      diffElements.raw.value = text;
+    } else {
+      diffElements.morph.value = text;
+    }
+
+    diffusion();
+  } catch (err) {
+    console.error('Paste failed:', err);
+  }
+}
