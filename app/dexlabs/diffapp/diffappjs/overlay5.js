@@ -1,9 +1,14 @@
 let diffSavedText = '';
   let diffCurrentSelection = { viewId: null, startLine: -1, endLine: -1, text: '', isLineSelection: false, startOffset: 0, endOffset: 0 };
 
-document.addEventListener('contextmenu', e => {
-    if (e.target.closest('body')) e.preventDefault();
+document.addEventListener('DOMContentLoaded', () => {
+  document.addEventListener('contextmenu', e => {
+    if (e.target.closest('#diffDiff1View') || 
+        e.target.closest('#diffDiff2View')) {
+      e.preventDefault();
+    }
   });
+});
 
 function diffGetLines(isRaw) {
     const text = isRaw ? diffElements.raw.value : diffElements.morph.value;
