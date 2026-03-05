@@ -347,3 +347,18 @@
   .modal-header { padding: 10px 12px; }
   .modal-footer { padding: 10px; }
 }
+
+.modal-label {
+  display: block;      /* Forces input to the next line */
+  font-size: 13px;
+  color: var(--blueink);
+  margin-bottom: 8px;  /* This creates the gap you're looking for */
+  font-weight: 500;    /* Optional: makes the label slightly more readable */
+}
+
+/* Ensure the wrapper doesn't collapse */
+.modal-element {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 4px; /* Optional: adds space between different input rows */
+}
