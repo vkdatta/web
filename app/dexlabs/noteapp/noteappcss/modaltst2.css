@@ -130,8 +130,8 @@
 
 /* Rotating Arrow Animation */
 .custom-dropdown-trigger::after {
-  content: '\e5cf'; /* Material Symbol Chevron Down */
-  font-family: 'Material Symbols Outlined';
+  content: 'expand_more'; /* Material Symbol Chevron Down */
+  font-family: 'Material Symbols Rounded';
   position: absolute;
   right: 12px;
   top: 50%;
