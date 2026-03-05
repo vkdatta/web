@@ -395,3 +395,26 @@ padding: 10px;
   font-weight: 500;
   order: 2;  /* Optional: Puts text after checkbox if desired */
 }
+
+
+
+.modal-element:has(.modal-input[type="checkbox"]) .modal-label,
+.modal-element:has(.modal-input[type="radio"]) .modal-label {
+  margin-bottom: 0;  /* No vertical push-down */
+}
+
+/* If label wraps the input (e.g., <label><input>...</label>), target the wrapper */
+.modal-label:has(.modal-input[type="checkbox"]),
+.modal-label:has(.modal-input[type="radio"]) {
+  margin-bottom: 0;
+  display: flex;  /* Switch to inline flex for horizontal alignment */
+  align-items: center;
+  gap: 8px;       /* Space between checkbox and text */
+}
+
+/* Ensure the input itself doesn't inherit unwanted spacing */
+.modal-input[type="checkbox"],
+.modal-input[type="radio"] {
+  margin: 0;  /* Override any default margins */
+  /* ... rest of your existing styles ... */
+}
