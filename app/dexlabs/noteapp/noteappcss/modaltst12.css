@@ -388,7 +388,7 @@ padding: 10px;
 }
 
 .modal-label {
-  display: inline;  /* Or inline-block; removes block behavior and margin-bottom */
+  display: block;  /* Or inline-block; removes block behavior and margin-bottom */
   font-size: 13px;
   color: var(--blueink);
   margin-bottom: 8px;  /* Remove vertical margin */
