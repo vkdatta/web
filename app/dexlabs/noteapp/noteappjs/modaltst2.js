@@ -9,7 +9,7 @@ function renderDropdownMenuPortal(trigger, options, callback) {
   searchContainer.className = "dropdown-search";
   searchContainer.innerHTML = `
     <div class="search-wrapper">
-      <span class="material-symbols-outlined search-icon">search</span>
+      <span class="material-symbols-rounded search-icon">search</span>
       <input type="text" class="search-input" placeholder="Search..." autocomplete="off">
     </div>
   `;
