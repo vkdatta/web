@@ -379,18 +379,6 @@ padding: 10px;
  color: var(--blueink);
  font-size: 13px;
 }
-.modal-label {
- display: block;
- font-size: 13px;
- color: var(--blueink);
- margin-bottom: 8px;
- font-weight: 500;
-}
-.modal-element {
- display: flex;
- flex-direction: column;
- margin-bottom: 4px;
-}
 .modal-element {
   display: flex;  /* Change from column to row */
   flex-direction: row;  /* Aligns label and input side-by-side */
@@ -403,7 +391,7 @@ padding: 10px;
   display: inline;  /* Or inline-block; removes block behavior and margin-bottom */
   font-size: 13px;
   color: var(--blueink);
-  margin-bottom: 0;  /* Remove vertical margin */
+  margin-bottom: 8px;  /* Remove vertical margin */
   font-weight: 500;
   order: 2;  /* Optional: Puts text after checkbox if desired */
 }
