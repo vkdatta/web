@@ -119,14 +119,14 @@ transform var(--transition-speed), background var(--transition-speed);
 .modal-textarea::placeholder {
 color: rgba(230, 238, 248, 0.32);
 }
-.modal-input:focus,
+.modal-input:focus:not([type="checkbox"]):not([type="radio"]),
 .modal-select:focus,
 .modal-textarea:focus,
 .custom-dropdown-trigger:focus {
-box-shadow: 0 0 0 var(--focus-ring) rgba(100, 116, 255, 0.08);
-border-color: rgba(100, 116, 255, 0.18);
-transform: translateY(-1px);
-background: #000;
+  box-shadow: 0 0 0 var(--focus-ring) rgba(100, 116, 255, 0.08);
+  border-color: rgba(100, 116, 255, 0.18);
+  transform: translateY(-1px);
+  background: #000;
 }
 .modal-textarea {
 min-height: 84px;
