@@ -120,31 +120,46 @@
 }
 
 .custom-dropdown-trigger {
+  position: relative;
+  padding-right: 40px; 
   cursor: pointer;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  user-select: none;
-  padding-right: 32px; /* Space for the arrow */
 }
 
-/* Rotating Arrow Animation */
 .custom-dropdown-trigger::after {
-  content: 'expand_more'; /* Material Symbol Chevron Down */
-  font-family: 'Material Symbols Rounded';
+  content: 'expand_more';
+  font-family: 'Material Symbols Rounded' !important;
   position: absolute;
   right: 12px;
   top: 50%;
-  transform: translateY(-50%);
+  
+  /* Initial state: centered and right-side up */
+  transform: translateY(-50%) rotate(0deg);
+  
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  
+  font-size: 22px;
   color: var(--blueink);
-  font-size: 20px;
   pointer-events: none;
-  transition: transform var(--transition-speed) ease;
+  
+  /* Transition handles the rotation over time */
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  
+  /* Forces the browser to treat it as a graphic icon, not text */
+  font-feature-settings: "liga";
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
+/* The Rotate State */
 .custom-dropdown-trigger[aria-expanded="true"]::after {
+  /* Keeps the vertical center but adds the flip */
   transform: translateY(-50%) rotate(180deg);
 }
+
 
 /* The Portal Menu */
 .custom-dropdown-portal-menu {
