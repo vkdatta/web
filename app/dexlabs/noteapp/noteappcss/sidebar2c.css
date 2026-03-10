@@ -276,8 +276,7 @@ margin: 10px auto;
 .secondary-sidebar-grid {
   display: flex;
   background: #272727;
-  width: 100%;
-  max-width: 300px;
+  width: 100% !important;
   gap: 5px;
   border-radius: 12px;
   align-items: center;
