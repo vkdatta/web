@@ -1,5 +1,3 @@
-
-
 const diffElements = {
   raw: document.getElementById('diffRawInput'),
   morph: document.getElementById('diffMorphInput'),
@@ -14,34 +12,27 @@ const diffElements = {
   optSync: document.getElementById('diffOptSyncScroll'),
   overlay: document.getElementById('diffCustomOverlay'),
   inputType: document.getElementById('diffinputtype'),
-  trimSpaces: document.getElementById('diffOptTrim') // New Element
+  trimSpaces: document.getElementById('diffOptTrim')
 };
-
 function diffUpdateGutter(textarea, gutter) {
   const lines = textarea.value.split('\n').length;
   let html = '';
   for (let i = 1; i <= lines; i++) html += i + '<br>';
   gutter.innerHTML = html;
 }
-
 function calculateSimilarity(o, n) {
   if (o === n) return 100;
   const wO = o.trim().split(/\s+/).filter(Boolean);
   const wN = n.trim().split(/\s+/).filter(Boolean);
   if (wO.length === 0 || wN.length === 0) return 0;
-
   const longest = wO.length >= wN.length ? wO : wN;
   const shortest = wO.length < wN.length ? wO : wN;
-
-  // Check if all words of shortest are in longest
   const allIn = shortest.every(word => longest.includes(word));
-  
   if (allIn) {
     const variance = ((longest.length - shortest.length) / wO.length) * 100;
     const SD = Math.sqrt(Math.max(0, variance));
     return Math.max(0, 100 - SD);
   } else {
-    // Fallback if not perfectly matching: standard overlap calculation
     let matchCount = 0;
     const tempLong = [...longest];
     for (const word of shortest) {
@@ -54,38 +45,29 @@ function calculateSimilarity(o, n) {
     return (matchCount / longest.length) * 100;
   }
 }
-
 function findAnchor(o, n) {
   const oWords = o.split(/(\s+)/);
   const nWords = n.split(/(\s+)/);
   let maxLen = 0, oStart = 0, nStart = 0;
-
-  // Find longest common continuous sequence of words (the Anchor)
   for (let a = 0; a < oWords.length; a++) {
     if (!oWords[a].trim()) continue;
     for (let b = 0; b < nWords.length; b++) {
       if (!nWords[b].trim()) continue;
       let curLen = 0, tempA = a, tempB = b;
-      
       while (tempA < oWords.length && tempB < nWords.length && oWords[tempA] === nWords[tempB]) {
         curLen++;
         tempA++; tempB++;
       }
-      
       if (curLen > maxLen) {
-        // Ensure at least one actual word is in the match, not just spaces
         let hasWord = false;
         for (let k = 0; k < curLen; k++) if (oWords[a + k].trim()) hasWord = true;
-        
         if (hasWord) {
           maxLen = curLen; oStart = a; nStart = b;
         }
       }
     }
   }
-
   if (maxLen === 0) return null;
-
   return {
     preO: oWords.slice(0, oStart).join(''),
     preN: nWords.slice(0, nStart).join(''),
@@ -94,10 +76,7 @@ function findAnchor(o, n) {
     sufN: nWords.slice(nStart + maxLen).join('')
   };
 }
-
-
 class SemanticCSSDiff { constructor() { this.left = new Map(); this.right = new Map(); } normalizeSelector(sel) { return sel.trim().replace(/\s+/g, ' '); } normalizeValue(val) { return String(val || '').trim().toLowerCase().replace(/\s+/g, ''); } getKey(context, selector = '') { return (context ? context + ' → ' : '') + selector; } parseCSS(cssText) { const style = document.createElement('style'); style.textContent = cssText; document.head.appendChild(style); const sheet = style.sheet; const target = new Map(); this.walk(sheet.cssRules, target); document.head.removeChild(style); return target; } walk(rules, target, context = '') { if (!rules) return; for (const rule of rules) { if (rule.type === 1) { const selectors = (rule.selectorText || '').split(',').map(s => this.normalizeSelector(s)); for (const sel of selectors) { if (!sel) continue; const key = this.getKey(context, sel); if (!target.has(key)) target.set(key, new Map()); const declMap = target.get(key); for (let i = 0; i < rule.style.length; i++) { const prop = rule.style[i].toLowerCase(); const val = this.normalizeValue(rule.style.getPropertyValue(prop)); const imp = rule.style.getPropertyPriority(prop) === 'important'; declMap.set(prop, {value: val, important: imp}); } } } else if (rule.type === 4) { const newCtx = `@media ${rule.media.mediaText}` + (context ? ` → ${context}` : ''); this.walk(rule.cssRules, target, newCtx); } else if (rule.type === 12) { const newCtx = `@supports ${rule.conditionText}` + (context ? ` → ${context}` : ''); this.walk(rule.cssRules, target, newCtx); } else if (rule.type === 7) { const key = `@keyframes ${rule.name}`; if (!target.has(key)) target.set(key, new Map()); const kfMap = target.get(key); for (const frame of rule.cssRules || []) { const frameKey = frame.keyText.trim(); const frameDecls = {}; for (let i = 0; i < frame.style.length; i++) { const prop = frame.style[i].toLowerCase(); frameDecls[prop] = this.normalizeValue(frame.style.getPropertyValue(prop)); } kfMap.set(frameKey, frameDecls); } } else if (rule.type === 5) { const key = '@font-face'; if (!target.has(key)) target.set(key, new Map()); const declMap = target.get(key); for (let i = 0; i < rule.style.length; i++) { const prop = rule.style[i].toLowerCase(); declMap.set(prop, {value: this.normalizeValue(rule.style.getPropertyValue(prop)), important: false}); } } } } load(css1, css2) { this.left = this.parseCSS(css1); this.right = this.parseCSS(css2); } getCanonicalLines() { const allKeys = new Set([...this.left.keys(), ...this.right.keys()]); const leftLines = []; const rightLines = []; for (const key of [...allKeys].sort()) { const lMap = this.left.get(key) || new Map(); const rMap = this.right.get(key) || new Map(); leftLines.push(this.formatRule(key, lMap)); rightLines.push(this.formatRule(key, rMap)); } return { leftLines, rightLines }; } formatRule(key, declMap) { if (declMap.size === 0) return ''; if (key.startsWith('@keyframes')) { let s = key + ' { '; for (const [frameKey, frameDecls] of declMap) { const d = Object.entries(frameDecls).map(([p, v]) => `${p}:${v}`).join('; '); s += `${frameKey} { ${d} } `; } return s.trim() + ' }'; } const decls = [...declMap.entries()] .sort((a, b) => a[0].localeCompare(b[0])) .map(([p, v]) => `${p}: ${v.value}${v.important ? ' !important' : ''}`) .join('; '); return `${key} { ${decls} }`; } }
-
 function diffusion() {
   let t1 = diffElements.raw.value || '';
   let t2 = diffElements.morph.value || '';
@@ -226,14 +205,10 @@ function diffusion() {
   document.getElementById('diffStatLine').textContent = finalMax;
   document.getElementById('diffStatStatus').textContent = diffs === 0 ? 'Identical' : 'Differences Found';
 }
-
 function diffEscapeHTML(s) { return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[m] || '&#039;'); }
 function diffCommonPrefix(a, b) { let i=0; while(i<a.length && i<b.length && a[i]===b[i]) i++; return a.slice(0,i); }
 function diffCommonSuffix(a, b) { let i=0; while(i<a.length && i<b.length && a[a.length-1-i]===b[b.length-1-i]) i++; return a.slice(a.length-i); }
-
-// Make sure to add events for the new UI elements if they exist
 [diffElements.raw, diffElements.morph].forEach(t => t.addEventListener('input', diffusion));
 if (diffElements.inputType) diffElements.inputType.addEventListener('change', diffusion);
 if (diffElements.trimSpaces) diffElements.trimSpaces.addEventListener('change', diffusion);
-
 diffusion();
