@@ -4,17 +4,22 @@
     static get observedAttributes() { return ['src']; }
     constructor() {
       super();
-      this.attachShadow({ mode: 'open' });
       this._isMounted = false;
       this._abortController = null;
-      this._observer = new MutationObserver(m => {
-        if (m.some(r => r.attributeName.startsWith('data-'))) this.render();
+      this._observer = new MutationObserver(mutations => {
+        if (mutations.some(r => r.attributeName.startsWith('data-'))) {
+          this.render();
+        }
       });
     }
     connectedCallback() {
       this._observer.observe(this, { attributes: true });
       this.render();
       this._isMounted = true;
+    }
+    disconnectedCallback() {
+      this._observer.disconnect();
+      if (this._abortController) this._abortController.abort();
     }
     async render() {
       const src = this.getAttribute('src');
@@ -35,14 +40,13 @@
         }[m]));
         this.getAttributeNames().forEach(attr => {
           if (attr.startsWith('data-')) {
-            const propKey = attr.slice(5);
-            const val = this.getAttribute(attr);
-            const regex = new RegExp(`{{${propKey}}}`, 'g');
-            html = html.replace(regex, val);
+            const key = attr.slice(5);
+            const val = escape(this.getAttribute(attr));
+            html = html.replace(new RegExp(`{{${key}}}`, 'g'), val);
           }
         });
         const stateMap = new Map();
-        this.shadowRoot.querySelectorAll('[id]').forEach(el => {
+        this.querySelectorAll('[id]').forEach(el => {
           stateMap.set(el.id, {
             value: el.value,
             checked: el.checked,
@@ -50,41 +54,47 @@
             selectionEnd: el.selectionEnd
           });
         });
-        this.shadowRoot.innerHTML = html;
+        const parser = new DOMParser();
+        const newDoc = parser.parseFromString(html, 'text/html');
+        const newContent = newDoc.body;
+        this.innerHTML = '';
+        this.append(...Array.from(newContent.childNodes));
         stateMap.forEach((state, id) => {
-          const el = this.shadowRoot.getElementById(id);
+          const el = this.querySelector(`#${CSS.escape(id)}`);
           if (el) {
-            Object.assign(el, state);
-            if (state.selectionStart !== undefined) {
+            if ('value' in el) el.value = state.value;
+            if ('checked' in el) el.checked = state.checked;
+            if (state.selectionStart != null && el.setSelectionRange) {
               el.setSelectionRange(state.selectionStart, state.selectionEnd);
             }
           }
         });
         this.executeScripts();
       } catch (err) {
-        if (err.name !== 'AbortError') console.error("[Dextools]", err);
+        if (err.name !== 'AbortError') {
+          console.error('[Dextools]', err);
+          this.innerHTML = `<!-- Error loading ${fetchPath} -->`;
+        }
       }
     }
     executeScripts() {
-      const hostRef = this;
-      const rootRef = this.shadowRoot;
-      this.shadowRoot.querySelectorAll('script').forEach(oldScript => {
-        if (oldScript.hasAttribute('once') && this._isMounted) return;
+      this.querySelectorAll('script').forEach(oldScript => {
+        if (oldScript.hasAttribute('once') && this._isMounted) {
+          oldScript.remove();
+          return;
+        }
         const newScript = document.createElement('script');
-        Array.from(oldScript.attributes).forEach(a => newScript.setAttribute(a.name, a.value));
-        newScript.textContent = `(function(host, root){
-          ${oldScript.textContent}
-        })(window._dexActiveHost, window._dexActiveRoot);`;
-        window._dexActiveHost = hostRef;
-        window._dexActiveRoot = rootRef;
-        this.shadowRoot.appendChild(newScript);
-        delete window._dexActiveHost;
-        delete window._dexActiveRoot;
-        oldScript.remove();
+        Array.from(oldScript.attributes).forEach(attr =>
+          newScript.setAttribute(attr.name, attr.value)
+        );
+        newScript.textContent = `
+          (function(host){
+            ${oldScript.textContent}
+          })(document.currentScript.closest('dextools-import'));
+        `;
+        oldScript.parentNode.replaceChild(newScript, oldScript);
       });
     }
   }
-  if (!customElements.get('dextools-import')) {
-    customElements.define('dextools-import', DextoolsImport);
-  }
+  customElements.define('dextools-import', DextoolsImport);
 })();
