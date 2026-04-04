@@ -26,16 +26,19 @@
       try {
         if (!cache.has(fetchPath)) {
           const res = await fetch(fetchPath, { signal });
+          if (!res.ok) throw new Error(res.status);
           cache.set(fetchPath, await res.text());
         }
         let html = String(cache.get(fetchPath));
-        const escape = s => s.replace(/[&<>"']/g, m => ({
+        const escape = s => String(s).replace(/[&<>"']/g, m => ({
           '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"
         }[m]));
         this.getAttributeNames().forEach(attr => {
           if (attr.startsWith('data-')) {
-            const regex = new RegExp(`{{${attr.slice(5)}}}`, 'g');
-            html = html.replace(regex, escape(this.getAttribute(attr)));
+            const propKey = attr.slice(5);
+            const val = this.getAttribute(attr);
+            const regex = new RegExp(`{{${propKey}}}`, 'g');
+            html = html.replace(regex, val);
           }
         });
         const stateMap = new Map();
@@ -47,11 +50,7 @@
             selectionEnd: el.selectionEnd
           });
         });
-        const parser = new DOMParser();
-        const newDoc = parser.parseFromString(html, 'text/html');
-        const newContent = newDoc.body;
-        this.shadowRoot.innerHTML = '';
-        this.shadowRoot.appendChild(document.importNode(newContent, true));
+        this.shadowRoot.innerHTML = html;
         stateMap.forEach((state, id) => {
           const el = this.shadowRoot.getElementById(id);
           if (el) {
@@ -63,20 +62,29 @@
         });
         this.executeScripts();
       } catch (err) {
-        if (err.name !== 'AbortError') console.error(err);
+        if (err.name !== 'AbortError') console.error("[Dextools]", err);
       }
     }
     executeScripts() {
+      const hostRef = this;
+      const rootRef = this.shadowRoot;
       this.shadowRoot.querySelectorAll('script').forEach(oldScript => {
         if (oldScript.hasAttribute('once') && this._isMounted) return;
         const newScript = document.createElement('script');
         Array.from(oldScript.attributes).forEach(a => newScript.setAttribute(a.name, a.value));
-        newScript.textContent = `(function(host, root){ ${oldScript.textContent} })(this.getRootNode().host, this.getRootNode());`;
+        newScript.textContent = `(function(host, root){
+          ${oldScript.textContent}
+        })(window._dexActiveHost, window._dexActiveRoot);`;
+        window._dexActiveHost = hostRef;
+        window._dexActiveRoot = rootRef;
         this.shadowRoot.appendChild(newScript);
+        delete window._dexActiveHost;
+        delete window._dexActiveRoot;
         oldScript.remove();
       });
     }
   }
-  customElements.define('dextools-import', DextoolsImport);
+  if (!customElements.get('dextools-import')) {
+    customElements.define('dextools-import', DextoolsImport);
+  }
 })();
-                                    
