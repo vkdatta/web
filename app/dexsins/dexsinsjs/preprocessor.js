@@ -23,6 +23,15 @@
     console.error(LOG, `HTTP ${xhr.status} fetching: ${url}`);
     return null;
   }
+  function applyData(html, element) {
+    const dataset = element.dataset;
+    return html.replace(/\{\{\s*([a-zA-Z0-9_-]+)\s*\}\}/g, (match, key) => {
+      const camel = key.replace(/-([a-z])/g, (_, l) => l.toUpperCase());
+      if (key in dataset)   return dataset[key];
+      if (camel in dataset) return dataset[camel];
+      return match;
+    });
+  }
   function inject(anchor, html) {
     const tpl = document.createElement('template');
     tpl.innerHTML = html;
@@ -55,8 +64,8 @@
         this.remove();
         return;
       }
-      const html = fetchSync(resolveURL(src));
-      if (html !== null) inject(this, html);
+      let html = fetchSync(resolveURL(src));
+      if (html !== null) inject(this, applyData(html, this));
       else this.remove();
     }
   }
