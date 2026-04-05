@@ -73,7 +73,8 @@ preprocessor.js is extremely useful when working with large HTML files that beco
 
 Without preprocessor 
 
-```html index.html
+```html
+<!-- index.html -->
 <div class="article-card">
   <div class="article-header">
     <h2>Why Remote Work Is Reshaping Cities</h2>
@@ -154,5 +155,60 @@ Without preprocessor
   </div>
 </div>
 ```
+With preprocessor 
 
+```html
+<!-- article-card.html -->
+
+<div class="article-card">
+  <div class="article-header">
+    <h2>{{title}}</h2>
+    <span class="author">{{author}}</span>
+  </div>
+  <div class="article-body">
+    <p>{{summary}}</p>
+    <p>Published in the Weekly Insight journal.</p>
+    <p>Estimated reading time: 4 minutes.</p>
+    <p>Category: Technology & Society.</p>
+    <p>This article explores real-world implications.</p>
+    <p>Includes expert opinions and data points.</p>
+    <p>Updated regularly with new findings.</p>
+    <p>Trusted by over 50,000 readers monthly.</p>
+  </div>
+  <div class="article-footer">
+    <button>Read Full Article</button>
+  </div>
+</div>
+```
+
+```html
+<!-- index.html -->
+<dextools-import 
+  src="article-card.html"
+  data-title="Why Remote Work Is Reshaping Cities"
+  data-author="By Ananya Rao"
+  data-summary="As remote work rises, smaller cities are seeing unexpected growth.">
+</dextools-import>
+
+<dextools-import 
+  src="article-card.html"
+  data-title="The Rise of AI in Everyday Apps"
+  data-author="By Rahul Verma"
+  data-summary="From keyboards to photo editors, AI is quietly becoming part of daily life.">
+</dextools-import>
+
+<dextools-import 
+  src="article-card.html"
+  data-title="Electric Vehicles Are Changing Urban Transport"
+  data-author="By Sneha Kapoor"
+  data-summary="EV adoption is accelerating as cities push for cleaner mobility.">
+</dextools-import>
+
+<dextools-import 
+  src="article-card.html"
+  data-title="How Startups Are Redefining Finance"
+  data-author="By Arjun Mehta"
+  data-summary="Fintech startups are simplifying banking and investments globally.">
+</dextools-import>
+```
 
