@@ -69,3 +69,4 @@ Usage Example:
 
 ### 6. preprocessor.js 
 
+preprocessor.js is extremely useful when working with large HTML files that become difficult to maintain and scale. By splitting sections of HTML into different HTML files or creating a file for repeated UI sections into smaller reusable chunks, you avoid duplication and keep your main files clean and readable. Instead of editing the same structure in multiple places, you update it once and reuse it everywhere. The data-* binding mechanism allows small variations (like titles, descriptions, or buttons) without breaking the shared structure. This makes development faster, reduces errors, and creates a modular system similar to components in modern frameworks without needing any build tools or libraries.
