@@ -7,6 +7,7 @@ This repository contains personal JavaScript utilities for frontend enhancements
 - **NoteApp**: Personal note-taking application.
 - **DiffApp**: Personal diff tool for comparing text.
 - **Codeblock.js**: syntax highlight any language with minimal setup.
+- **preprocessor.js**: Split large HTML file into multiple parts and bind them together. 
 
 All files are intended for **personal use** and can be directly included via CDN links.
 
@@ -65,3 +66,6 @@ Usage Example:
 ```<code lang="js">your javascript code</code>```
 
 > __Warning:__ This only supports adding code blocks in HTML. Directly injecting text into code blocks via JavaScript requires manipulating the .code-content query selector. You also need to use :not() to include unsupported languages.
+
+### 6. preprocessor.js 
+
