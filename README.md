@@ -1,77 +1,99 @@
-# Personal JavaScript Utilities
+## JavaScript Utilities for DexLabs and General Purpose Framework
 
-This repository contains personal JavaScript utilities for frontend enhancements including:
+This repo contains JavaScript utilities for frontend enhancements including:
 
-- **Autosave.js**: Automatically saves input values and textareas.
-- **Fullscreen.js**: Enable fullscreen mode on double-tap anywhere.
-- **NoteApp**: Personal note-taking application.
-- **DiffApp**: Personal diff tool for comparing text.
-- **Codeblock.js**: syntax highlight any language with minimal setup.
-- **preprocessor.js**: Split large HTML file into multiple parts and bind them together. 
-
-All files are intended for **personal use** and can be directly included via CDN links.
+- **autosave.js**: Automatically saves state including input, textarea, radios to localStorage.
+- **fullscreen.js**: Enable fullscreen mode on double-tap.
+- **noteapp**: Personal note-taking app.
+- **diffapp**: Personal diff-checker app.
+- **codeblock.js**: syntax highlight any language with minimal setup.
+- **preprocessor.js**: Split large HTML file into multiple parts and bind them together.
 
 ---
 
 ## Features & Usage
 
-### 1. Autosave.js
+### 1. autosave.js
 
-Automatically saves the values of <input>, <textarea>, and <radio> elements in localStorage.
+Automatically saves states localStorage.
 
 Usage Example:
 
-```<input id="customername" placeholder="Enter customer name">```
+```html
+<input id="customername" placeholder="Enter customer name"/>
+<textarea id="notes" placeholder="Write your notes"></textarea>
+```
 
-```<textarea id="notes" placeholder="Write your notes"></textarea>```
+Both gets autosaved to user's localStorage. Important: Each element must have a unique ID for autosaving.
 
-- Important: Each element must have a unique id for autosaving.
-- Once a user types, the value will automatically be saved and restored on page reload.
+Install via -
 
+```html
+<script src="https://cdn.jsdelivr.net/gh/vkdatta/web@main/app/dexsins/dexsinsjs/autosave.js"></script>
+```
 ---
 
-### 2. Fullscreen.js
+### 2. fullscreen.js
 
-Double-tap anywhere on the page to toggle fullscreen mode.
-
-Usage Example:
-
-```<script>Fullscreen functionality is automatically initialized on page load</script>```
-
+- Double-tap anywhere on the page to toggle fullscreen mode.
 - Works on desktops and mobile devices.
-- No extra setup required. just include the script.
 
+Install via -
+
+```html
+<script src="https://cdn.jsdelivr.net/gh/vkdatta/web@main/app/dexsins/dexsinsjs/fullscreen.js"></script>
+```
 ---
 
-### 3. NoteApp
+### 3. noteapp
 
-A personal note-taking frontend app. Includes JS and CSS for layout and behavior.
+Personal note-taking app. 
 
+Access via - 
+
+```
+https://dex-labs.blogspot.com/
+```
 ---
 
 ### 4. DiffApp
 
-Compare text differences directly in the browser. Includes JS and CSS.
+Personal diff-checker app.
 
+Access via - 
+
+```
+https://dex-labs.blogspot.com/
+```
 ---
 
 ### 5. codeblock.js
 
-No more complex Prism setup for syntax highlighting. Just paste the codeblock.js script into your template and let it do its work. Simply name the file extension, and the script will handle the highlighting automatically. No other Prism scripts are required. This uses Prism and performs syntax highlighting out of the box. There’s no need for pre tags or anything else. It supports almost all languages in Prism and uses dark mode by default. You can change the CSS using the !important directive if you want to use a light theme.
+Drop the heavy Prism setup. Just include the codeblock.js script in your template and it handles everything. You only need to paste the script once. After that, it detects the file extension and applies syntax highlighting automatically. No extra Prism scripts required. It works with most Prism-supported languages out of the box and defaults to a dark theme. If you want a light theme, just override the styles using !important. No need for manual <pre> tags or extra configuration.
 
 Usage Example:
 
-```<code lang="py">your python code</code>```
+```html
+<code lang="py">your python code</code>
+```
 
-```<code lang="js">your javascript code</code>```
+```html
+<code lang="js">your javascript code</code>
+```
 
 > __Warning:__ This only supports adding code blocks in HTML. Directly injecting text into code blocks via JavaScript requires manipulating the .code-content query selector. You also need to use :not() to include unsupported languages.
+
+Install via -
+
+```html
+<script src="https://cdn.jsdelivr.net/gh/vkdatta/web@main/app/dexsins/dexsinsjs/codeblock.js"></script>
+```
 
 ### 6. preprocessor.js 
 
 preprocessor.js is extremely useful when working with large HTML files that become difficult to maintain and scale. By splitting sections of HTML into different HTML files or creating a file for repeated UI sections into smaller reusable chunks, you avoid duplication and keep your main files clean and readable. Instead of editing the same structure in multiple places, you update it once and reuse it everywhere. The data-* binding mechanism allows small variations (like titles, descriptions, or buttons) without breaking the shared structure. This makes development faster, reduces errors, and creates a modular system similar to components in modern frameworks without needing any build tools or libraries.
 
-Without preprocessor 
+Without preprocessor: 
 
 ```html
 <!-- index.html -->
@@ -155,7 +177,8 @@ Without preprocessor
   </div>
 </div>
 ```
-With preprocessor 
+
+With preprocessor:
 
 ```html
 <!-- article-card.html -->
@@ -211,4 +234,8 @@ With preprocessor
   data-summary="Fintech startups are simplifying banking and investments globally.">
 </dextools-import>
 ```
+Install via -
 
+```html
+<script src="https://cdn.jsdelivr.net/gh/vkdatta/web@main/app/dexsins/dexsinsjs/preprocessor.js"></script>
+```
