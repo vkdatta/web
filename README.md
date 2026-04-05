@@ -69,7 +69,7 @@ https://dex-labs.blogspot.com/
 
 ### 5. codeblock.js
 
-Drop the heavy Prism setup. Just include the codeblock.js script in your template and it handles everything. You only need to paste the script once. After that, it detects the file extension and applies syntax highlighting automatically. No extra Prism scripts required. It works with most Prism-supported languages out of the box and defaults to a dark theme. If you want a light theme, just override the styles using !important. No need for manual <pre> tags or extra configuration.
+Drop the heavy Prism setup. Just include the codeblock.js script in your template and it handles everything. You only need to paste the script once. After that, it detects the file extension and applies syntax highlighting automatically. No extra Prism scripts required. It works with most Prism-supported languages out of the box and defaults to a dark theme. If you want a light theme, just override the styles using !important. No need for manual pre tags or extra configuration.
 
 Usage Example:
 
