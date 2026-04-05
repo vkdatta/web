@@ -70,3 +70,89 @@ Usage Example:
 ### 6. preprocessor.js 
 
 preprocessor.js is extremely useful when working with large HTML files that become difficult to maintain and scale. By splitting sections of HTML into different HTML files or creating a file for repeated UI sections into smaller reusable chunks, you avoid duplication and keep your main files clean and readable. Instead of editing the same structure in multiple places, you update it once and reuse it everywhere. The data-* binding mechanism allows small variations (like titles, descriptions, or buttons) without breaking the shared structure. This makes development faster, reduces errors, and creates a modular system similar to components in modern frameworks without needing any build tools or libraries.
+
+Without preprocessor 
+
+```html index.html
+<div class="article-card">
+  <div class="article-header">
+    <h2>Why Remote Work Is Reshaping Cities</h2>
+    <span class="author">By Ananya Rao</span>
+  </div>
+  <div class="article-body">
+    <p>As remote work rises, smaller cities are seeing unexpected growth.</p>
+    <p>Published in the Weekly Insight journal.</p>
+    <p>Estimated reading time: 4 minutes.</p>
+    <p>Category: Technology & Society.</p>
+    <p>This article explores real-world implications.</p>
+    <p>Includes expert opinions and data points.</p>
+    <p>Updated regularly with new findings.</p>
+    <p>Trusted by over 50,000 readers monthly.</p>
+  </div>
+  <div class="article-footer">
+    <button>Read Full Article</button>
+  </div>
+</div>
+
+<div class="article-card">
+  <div class="article-header">
+    <h2>The Rise of AI in Everyday Apps</h2>
+    <span class="author">By Rahul Verma</span>
+  </div>
+  <div class="article-body">
+    <p>From keyboards to photo editors, AI is quietly becoming part of daily life.</p>
+    <p>Published in the Weekly Insight journal.</p>
+    <p>Estimated reading time: 4 minutes.</p>
+    <p>Category: Technology & Society.</p>
+    <p>This article explores real-world implications.</p>
+    <p>Includes expert opinions and data points.</p>
+    <p>Updated regularly with new findings.</p>
+    <p>Trusted by over 50,000 readers monthly.</p>
+  </div>
+  <div class="article-footer">
+    <button>Read Full Article</button>
+  </div>
+</div>
+
+<div class="article-card">
+  <div class="article-header">
+    <h2>Electric Vehicles Are Changing Urban Transport</h2>
+    <span class="author">By Sneha Kapoor</span>
+  </div>
+  <div class="article-body">
+    <p>EV adoption is accelerating as cities push for cleaner mobility.</p>
+    <p>Published in the Weekly Insight journal.</p>
+    <p>Estimated reading time: 4 minutes.</p>
+    <p>Category: Technology & Society.</p>
+    <p>This article explores real-world implications.</p>
+    <p>Includes expert opinions and data points.</p>
+    <p>Updated regularly with new findings.</p>
+    <p>Trusted by over 50,000 readers monthly.</p>
+  </div>
+  <div class="article-footer">
+    <button>Read Full Article</button>
+  </div>
+</div>
+
+<div class="article-card">
+  <div class="article-header">
+    <h2>How Startups Are Redefining Finance</h2>
+    <span class="author">By Arjun Mehta</span>
+  </div>
+  <div class="article-body">
+    <p>Fintech startups are simplifying banking and investments globally.</p>
+    <p>Published in the Weekly Insight journal.</p>
+    <p>Estimated reading time: 4 minutes.</p>
+    <p>Category: Technology & Society.</p>
+    <p>This article explores real-world implications.</p>
+    <p>Includes expert opinions and data points.</p>
+    <p>Updated regularly with new findings.</p>
+    <p>Trusted by over 50,000 readers monthly.</p>
+  </div>
+  <div class="article-footer">
+    <button>Read Full Article</button>
+  </div>
+</div>
+```
+
+
