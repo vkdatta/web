@@ -25,7 +25,6 @@
     return _xhr;
   }
   Object.setPrototypeOf(_PatchedXHR, _OrigXHR);
-  Object.assign(_PatchedXHR, _OrigXHR);
   window.XMLHttpRequest = _PatchedXHR;
 
   function _showErrorPage() {
