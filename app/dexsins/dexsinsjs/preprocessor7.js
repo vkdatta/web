@@ -5,7 +5,6 @@
   const checkedUrls = new Set();
   const urlsToCheck = [];
 
-  // Re-use Code X's URL resolution logic for the pre-flight check
   function resolveURL(src) {
     try {
       return new URL(src.trim(), document.baseURI || location.href).href;
@@ -14,16 +13,14 @@
     }
   }
 
-  // 1. Get initial imports from the current DOM
   document.querySelectorAll('dextools-import').forEach(el => {
     const src = el.getAttribute('src');
     if (src) urlsToCheck.push(src);
   });
 
-  // 2. BFS to read all .html files and trace nested <dextools-import> blocks
   while (urlsToCheck.length > 0) {
     const src = urlsToCheck.shift();
-    
+
     if (checkedUrls.has(src)) continue;
     checkedUrls.add(src);
 
@@ -31,13 +28,12 @@
 
     try {
       const response = await fetch(url, { method: 'GET' });
-      
+
       if (!response.ok) {
         missingFiles.push({ src, status: response.status });
       } else {
         const html = await response.text();
-        
-        // Search the fetched HTML text for nested imports
+
         const regex = /<dextools-import[^>]+src\s*=\s*["']([^"']+)["']/gi;
         let match;
         while ((match = regex.exec(html)) !== null) {
@@ -52,7 +48,6 @@
     }
   }
 
-  // 4. Else nuke all existing HTML and write sandboxed error page
   if (missingFiles.length > 0) {
     const listHtml = missingFiles.map(f =>
       `<li><span class="status">[HTTP ${f.status}]</span> <span class="path">${f.src}</span></li>`
@@ -65,7 +60,6 @@
         <meta charset="UTF-8">
         <title>Missing Dextools Dependencies</title>
         <style>
-          /* Completely Sandboxed CSS */
           all: initial;
           html, body {
             margin: 0; padding: 0;
@@ -80,16 +74,31 @@
             border-radius: 8px; padding: 2rem; max-width: 600px; width: 100%;
             box-shadow: 0 8px 24px rgba(255, 0, 0, 0.15);
           }
-          .dxt-error-overlay h1 { color: #ff4444; margin-top: 0; font-size: 1.5rem; border-bottom: 1px solid #333; padding-bottom: 1rem; }
-          .dxt-error-overlay p { color: #bbbbbb; font-size: 1rem; line-height: 1.5; margin-bottom: 1.5rem; }
-          .dxt-error-overlay ul { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 0.5rem; }
-          .dxt-error-overlay li {
-            background: #262626; padding: 0.75rem 1rem; border-radius: 4px;
-            display: flex; align-items: center; gap: 1rem;
-            border-left: 4px solid #ff4444;
+          .dxt-error-overlay h1 {
+            color: #ff4444; margin-top: 0; font-size: 1.5rem;
+            border-bottom: 1px solid #333; padding-bottom: 1rem;
           }
-          .dxt-error-overlay .status { color: #ff4444; font-weight: bold; font-size: 0.85rem; letter-spacing: 0.5px; }
-          .dxt-error-overlay .path { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; color: #e0e0e0; font-size: 0.9rem; word-break: break-all; }
+          .dxt-error-overlay p {
+            color: #bbbbbb; font-size: 1rem; line-height: 1.5;
+            margin-bottom: 1.5rem;
+          }
+          .dxt-error-overlay ul {
+            list-style: none; padding: 0; margin: 0;
+            display: flex; flex-direction: column; gap: 0.5rem;
+          }
+          .dxt-error-overlay li {
+            background: #262626; padding: 0.75rem 1rem;
+            border-radius: 4px; display: flex; align-items: center;
+            gap: 1rem; border-left: 4px solid #ff4444;
+          }
+          .dxt-error-overlay .status {
+            color: #ff4444; font-weight: bold;
+            font-size: 0.85rem; letter-spacing: 0.5px;
+          }
+          .dxt-error-overlay .path {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            color: #e0e0e0; font-size: 0.9rem; word-break: break-all;
+          }
         </style>
       </head>
       <body>
@@ -103,19 +112,15 @@
     `;
 
     document.documentElement.innerHTML = errorPage;
-    return; // Halt execution entirely
+    return;
   }
 
-  // 3. If everything exists proceed with Code X
-  // ==========================================
-  // CODE X (Unmodified logic)
-  // ==========================================
   (function () {
     'use strict';
-    const TAG       = 'dextools-import';
+    const TAG = 'dextools-import';
     const MAX_DEPTH = 32;
-    const LOG       = '[dextools]';
-    
+    const LOG = '[dextools]';
+
     function resolveURL(src) {
       try {
         return new URL(src.trim(), document.baseURI || location.href).href;
@@ -123,36 +128,37 @@
         return src.trim();
       }
     }
-    
+
     function fetchSync(url) {
       const xhr = new XMLHttpRequest();
       try {
-        xhr.open('GET', url, false );
+        xhr.open('GET', url, false);
         xhr.send(null);
       } catch (e) {
         console.error(LOG, 'Network error fetching:', url, e);
         return null;
       }
       if (xhr.status >= 200 && xhr.status < 300) return xhr.responseText;
-      console.error(LOG, \`HTTP \${xhr.status} fetching: \${url}\`);
+      console.error(LOG, `HTTP ${xhr.status} fetching: ${url}`);
       return null;
     }
-    
+
     function applyData(html, element) {
       const dataset = element.dataset;
-      return html.replace(/\\{\\{\\s*([a-zA-Z0-9_-]+)\\s*\\}\\}/g, (match, key) => {
+      return html.replace(/\{\{\s*([a-zA-Z0-9_-]+)\s*\}\}/g, (match, key) => {
         const camel = key.replace(/-([a-z])/g, (_, l) => l.toUpperCase());
-        if (key in dataset)   return dataset[key];
+        if (key in dataset) return dataset[key];
         if (camel in dataset) return dataset[camel];
         return match;
       });
     }
-    
+
     function inject(anchor, html) {
       const tpl = document.createElement('template');
       tpl.innerHTML = html;
-      const frag  = document.createDocumentFragment();
+      const frag = document.createDocumentFragment();
       const nodes = Array.from(tpl.content.childNodes);
+
       for (const node of nodes) {
         if (node.nodeType === Node.ELEMENT_NODE && node.nodeName === 'SCRIPT') {
           const s = document.createElement('script');
@@ -163,10 +169,11 @@
           frag.appendChild(document.importNode(node, true));
         }
       }
+
       anchor.parentNode.insertBefore(frag, anchor);
       anchor.parentNode.removeChild(anchor);
     }
-    
+
     class DextoolsImport extends HTMLElement {
       connectedCallback() {
         const src = this.getAttribute('src');
@@ -175,24 +182,23 @@
           this.remove();
           return;
         }
+
         const depth = parseInt(this.getAttribute('data-dxt-depth') || '0', 10);
         if (depth > MAX_DEPTH) {
-          console.error(LOG, \`Max depth (\${MAX_DEPTH}) exceeded — possible circular import: \${src}\`);
+          console.error(LOG, `Max depth (${MAX_DEPTH}) exceeded — possible circular import: ${src}`);
           this.remove();
           return;
         }
+
         let html = fetchSync(resolveURL(src));
         if (html !== null) inject(this, applyData(html, this));
         else this.remove();
       }
     }
-    
+
     if (!customElements.get(TAG)) {
       customElements.define(TAG, DextoolsImport);
     }
   })();
-  // ==========================================
-  // END CODE X
-  // ==========================================
 
 })();
