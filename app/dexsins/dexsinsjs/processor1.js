@@ -13,7 +13,7 @@
   function fetchSync(url) {
     const xhr = new XMLHttpRequest();
     try {
-      xhr.open('GET', url, false );
+      xhr.open('GET', url, true );
       xhr.send(null);
     } catch (e) {
       console.error(LOG, 'Network error fetching:', url, e);
