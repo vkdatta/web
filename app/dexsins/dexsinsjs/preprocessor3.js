@@ -2,7 +2,12 @@
   'use strict';
   const LOG = '[dextools-validator]';
   
-  // Pre-validate all imports before the custom element loads anything
+  // BLOCK RENDERING IMMEDIATELY - before anything paints
+  const blockStyles = document.createElement('style');
+  blockStyles.textContent = 'html,body{margin:0;padding:0;overflow:hidden;height:100%;background:#000}';
+  document.documentElement.appendChild(blockStyles);
+  document.body && (document.body.style.display = 'none');
+  
   function prevalidateImports() {
     const imports = Array.from(document.querySelectorAll('dextools-import'));
     const missing = [];
@@ -16,7 +21,6 @@
       if (checked.has(url)) continue;
       checked.add(url);
       
-      // Check if file exists with HEAD request
       const xhr = new XMLHttpRequest();
       try {
         xhr.open('HEAD', url, false);
@@ -30,18 +34,40 @@
     }
     
     if (missing.length > 0) {
-      displayErrorPage(missing);
+      // LOG TO CONSOLE
+      console.error(LOG, 'MISSING FILES DETECTED:');
+      missing.forEach((m, i) => {
+        console.error(`  ${i + 1}. ${m.src} (${m.status ? 'HTTP ' + m.status : m.error})`);
+      });
+      console.error(LOG, `Total: ${missing.length} file(s) missing. Website loading blocked.`);
+      
+      showIsolatedErrorPage(missing);
       return false;
     }
+    
+    // Remove block styles if all good
+    blockStyles.remove();
+    document.body && (document.body.style.display = '');
     return true;
   }
   
-  function displayErrorPage(missing) {
+  function showIsolatedErrorPage(missing) {
+    // Clear everything
+    document.head.innerHTML = '';
+    document.body.innerHTML = '';
+    
+    // Create isolated iframe for error page
+    const iframe = document.createElement('iframe');
+    iframe.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;border:none;z-index:99999';
+    
     const list = missing.map(m => 
-      `<li><code>${escapeHtml(m.src)}</code> — ${m.status ? `HTTP ${m.status}` : escapeHtml(m.error || 'Network Error')}</li>`
+      `<li style="padding:8px 0;border-bottom:1px solid #fecaca;color:#7f1d1d;font-family:monospace;font-size:13px">
+        <span style="background:#fee2e2;padding:2px 6px;border-radius:3px;font-weight:bold">${escapeHtml(m.src)}</span>
+        <span style="color:#991b1b;margin-left:8px">${m.status ? 'HTTP ' + m.status : escapeHtml(m.error || 'Error')}</span>
+      </li>`
     ).join('');
     
-    document.documentElement.innerHTML = `<!DOCTYPE html>
+    const errorHTML = `<!DOCTYPE html>
 <html>
 <head>
   <meta charset="UTF-8">
@@ -54,110 +80,103 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
       padding: 20px;
     }
     .container {
       background: white;
-      max-width: 800px;
+      max-width: 700px;
       width: 100%;
       padding: 40px;
-      border-radius: 16px;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      border-radius: 12px;
+      box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
+    }
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      margin-bottom: 20px;
+      padding-bottom: 20px;
+      border-bottom: 2px solid #fecaca;
     }
     .icon {
-      width: 64px;
-      height: 64px;
+      width: 50px;
+      height: 50px;
       background: #fee2e2;
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
-      margin-bottom: 20px;
-    }
-    .icon::before {
-      content: "⚠️";
-      font-size: 32px;
+      font-size: 24px;
     }
     h1 { 
       color: #dc2626; 
-      font-size: 28px;
-      margin-bottom: 12px;
+      font-size: 24px;
     }
     p { 
       color: #4b5563; 
-      margin-bottom: 24px;
+      margin-bottom: 20px;
       line-height: 1.6;
     }
     .file-list {
       background: #fef2f2;
-      border: 1px solid #fecaca;
+      border: 2px solid #fecaca;
       border-radius: 8px;
       padding: 20px;
       margin-bottom: 20px;
     }
     .file-list h3 {
       color: #991b1b;
-      font-size: 14px;
+      font-size: 12px;
       text-transform: uppercase;
       letter-spacing: 0.05em;
       margin-bottom: 12px;
     }
-    ul { 
-      list-style: none;
-    }
-    li { 
-      padding: 10px 0;
-      border-bottom: 1px solid #fecaca;
-      color: #7f1d1d;
-      font-family: 'Courier New', monospace;
-      font-size: 14px;
-    }
-    li:last-child { border-bottom: none; }
-    code { 
-      background: #fee2e2; 
-      padding: 4px 8px; 
-      border-radius: 4px; 
-      font-weight: 600;
-    }
+    ul { list-style: none; }
+    li:last-child { border-bottom: none !important; }
     .footer {
       color: #6b7280;
-      font-size: 14px;
+      font-size: 13px;
       text-align: center;
-      padding-top: 20px;
-      border-top: 1px solid #e5e7eb;
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <div class="icon"></div>
-    <h1>Cannot Load Website</h1>
-    <p>The following files referenced by <code>&lt;dextools-import&gt;</code> tags could not be found. Please ensure all files exist and try again.</p>
+    <div class="header">
+      <div class="icon">⚠️</div>
+      <h1>Cannot Load Website</h1>
+    </div>
+    <p>The following files referenced by <code style="background:#f3f4f6;padding:2px 6px;border-radius:3px;font-family:monospace">&lt;dextools-import&gt;</code> tags could not be found:</p>
     <div class="file-list">
       <h3>Missing Files (${missing.length})</h3>
       <ul>${list}</ul>
     </div>
-    <div class="footer">Check file paths and server configuration</div>
+    <div class="footer">Check that all referenced files exist and are accessible</div>
   </div>
 </body>
 </html>`;
+    
+    document.body.appendChild(iframe);
+    iframe.contentDocument.open();
+    iframe.contentDocument.write(errorHTML);
+    iframe.contentDocument.close();
+    
+    // Stop everything else
+    throw new Error('Dextools import validation failed - missing files');
   }
   
   function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
+    return text.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   }
   
-  // Run validation immediately - if it fails, block everything
+  // Run immediately
   if (!prevalidateImports()) {
-    // Prevent the rest of the script from executing
-    throw new Error('Import validation failed - missing files detected');
+    throw new Error('Validation failed');
   }
 })();
 
-// YOUR ORIGINAL CODE BELOW - COMPLETELY UNCHANGED
+// YOUR ORIGINAL CODE - COMPLETELY UNCHANGED
 (function () {
   'use strict';
   const TAG       = 'dextools-import';
