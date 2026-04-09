@@ -6,6 +6,7 @@
   const LOG       = '[dextools]';
 
   const cache = new Map();
+
   function resolveURL(src) {
     try {
       return new URL(src.trim(), document.baseURI || location.href).href;
@@ -57,11 +58,9 @@
     for (const node of nodes) {
       if (node.nodeType === Node.ELEMENT_NODE && node.nodeName === 'SCRIPT') {
         const s = document.createElement('script');
-
         for (const { name, value } of node.attributes) {
           s.setAttribute(name, value);
         }
-
         s.textContent = node.textContent;
         frag.appendChild(s);
       } else {
@@ -69,8 +68,12 @@
       }
     }
 
-    anchor.parentNode.insertBefore(frag, anchor);
-    anchor.parentNode.removeChild(anchor);
+    const parent = anchor.parentNode;
+    parent.insertBefore(frag, anchor);
+    parent.removeChild(anchor);
+
+    // 🔥 notify autosave (and anything else)
+    document.dispatchEvent(new Event('dextools:loaded'));
   }
 
   class DextoolsImport extends HTMLElement {
@@ -86,7 +89,7 @@
       const depth = parseInt(this.getAttribute('data-dxt-depth') || '0', 10);
 
       if (depth > MAX_DEPTH) {
-        console.error(LOG, `Max depth (${MAX_DEPTH}) exceeded — possible circular import: ${src}`);
+        console.error(LOG, `Max depth exceeded: ${src}`);
         this.remove();
         return;
       }
