@@ -1,45 +1,165 @@
 (function () {
   'use strict';
-
-  /* ── Preflight: check all <dextools-import src> files before doing anything ── */
-  const missingFiles = [];
-  document.querySelectorAll('dextools-import[src]').forEach(function (el) {
-    const url = el.getAttribute('src').trim();
-    if (!url) return;
-    const xhr = new XMLHttpRequest();
-    try {
-      xhr.open('GET', url, false);
-      xhr.send(null);
-    } catch (e) { /* network error */ }
-    if (xhr.status === 0 || xhr.status >= 400) missingFiles.push(url);
-  });
-
-  if (missingFiles.length > 0) {
-    const rows = missingFiles.map(function (f, i) {
-      return '<tr><td>' + (i + 1) + '</td><td><code>' + f + '</code></td><td>Missing</td></tr>';
-    }).join('');
-    document.open();
-    document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Import Error</title>'
-      + '<style>body{font-family:sans-serif;background:#0f1117;color:#e2e8f0;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0}'
-      + '.card{background:#1a1d27;border:1px solid #2d3148;border-radius:12px;max-width:720px;width:100%;overflow:hidden}'
-      + '.hd{background:#1e2235;padding:1.5rem 2rem;border-bottom:1px solid #2d3148}'
-      + '.hd h1{color:#f87171;font-size:1.2rem;margin:0}.hd p{color:#94a3b8;font-size:.85rem;margin:.25rem 0 0}'
-      + '.bd{padding:1.5rem 2rem}table{width:100%;border-collapse:collapse;font-size:.875rem}'
-      + 'th{text-align:left;padding:.6rem .75rem;color:#64748b;font-size:.75rem;text-transform:uppercase;border-bottom:1px solid #2d3148}'
-      + 'td{padding:.65rem .75rem;border-bottom:1px solid #1e2235}td:first-child{color:#475569;width:2rem;text-align:center}'
-      + 'td code{color:#fbbf24;font-family:monospace;word-break:break-all}'
-      + 'td:last-child{color:#f87171;font-size:.8rem}.ft{background:#13161f;border-top:1px solid #2d3148;padding:1rem 2rem;font-size:.8rem;color:#475569}'
-      + '</style></head><body><div class="card">'
-      + '<div class="hd"><h1>⚠️ Page failed to load</h1><p>' + missingFiles.length + ' missing file(s) blocked rendering</p></div>'
-      + '<div class="bd"><table><thead><tr><th>#</th><th>File</th><th>Status</th></tr></thead><tbody>' + rows + '</tbody></table></div>'
-      + '<div class="ft">Fix the missing files above, then reload.</div>'
-      + '</div></body></html>');
-    document.close();
-    return;
+  const LOG = '[dextools-validator]';
+  
+  // Pre-validate all imports before the custom element loads anything
+  function prevalidateImports() {
+    const imports = Array.from(document.querySelectorAll('dextools-import'));
+    const missing = [];
+    const checked = new Set();
+    
+    for (const el of imports) {
+      const src = el.getAttribute('src');
+      if (!src || !src.trim()) continue;
+      
+      const url = new URL(src.trim(), document.baseURI || location.href).href;
+      if (checked.has(url)) continue;
+      checked.add(url);
+      
+      // Check if file exists with HEAD request
+      const xhr = new XMLHttpRequest();
+      try {
+        xhr.open('HEAD', url, false);
+        xhr.send(null);
+        if (xhr.status >= 400 || xhr.status === 0) {
+          missing.push({src: src.trim(), url, status: xhr.status});
+        }
+      } catch (e) {
+        missing.push({src: src.trim(), url, error: e.message});
+      }
+    }
+    
+    if (missing.length > 0) {
+      displayErrorPage(missing);
+      return false;
+    }
+    return true;
   }
-  /* ── End preflight ───────────────────────────────────────────────────────── */
+  
+  function displayErrorPage(missing) {
+    const list = missing.map(m => 
+      `<li><code>${escapeHtml(m.src)}</code> — ${m.status ? `HTTP ${m.status}` : escapeHtml(m.error || 'Network Error')}</li>`
+    ).join('');
+    
+    document.documentElement.innerHTML = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Import Error - Missing Files</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { 
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      padding: 20px;
+    }
+    .container {
+      background: white;
+      max-width: 800px;
+      width: 100%;
+      padding: 40px;
+      border-radius: 16px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+    .icon {
+      width: 64px;
+      height: 64px;
+      background: #fee2e2;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 20px;
+    }
+    .icon::before {
+      content: "⚠️";
+      font-size: 32px;
+    }
+    h1 { 
+      color: #dc2626; 
+      font-size: 28px;
+      margin-bottom: 12px;
+    }
+    p { 
+      color: #4b5563; 
+      margin-bottom: 24px;
+      line-height: 1.6;
+    }
+    .file-list {
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+    .file-list h3 {
+      color: #991b1b;
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 12px;
+    }
+    ul { 
+      list-style: none;
+    }
+    li { 
+      padding: 10px 0;
+      border-bottom: 1px solid #fecaca;
+      color: #7f1d1d;
+      font-family: 'Courier New', monospace;
+      font-size: 14px;
+    }
+    li:last-child { border-bottom: none; }
+    code { 
+      background: #fee2e2; 
+      padding: 4px 8px; 
+      border-radius: 4px; 
+      font-weight: 600;
+    }
+    .footer {
+      color: #6b7280;
+      font-size: 14px;
+      text-align: center;
+      padding-top: 20px;
+      border-top: 1px solid #e5e7eb;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="icon"></div>
+    <h1>Cannot Load Website</h1>
+    <p>The following files referenced by <code>&lt;dextools-import&gt;</code> tags could not be found. Please ensure all files exist and try again.</p>
+    <div class="file-list">
+      <h3>Missing Files (${missing.length})</h3>
+      <ul>${list}</ul>
+    </div>
+    <div class="footer">Check file paths and server configuration</div>
+  </div>
+</body>
+</html>`;
+  }
+  
+  function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+  
+  // Run validation immediately - if it fails, block everything
+  if (!prevalidateImports()) {
+    // Prevent the rest of the script from executing
+    throw new Error('Import validation failed - missing files detected');
+  }
+})();
 
-
+// YOUR ORIGINAL CODE BELOW - COMPLETELY UNCHANGED
+(function () {
+  'use strict';
   const TAG       = 'dextools-import';
   const MAX_DEPTH = 32;
   const LOG       = '[dextools]';
