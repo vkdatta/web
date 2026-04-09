@@ -1,184 +1,60 @@
 (function () {
   'use strict';
-  const LOG = '[dextools-validator]';
-  
-  // BLOCK RENDERING IMMEDIATELY - before anything paints
-  const blockStyles = document.createElement('style');
-  blockStyles.textContent = 'html,body{margin:0;padding:0;overflow:hidden;height:100%;background:#000}';
-  document.documentElement.appendChild(blockStyles);
-  document.body && (document.body.style.display = 'none');
-  
-  function prevalidateImports() {
-    const imports = Array.from(document.querySelectorAll('dextools-import'));
-    const missing = [];
-    const checked = new Set();
-    
-    for (const el of imports) {
-      const src = el.getAttribute('src');
-      if (!src || !src.trim()) continue;
-      
-      const url = new URL(src.trim(), document.baseURI || location.href).href;
-      if (checked.has(url)) continue;
-      checked.add(url);
-      
-      const xhr = new XMLHttpRequest();
-      try {
-        xhr.open('HEAD', url, false);
-        xhr.send(null);
-        if (xhr.status >= 400 || xhr.status === 0) {
-          missing.push({src: src.trim(), url, status: xhr.status});
-        }
-      } catch (e) {
-        missing.push({src: src.trim(), url, error: e.message});
-      }
-    }
-    
-    if (missing.length > 0) {
-      // LOG TO CONSOLE
-      console.error(LOG, 'MISSING FILES DETECTED:');
-      missing.forEach((m, i) => {
-        console.error(`  ${i + 1}. ${m.src} (${m.status ? 'HTTP ' + m.status : m.error})`);
-      });
-      console.error(LOG, `Total: ${missing.length} file(s) missing. Website loading blocked.`);
-      
-      showIsolatedErrorPage(missing);
-      return false;
-    }
-    
-    // Remove block styles if all good
-    blockStyles.remove();
-    document.body && (document.body.style.display = '');
-    return true;
-  }
-  
-  function showIsolatedErrorPage(missing) {
-    // Clear everything
-    document.head.innerHTML = '';
-    document.body.innerHTML = '';
-    
-    // Create isolated iframe for error page
-    const iframe = document.createElement('iframe');
-    iframe.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;border:none;z-index:99999';
-    
-    const list = missing.map(m => 
-      `<li style="padding:8px 0;border-bottom:1px solid #fecaca;color:#7f1d1d;font-family:monospace;font-size:13px">
-        <span style="background:#fee2e2;padding:2px 6px;border-radius:3px;font-weight:bold">${escapeHtml(m.src)}</span>
-        <span style="color:#991b1b;margin-left:8px">${m.status ? 'HTTP ' + m.status : escapeHtml(m.error || 'Error')}</span>
-      </li>`
-    ).join('');
-    
-    const errorHTML = `<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="UTF-8">
-  <title>Import Error - Missing Files</title>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { 
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-      padding: 20px;
-    }
-    .container {
-      background: white;
-      max-width: 700px;
-      width: 100%;
-      padding: 40px;
-      border-radius: 12px;
-      box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
-    }
-    .header {
-      display: flex;
-      align-items: center;
-      gap: 15px;
-      margin-bottom: 20px;
-      padding-bottom: 20px;
-      border-bottom: 2px solid #fecaca;
-    }
-    .icon {
-      width: 50px;
-      height: 50px;
-      background: #fee2e2;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 24px;
-    }
-    h1 { 
-      color: #dc2626; 
-      font-size: 24px;
-    }
-    p { 
-      color: #4b5563; 
-      margin-bottom: 20px;
-      line-height: 1.6;
-    }
-    .file-list {
-      background: #fef2f2;
-      border: 2px solid #fecaca;
-      border-radius: 8px;
-      padding: 20px;
-      margin-bottom: 20px;
-    }
-    .file-list h3 {
-      color: #991b1b;
-      font-size: 12px;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      margin-bottom: 12px;
-    }
-    ul { list-style: none; }
-    li:last-child { border-bottom: none !important; }
-    .footer {
-      color: #6b7280;
-      font-size: 13px;
-      text-align: center;
-    }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <div class="header">
-      <div class="icon">⚠️</div>
-      <h1>Cannot Load Website</h1>
-    </div>
-    <p>The following files referenced by <code style="background:#f3f4f6;padding:2px 6px;border-radius:3px;font-family:monospace">&lt;dextools-import&gt;</code> tags could not be found:</p>
-    <div class="file-list">
-      <h3>Missing Files (${missing.length})</h3>
-      <ul>${list}</ul>
-    </div>
-    <div class="footer">Check that all referenced files exist and are accessible</div>
-  </div>
-</body>
-</html>`;
-    
-    document.body.appendChild(iframe);
-    iframe.contentDocument.open();
-    iframe.contentDocument.write(errorHTML);
-    iframe.contentDocument.close();
-    
-    // Stop everything else
-    throw new Error('Dextools import validation failed - missing files');
-  }
-  
-  function escapeHtml(text) {
-    return text.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  }
-  
-  // Run immediately
-  if (!prevalidateImports()) {
-    throw new Error('Validation failed');
-  }
-})();
 
-// YOUR ORIGINAL CODE - COMPLETELY UNCHANGED
-(function () {
-  'use strict';
+  /* ── Preflight: intercept XHR failures, show error page if any file is missing ── */
+  const _missingFiles = [];
+  const _OrigXHR = window.XMLHttpRequest;
+
+  function _PatchedXHR() {
+    const _xhr = new _OrigXHR();
+    let _url = '';
+    const _origOpen = _xhr.open.bind(_xhr);
+    _xhr.open = function (method, url, async, user, pass) {
+      _url = url;
+      return _origOpen(method, url, async, user, pass);
+    };
+    const _origSend = _xhr.send.bind(_xhr);
+    _xhr.send = function (body) {
+      try { _origSend(body); } catch (e) { /* network error */ }
+      if (_url && (_xhr.status === 0 || _xhr.status >= 400)) {
+        console.error('[dextools] Missing file:', _url);
+        _missingFiles.push(_url);
+        setTimeout(_showErrorPage, 0);
+      }
+    };
+    return _xhr;
+  }
+  Object.setPrototypeOf(_PatchedXHR, _OrigXHR);
+  Object.assign(_PatchedXHR, _OrigXHR);
+  window.XMLHttpRequest = _PatchedXHR;
+
+  function _showErrorPage() {
+    if (!_missingFiles.length) return;
+    console.error('[dextools] Page blocked. Missing files:\n' + _missingFiles.join('\n'));
+    const rows = _missingFiles.map(function (f, i) {
+      return '<tr><td>' + (i + 1) + '</td><td>' + f + '</td><td>Missing</td></tr>';
+    }).join('');
+    document.documentElement.innerHTML = '<head><meta charset="UTF-8"><title>Import Error</title></head><body>'
+      + '<div style="font-family:sans-serif;background:#0f1117;color:#e2e8f0;min-height:100vh;display:flex;align-items:center;justify-content:center;margin:0;padding:2rem;">'
+      + '<div style="background:#1a1d27;border:1px solid #2d3148;border-radius:12px;max-width:720px;width:100%;overflow:hidden;">'
+      + '<div style="background:#1e2235;padding:1.5rem 2rem;border-bottom:1px solid #2d3148;">'
+      + '<h1 style="color:#f87171;font-size:1.2rem;margin:0;">&#9888; Page failed to load</h1>'
+      + '<p style="color:#94a3b8;font-size:.85rem;margin:.3rem 0 0;">' + _missingFiles.length + ' missing file(s) blocked rendering</p>'
+      + '</div>'
+      + '<div style="padding:1.5rem 2rem;">'
+      + '<table style="width:100%;border-collapse:collapse;font-size:.875rem;">'
+      + '<thead><tr>'
+      + '<th style="text-align:left;padding:.6rem .75rem;color:#64748b;font-size:.75rem;text-transform:uppercase;border-bottom:1px solid #2d3148;">#</th>'
+      + '<th style="text-align:left;padding:.6rem .75rem;color:#64748b;font-size:.75rem;text-transform:uppercase;border-bottom:1px solid #2d3148;">File</th>'
+      + '<th style="text-align:left;padding:.6rem .75rem;color:#64748b;font-size:.75rem;text-transform:uppercase;border-bottom:1px solid #2d3148;">Status</th>'
+      + '</tr></thead><tbody>' + rows + '</tbody></table>'
+      + '</div>'
+      + '<div style="background:#13161f;border-top:1px solid #2d3148;padding:1rem 2rem;font-size:.8rem;color:#475569;">Fix the missing files above and reload the page.</div>'
+      + '</div></div></body>';
+  }
+  /* ── End preflight ── */
+
+
   const TAG       = 'dextools-import';
   const MAX_DEPTH = 32;
   const LOG       = '[dextools]';
