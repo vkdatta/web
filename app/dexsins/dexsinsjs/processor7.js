@@ -3,6 +3,7 @@
   const TAG       = 'dextools-import';
   const MAX_DEPTH = 32;
   const LOG       = '[dextools]';
+
   function resolveURL(src) {
     try {
       return new URL(src.trim(), document.baseURI || location.href).href;
@@ -10,19 +11,22 @@
       return src.trim();
     }
   }
-  function fetchSync(url) {
-    const xhr = new XMLHttpRequest();
+
+  // Asynchronous fetch – replaces the old synchronous XHR
+  async function fetchAsync(url) {
     try {
-      xhr.open('GET', url, false );
-      xhr.send(null);
+      const response = await fetch(url);
+      if (!response.ok) {
+        console.error(LOG, `HTTP ${response.status} fetching: ${url}`);
+        return null;
+      }
+      return await response.text();
     } catch (e) {
       console.error(LOG, 'Network error fetching:', url, e);
       return null;
     }
-    if (xhr.status >= 200 && xhr.status < 300) return xhr.responseText;
-    console.error(LOG, `HTTP ${xhr.status} fetching: ${url}`);
-    return null;
   }
+
   function applyData(html, element) {
     const dataset = element.dataset;
     return html.replace(/\{\{\s*([a-zA-Z0-9_-]+)\s*\}\}/g, (match, key) => {
@@ -32,6 +36,7 @@
       return match;
     });
   }
+
   function inject(anchor, html) {
     const tpl = document.createElement('template');
     tpl.innerHTML = html;
@@ -50,6 +55,7 @@
     anchor.parentNode.insertBefore(frag, anchor);
     anchor.parentNode.removeChild(anchor);
   }
+
   class DextoolsImport extends HTMLElement {
     connectedCallback() {
       const src = this.getAttribute('src');
@@ -58,17 +64,26 @@
         this.remove();
         return;
       }
+
       const depth = parseInt(this.getAttribute('data-dxt-depth') || '0', 10);
       if (depth > MAX_DEPTH) {
         console.error(LOG, `Max depth (${MAX_DEPTH}) exceeded — possible circular import: ${src}`);
         this.remove();
         return;
       }
-      let html = fetchSync(resolveURL(src));
-      if (html !== null) inject(this, applyData(html, this));
-      else this.remove();
+
+      // Use an async IIFE because connectedCallback cannot be async
+      (async () => {
+        const html = await fetchAsync(resolveURL(src));
+        if (html !== null) {
+          inject(this, applyData(html, this));
+        } else {
+          this.remove();
+        }
+      })();
     }
   }
+
   if (!customElements.get(TAG)) {
     customElements.define(TAG, DextoolsImport);
   }
