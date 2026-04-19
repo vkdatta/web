@@ -9,10 +9,10 @@
         flex: 1;
         min-height: 0;
         overflow-y: auto;
-        padding: 16px 18px;
+        padding: 14px 16px;
         display: flex;
         flex-direction: column;
-        gap: 18px;
+        gap: 16px;
       }
       .fp-body::-webkit-scrollbar { width: 3px; }
       .fp-body::-webkit-scrollbar-thumb {
@@ -22,7 +22,7 @@
       .fp-section {
         display: flex;
         flex-direction: column;
-        gap: 8px;
+        gap: 7px;
       }
       .fp-section-header {
         display: flex;
@@ -31,7 +31,6 @@
         flex-shrink: 0;
       }
       .fp-panel-label {
-        font-size: 11px;
         font-weight: 700;
         color: var(--blueink);
         text-transform: uppercase;
@@ -47,20 +46,19 @@
       }
       .fp-search-icon {
         position: absolute;
-        left: 10px;
-        font-size: 16px;
+        left: 9px;
         color: var(--blueink);
         pointer-events: none;
+        line-height: 1;
       }
       .fp-search-input {
         width: 100%;
         box-sizing: border-box;
-        padding: 6px 10px 6px 32px;
+        padding: 5px 10px 5px 30px;
         background: #1e2124;
         border: 1px solid var(--border);
         border-radius: 20px;
         color: #eeeeee;
-        font-size: 13px;
         outline: none;
         font-family: inherit;
         transition: border-color 0.2s;
@@ -71,13 +69,13 @@
       .fp-list {
         display: flex;
         flex-direction: column;
-        gap: 6px;
+        gap: 5px;
       }
       .fp-card {
         cursor: pointer;
         border: 1px solid var(--border);
         border-radius: 10px;
-        padding: 12px 16px;
+        padding: 10px 14px;
         background: #1e2124;
         transition: border-color 0.18s, background 0.18s, transform 0.15s;
         user-select: none;
@@ -98,7 +96,6 @@
         background: rgba(100, 116, 255, 0.09);
       }
       .fp-card-preview {
-        font-size: 17px;
         color: #d8d8d8;
         flex: 1;
         overflow: hidden;
@@ -107,7 +104,6 @@
         line-height: 1.4;
       }
       .fp-card-badge {
-        font-size: 9px;
         font-weight: 700;
         color: var(--blueink);
         text-transform: uppercase;
@@ -117,63 +113,65 @@
         border-radius: 4px;
         padding: 2px 6px;
         flex-shrink: 0;
+        white-space: nowrap;
       }
       .fp-divider {
         height: 1px;
         background: rgba(255,255,255,0.05);
-        margin: 2px 0;
+        flex-shrink: 0;
       }
       .fp-empty {
-        font-size: 13px;
         color: var(--blueink);
         text-align: center;
-        padding: 14px 0;
+        padding: 12px 0;
         opacity: 0.7;
       }
     `;
     document.head.appendChild(s);
   }
 
+  function createFont(label, sets) {
+    const font = { label };
+    if (sets.upper)    font.upper    = [...sets.upper];
+    if (sets.lower)    font.lower    = [...sets.lower];
+    if (sets.numerals) font.numerals = [...sets.numerals];
+    return font;
+  }
+
   const FONTS = {
-    typewriter: {
-      label:    'Typewriter',
-      upper:    [...'𝙰𝙱𝙲𝙳𝙴𝙵𝙶𝙷𝙸𝙹𝙺𝙻𝙼𝙽𝙾𝙿𝚀𝚁𝚂𝚃𝚄𝚅𝚆𝚇𝚈𝚉'],
-      lower:    [...'𝚊𝚋𝚌𝚍𝚎𝚏𝚐𝚑𝚒𝚓𝚔𝚕𝚖𝚗𝚘𝚙𝚚𝚛𝚜𝚝𝚞𝚟𝚠𝚣𝚢𝚣'],
-      numerals: [...'𝟷𝟸𝟹𝟺𝟻𝟼𝟽𝟾𝟿𝟶'],
-    },
-    smallcap: {
-      label:    'Smallcap',
-      upper:    [...'ᴀʙᴄᴅᴇғɢʜɪᴊᴋʟᴍɴᴏᴘǫʀsᴛᴜᴠᴡxʏᴢ'],
-      numerals: [...'𝟷𝟸𝟹𝟺𝟻𝟼𝟽𝟾𝟿𝟶'],
-    },
-    empire: {
-      label:    'Empire',
-      upper:    [...'𝕬𝕭𝕮𝕯𝕰𝕱𝕲𝕳𝕴𝕵𝕶𝕷𝕸𝕹𝕺𝕻𝕼𝕽𝕾𝕿𝖀𝖁𝖂𝖃𝖄𝖅'],
-      lower:    [...'𝖆𝖇𝖈𝖉𝖊𝖋𝖌𝖍𝖎𝖏𝖐𝖑𝖒𝖓𝖔𝖕𝖖𝖗𝖘𝖙𝖚𝖛𝖜𝖝𝖞𝖟'],
-    },
-    whiteball: {
-      label:    'White Ball',
-      upper:    [...'ⒶⒷⒸⒹⒺⒻⒼⒽⒾⒿⓀⓁⓂⓃⓄⓅⓆⓇⓈⓉⓊⓋⓌⓍⓎⓏ'],
-      lower:    [...'ⓐⓑⓒⓓⓔⓕⓖⓗⓘⓙⓚⓛⓜⓝⓞⓟⓠⓡⓢⓣⓤⓥⓦⓧⓨⓩ'],
-      numerals: [...'①②③④⑤⑥⑦⑧⑨⓪'],
-    },
-    blackball: {
-      label:    'Black Ball',
-      upper:    [...'🅐🅑🅒🅓🅔🅕🅖🅗🅘🅙🅚🅛🅜🅝🅞🅟🅠🅡🅢🅣🅤🅥🅦🅧🅨🅩'],
-      numerals: [...'➊➋➌➍➎➏➐➑➒⓿'],
-    },
-    blackdice: {
-      label:    'Black Dice',
-      upper:    [...'🅰🅱🅲🅳🅴🅵🅶🅷🅸🅹🅺🅻🅼🅽🅾🅿🆀🆁🆂🆃🆄🆅🆆🆇🆈🆉'],
-    },
+    typewriter: createFont('Typewriter', {
+      upper:    '𝙰𝙱𝙲𝙳𝙴𝙵𝙶𝙷𝙸𝙹𝙺𝙻𝙼𝙽𝙾𝙿𝚀𝚁𝚂𝚃𝚄𝚅𝚆𝚇𝚈𝚉',
+      lower:    '𝚊𝚋𝚌𝚍𝚎𝚏𝚐𝚑𝚒𝚓𝚔𝚕𝚖𝚗𝚘𝚙𝚚𝚛𝚜𝚝𝚞𝚟𝚠𝚣𝚢𝚣',
+      numerals: '𝟷𝟸𝟹𝟺𝟻𝟼𝟽𝟾𝟿𝟶',
+    }),
+    smallcap: createFont('Smallcap', {
+      upper:    'ᴀʙᴄᴅᴇғɢʜɪᴊᴋʟᴍɴᴏᴘǫʀsᴛᴜᴠᴡxʏᴢ',
+      numerals: '𝟷𝟸𝟹𝟺𝟻𝟼𝟽𝟾𝟿𝟶',
+    }),
+    empire: createFont('Empire', {
+      upper: '𝕬𝕭𝕮𝕯𝕰𝕱𝕲𝕳𝕴𝕵𝕶𝕷𝕸𝕹𝕺𝕻𝕼𝕽𝕾𝕿𝖀𝖁𝖂𝖃𝖄𝖅',
+      lower: '𝖆𝖇𝖈𝖉𝖊𝖋𝖌𝖍𝖎𝖏𝖐𝖑𝖒𝖓𝖔𝖕𝖖𝖗𝖘𝖙𝖚𝖛𝖜𝖝𝖞𝖟',
+    }),
+    whiteball: createFont('White Ball', {
+      upper:    'ⒶⒷⒸⒹⒺⒻⒼⒽⒾⒿⓀⓁⓂⓃⓄⓅⓆⓇⓈⓉⓊⓋⓌⓍⓎⓏ',
+      lower:    'ⓐⓑⓒⓓⓔⓕⓖⓗⓘⓙⓚⓛⓜⓝⓞⓟⓠⓡⓢⓣⓤⓥⓦⓧⓨⓩ',
+      numerals: '①②③④⑤⑥⑦⑧⑨⓪',
+    }),
+    blackball: createFont('Black Ball', {
+      upper:    '🅐🅑🅒🅓🅔🅕🅖🅗🅘🅙🅚🅛🅜🅝🅞🅟🅠🅡🅢🅣🅤🅥🅦🅧🅨🅩',
+      numerals: '➊➋➌➍➎➏➐➑➒⓿',
+    }),
+    blackdice: createFont('Black Dice', {
+      upper: '🅰🅱🅲🅳🅴🅵🅶🅷🅸🅹🅺🅻🅼🅽🅾🅿🆀🆁🆂🆃🆄🆅🆆🆇🆈🆉',
+    }),
   };
 
   const state = {
-    textFont:      null,
-    numeralFont:   null,
-    originalText:  null,
+    textFont:       null,
+    numeralFont:    null,
+    originalText:   null,
     liveSyncActive: false,
-    liveSyncFn:    null,
+    liveSyncFn:     null,
   };
 
   let _rmap = null;
@@ -197,7 +195,6 @@
   function convert(text, textFontKey, numeralFontKey) {
     const tf = textFontKey    ? FONTS[textFontKey]    : null;
     const nf = numeralFontKey ? FONTS[numeralFontKey] : null;
-
     return [...text].map(ch => {
       const c = ch.charCodeAt(0);
       if (c >= 65 && c <= 90 && tf?.upper) return tf.upper[c - 65];
@@ -213,18 +210,20 @@
 
   function applyConversion() {
     if (!noteTextarea) return;
-    const pos  = noteTextarea.selectionStart;
-    const raw  = toAscii(noteTextarea.value);
-    noteTextarea.value = convert(raw, state.textFont, state.numeralFont);
+    const pos = noteTextarea.selectionStart;
+    noteTextarea.value = convert(toAscii(noteTextarea.value), state.textFont, state.numeralFont);
     try { noteTextarea.setSelectionRange(pos, pos); } catch (_) {}
     if (typeof updateNoteMetadata === 'function') updateNoteMetadata();
   }
 
   function renderLabelInFont(font) {
-    return [...font.label.toUpperCase()].map(ch => {
+    return [...font.label].map(ch => {
       const c = ch.charCodeAt(0);
       if (c >= 65 && c <= 90 && font.upper) return font.upper[c - 65];
-      if (ch === ' ') return ' ';
+      if (c >= 97 && c <= 122) {
+        if (font.lower) return font.lower[c - 97];
+        if (font.upper) return font.upper[c - 97];
+      }
       return ch;
     }).join('');
   }
@@ -233,21 +232,17 @@
     const card = document.createElement('div');
     card.className = 'fp-card';
 
-    const isActive = panelType === 'text'
-      ? state.textFont === key
-      : state.numeralFont === key;
+    const isActive = panelType === 'text' ? state.textFont === key : state.numeralFont === key;
     if (isActive) card.classList.add('fp-selected');
 
     const preview = document.createElement('div');
     preview.className = 'fp-card-preview';
-    preview.textContent = panelType === 'numeral'
-      ? font.numerals.join('')
-      : renderLabelInFont(font);
+    preview.textContent = renderLabelInFont(font);
     card.appendChild(preview);
 
     const caps = [];
-    if (font.upper) caps.push('A–Z');
-    if (font.lower) caps.push('a–z');
+    if (font.upper)    caps.push('A–Z');
+    if (font.lower)    caps.push('a–z');
     if (font.numerals) caps.push('0–9');
     const badge = document.createElement('div');
     badge.className = 'fp-card-badge';
@@ -308,7 +303,7 @@
         list.appendChild(buildCard(key, FONTS[key], panelType, onSelect));
         count++;
       });
-      if (count === 0) {
+      if (!count) {
         const empty = document.createElement('div');
         empty.className = 'fp-empty';
         empty.textContent = 'No matches';
@@ -326,9 +321,7 @@
       showNotification('Pick at least one font first!');
       return;
     }
-    if (state.originalText === null) {
-      state.originalText = noteTextarea.value;
-    }
+    if (state.originalText === null) state.originalText = noteTextarea.value;
     applyConversion();
     showNotification('Font applied!');
     closeModal();
@@ -340,10 +333,8 @@
       return;
     }
     if (state.liveSyncActive) {
-      if (state.liveSyncFn) {
-        noteTextarea.removeEventListener('input', state.liveSyncFn);
-        state.liveSyncFn = null;
-      }
+      if (state.liveSyncFn) noteTextarea.removeEventListener('input', state.liveSyncFn);
+      state.liveSyncFn     = null;
       state.liveSyncActive = false;
     }
     noteTextarea.value = state.originalText;
@@ -357,27 +348,19 @@
 
   window.handleFontLiveSyncToggle = function () {
     if (state.liveSyncActive) {
-      if (state.liveSyncFn) {
-        noteTextarea.removeEventListener('input', state.liveSyncFn);
-        state.liveSyncFn = null;
-      }
+      if (state.liveSyncFn) noteTextarea.removeEventListener('input', state.liveSyncFn);
+      state.liveSyncFn     = null;
       state.liveSyncActive = false;
       showNotification('Live Sync off');
       closeModal();
       return;
     }
-
     if (!state.textFont && !state.numeralFont) {
       showNotification('Pick at least one font first!');
       return;
     }
-
-    if (state.originalText === null) {
-      state.originalText = noteTextarea.value;
-    }
-
+    if (state.originalText === null) state.originalText = noteTextarea.value;
     applyConversion();
-
     state.liveSyncFn = function () {
       const pos       = noteTextarea.selectionStart;
       const converted = convert(toAscii(noteTextarea.value), state.textFont, state.numeralFont);
@@ -386,7 +369,6 @@
       try { noteTextarea.setSelectionRange(pos, pos); } catch (_) {}
       if (typeof updateNoteMetadata === 'function') updateNoteMetadata();
     };
-
     noteTextarea.addEventListener('input', state.liveSyncFn);
     state.liveSyncActive = true;
     showNotification('Live Sync on!');
@@ -401,7 +383,7 @@
 
     const win = document.createElement('div');
     win.className = 'modal-window';
-    win.style.cssText = 'width:500px; max-width:calc(100vw - 40px); max-height:calc(100vh - 6vh); display:flex; flex-direction:column;';
+    win.style.width = '440px';
 
     const header = document.createElement('div');
     header.className = 'modal-header';
@@ -435,9 +417,9 @@
 
     const revertBtn = document.createElement('button');
     revertBtn.className = 'modal-btn';
-    revertBtn.innerHTML = '<span class="material-symbols-rounded" style="font-size:15px;vertical-align:-3px;margin-right:5px">history</span>Revert';
+    revertBtn.innerHTML = '<span class="material-symbols-rounded" style="vertical-align:-3px;margin-right:4px">history</span>Revert';
+    revertBtn.style.opacity = state.originalText === null ? '0.4' : '1';
     revertBtn.addEventListener('click', window.handleFontRevert);
-    if (state.originalText === null) revertBtn.style.opacity = '0.4';
 
     const applyBtn = document.createElement('button');
     applyBtn.className = 'modal-btn';
@@ -447,12 +429,11 @@
     const syncBtn = document.createElement('button');
     syncBtn.className = 'modal-btn' + (state.liveSyncActive ? ' active' : '');
     syncBtn.innerHTML = state.liveSyncActive
-      ? '<span class="material-symbols-rounded" style="font-size:15px;vertical-align:-3px;margin-right:5px">sync</span>Live Sync ON'
-      : '<span class="material-symbols-rounded" style="font-size:15px;vertical-align:-3px;margin-right:5px">sync</span>Live Sync';
+      ? '<span class="material-symbols-rounded" style="vertical-align:-3px;margin-right:4px">sync</span>Live Sync ON'
+      : '<span class="material-symbols-rounded" style="vertical-align:-3px;margin-right:4px">sync</span>Live Sync';
     syncBtn.addEventListener('click', window.handleFontLiveSyncToggle);
 
     footer.append(cancelBtn, revertBtn, applyBtn, syncBtn);
-
     win.append(header, body, footer);
     modalBackdrop.appendChild(win);
     document.documentElement.style.overflow = 'hidden';
