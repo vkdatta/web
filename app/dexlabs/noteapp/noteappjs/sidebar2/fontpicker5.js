@@ -23,6 +23,7 @@
         display: flex;
         flex-direction: column;
         gap: 7px;
+        min-height: 0;
       }
       .fp-section-header {
         display: flex;
@@ -70,6 +71,14 @@
         display: flex;
         flex-direction: column;
         gap: 5px;
+        overflow-y: auto;
+        max-height: 220px;
+        padding-right: 2px;
+      }
+      .fp-list::-webkit-scrollbar { width: 3px; }
+      .fp-list::-webkit-scrollbar-thumb {
+        background: var(--border);
+        border-radius: 10px;
       }
       .fp-card {
         cursor: pointer;
@@ -95,13 +104,28 @@
         border-color: rgba(100, 116, 255, 0.7);
         background: rgba(100, 116, 255, 0.09);
       }
-      .fp-card-preview {
-        color: #d8d8d8;
+      .fp-card-main {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
         flex: 1;
+        min-width: 0;
         overflow: hidden;
-        white-space: nowrap;
+      }
+      .fp-card-title {
+        font-weight: 600;
+        color: #eeeeee;
+        overflow: hidden;
         text-overflow: ellipsis;
-        line-height: 1.4;
+        white-space: nowrap;
+      }
+      .fp-card-sample {
+        color: var(--blueink);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        line-height: 1.3;
+        opacity: 0.85;
       }
       .fp-card-badge {
         font-weight: 700;
@@ -126,6 +150,22 @@
         padding: 12px 0;
         opacity: 0.7;
       }
+      @media (max-width: 600px) {
+        .fp-body {
+          padding: 10px;
+          gap: 10px;
+        }
+        .fp-card {
+          padding: 8px 10px;
+          gap: 8px;
+        }
+        .fp-list {
+          max-height: 160px;
+        }
+        .fp-panel-label {
+          letter-spacing: 0.4px;
+        }
+      }
     `;
     document.head.appendChild(s);
   }
@@ -138,13 +178,6 @@
     return font;
   }
 
-  /* 
-     CENTRAL FONT REGISTRY
-     To add a new font in the future:
-     1. Add a new entry here with a unique key
-     2. Provide upper / lower / numerals arrays (26 letters + 10 digits)
-     3. Everything else (reverse map, conversion, cards, live sync) updates automatically
-  */
   const FONTS = {
     typewriter: createFont('Typewriter', {
       upper:    '𝙰𝙱𝙲𝙳𝙴𝙵𝙶𝙷𝙸𝙹𝙺𝙻𝙼𝙽𝙾𝙿𝚀𝚁𝚂𝚃𝚄𝚅𝚆𝚇𝚈𝚉',
@@ -173,6 +206,12 @@
     }),
   };
 
+  window.registerFont = function (key, label, sets) {
+    if (FONTS[key]) { console.warn(`Font "${key}" already exists.`); return false; }
+    FONTS[key] = createFont(label, sets);
+    return true;
+  };
+
   const state = {
     textFont:       null,
     numeralFont:    null,
@@ -199,20 +238,25 @@
     return [...text].map(ch => m[ch] ?? ch).join('');
   }
 
-  function convert(text, textFontKey, numeralFontKey) {
-    const tf = textFontKey    ? FONTS[textFontKey]    : null;
-    const nf = numeralFontKey ? FONTS[numeralFontKey] : null;
+  function convertWithFont(text, textFont, numeralFont) {
     return [...text].map(ch => {
       const c = ch.charCodeAt(0);
-      if (c >= 65 && c <= 90 && tf?.upper) return tf.upper[c - 65];
+      if (c >= 65 && c <= 90 && textFont?.upper) return textFont.upper[c - 65];
       if (c >= 97 && c <= 122) {
-        if (tf?.lower) return tf.lower[c - 97];
-        if (tf?.upper) return tf.upper[c - 97];
+        if (textFont?.lower) return textFont.lower[c - 97];
+        if (textFont?.upper) return textFont.upper[c - 97];
       }
-      if (c >= 49 && c <= 57  && nf?.numerals) return nf.numerals[c - 49];
-      if (c === 48             && nf?.numerals) return nf.numerals[9];
+      if (c >= 49 && c <= 57 && numeralFont?.numerals) return numeralFont.numerals[c - 49];
+      if (c === 48             && numeralFont?.numerals) return numeralFont.numerals[9];
       return ch;
     }).join('');
+  }
+
+  function convert(text, textFontKey, numeralFontKey) {
+    return convertWithFont(text,
+      textFontKey    ? FONTS[textFontKey]    : null,
+      numeralFontKey ? FONTS[numeralFontKey] : null
+    );
   }
 
   function applyConversion() {
@@ -223,28 +267,20 @@
     if (typeof updateNoteMetadata === 'function') updateNoteMetadata();
   }
 
-  function renderLabelInFont(font) {
-    return [...font.label].map(ch => {
-      const c = ch.charCodeAt(0);
-      if (c >= 65 && c <= 90 && font.upper) return font.upper[c - 65];
-      if (c >= 97 && c <= 122) {
-        if (font.lower) return font.lower[c - 97];
-        if (font.upper) return font.upper[c - 97];
-      }
-      return ch;
-    }).join('');
+  function getCapabilityBadge(font) {
+    const caps = [];
+    if (font.upper)    caps.push('A–Z');
+    if (font.lower)    caps.push('a–z');
+    if (font.numerals) caps.push('0–9');
+    return caps.join(' · ') || '—';
   }
 
-  function renderSample(font, panelType) {
-    if (panelType === 'numeral' && font.numerals) {
-      return [...'0123456789'].map(ch => {
-        const c = ch.charCodeAt(0);
-        if (c === 48) return font.numerals[9];
-        if (c >= 49 && c <= 57) return font.numerals[c - 49];
-        return ch;
-      }).join('');
-    }
-    return renderLabelInFont(font);
+  function generatePreview(font) {
+    const parts = [];
+    if (font.upper)    parts.push(convertWithFont('ABC', font, null));
+    if (font.lower)    parts.push(convertWithFont('abc', font, null));
+    if (font.numerals) parts.push(convertWithFont('123', null, font));
+    return parts.join(' ') || font.label;
   }
 
   function buildCard(key, font, panelType, onSelect) {
@@ -254,18 +290,24 @@
     const isActive = panelType === 'text' ? state.textFont === key : state.numeralFont === key;
     if (isActive) card.classList.add('fp-selected');
 
-    const preview = document.createElement('div');
-    preview.className = 'fp-card-preview';
-    preview.textContent = renderSample(font, panelType);
-    card.appendChild(preview);
+    const main = document.createElement('div');
+    main.className = 'fp-card-main';
 
-    const caps = [];
-    if (font.upper)    caps.push('A–Z');
-    if (font.lower)    caps.push('a–z');
-    if (font.numerals) caps.push('0–9');
+    const title = document.createElement('div');
+    title.className = 'fp-card-title';
+    title.textContent = font.label;
+    main.appendChild(title);
+
+    const sample = document.createElement('div');
+    sample.className = 'fp-card-sample';
+    sample.textContent = generatePreview(font);
+    main.appendChild(sample);
+
     const badge = document.createElement('div');
     badge.className = 'fp-card-badge';
-    badge.textContent = caps.join(' · ');
+    badge.textContent = getCapabilityBadge(font);
+
+    card.appendChild(main);
     card.appendChild(badge);
 
     card.addEventListener('click', () => onSelect(key, card));
@@ -402,8 +444,7 @@
 
     const win = document.createElement('div');
     win.className = 'modal-window';
-    // No hard-coded width → lets modal.css (including mobile @media) control size
-    // Body is already flex + scrollable → never exceeds viewport
+    win.style.width = '440px';
 
     const header = document.createElement('div');
     header.className = 'modal-header';
@@ -417,7 +458,7 @@
     header.append(htitle, hclose);
 
     const body = document.createElement('div');
-    body.className = 'fp-body';           // already has overflow-y:auto + flex:1
+    body.className = 'modal-body fp-body';
     body.appendChild(buildSection('text'));
 
     const divider = document.createElement('div');
