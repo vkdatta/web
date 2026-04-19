@@ -1,13 +1,13 @@
 (function () {
   'use strict';
 
+  // ─── Minimal layout styles only ───
   if (!document.getElementById('fp-styles')) {
     const s = document.createElement('style');
     s.id = 'fp-styles';
     s.textContent = `
       .fp-toggle-row { display: flex; gap: 8px; margin-bottom: 12px; }
       .fp-toggle-btn { flex: 1; padding: 8px 12px; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.05); backdrop-filter: blur(10px); color: #aaa; border-radius: 8px; cursor: pointer; transition: all 0.2s; }
-      .fp-toggle-btn:hover { background: rgba(255,255,255,0.08); color: #eee; }
       .fp-toggle-btn.active { background: rgba(0,0,0,0.4); backdrop-filter: blur(12px); border-color: rgba(255,255,255,0.25); color: #fff; box-shadow: 0 4px 20px rgba(0,0,0,0.5); }
       .fp-section { display: none; }
       .fp-section.active { display: block; }
@@ -25,28 +25,59 @@
     document.head.appendChild(s);
   }
 
+  // ─── Font Registry ───
+  // CRITICAL: glyphs must be stored as ARRAYS so surrogate pairs stay intact
+  function createFont(label, sets) {
+    const font = { label };
+    if (sets.upper)    font.upper    = [...sets.upper];
+    if (sets.lower)    font.lower    = [...sets.lower];
+    if (sets.numerals) font.numerals = [...sets.numerals];
+    return font;
+  }
+
   const FONTS = {
-    typewriter: { label: 'Typewriter', upper: '𝙰𝙱𝙲𝙳𝙴𝙵𝙶𝙷𝙸𝙹𝙺𝙻𝙼𝙽𝙾𝙿𝚀𝚁𝚂𝚃𝚄𝚅𝚆𝚇𝚈𝚉', lower: '𝚊𝚋𝚌𝚍𝚎𝚏𝚐𝚑𝚒𝚓𝚔𝚕𝚖𝚗𝚘𝚙𝚚𝚛𝚜𝚝𝚞𝚟𝚠𝚡𝚢𝚣', numerals: '𝟷𝟸𝟹𝟺𝟻𝟼𝟽𝟾𝟿𝟶' },
-    smallcap: { label: 'Smallcap', upper: 'ᴀʙᴄᴅᴇғɢʜɪᴊᴋʟᴍɴᴏᴘǫʀsᴛᴜᴠᴡxʏᴢ', numerals: '𝟷𝟸𝟹𝟺𝟻𝟼𝟽𝟾𝟿𝟶' },
-    empire: { label: 'Empire', upper: '𝕬𝕭𝕮𝕯𝕰𝕱𝕲𝕳𝕴𝕵𝕶𝕷𝕸𝕹𝕺𝕻𝕼𝕽𝕾𝕿𝖀𝖁𝖂𝖃𝖄𝖅', lower: '𝖆𝖇𝖈𝖉𝖊𝖋𝖌𝖍𝖎𝖏𝖐𝖑𝖒𝖓𝖔𝖕𝖖𝖗𝖘𝖙𝖚𝖛𝖜𝖝𝖞𝖟' },
-    whiteball: { label: 'White Ball', upper: 'ⒶⒷⒸⒹⒺⒻⒼⒽⒾⒿⓀⓁⓂⓃⓄⓅⓆⓇⓈⓉⓊⓋⓌⓍⓎⓏ', lower: 'ⓐⓑⓒⓓⓔⓕⓖⓗⓘⓙⓚⓛⓜⓝⓞⓟⓠⓡⓢⓣⓤⓥⓦⓧⓨⓩ', numerals: '①②③④⑤⑥⑦⑧⑨⓪' },
-    blackball: { label: 'Black Ball', upper: '🅐🅑🅒🅓🅔🅕🅖🅗🅘🅙🅚🅛🅜🅝🅞🅟🅠🅡🅢🅣🅤🅥🅦🅧🅨🅩', numerals: '➊➋➌➍➎➏➐➑➒⓿' },
-    blackdice: { label: 'Black Dice', upper: '🅰🅱🅲🅳🅴🅵🅶🅷🅸🅹🅺🅻🅼🅽🅾🅿🆀🆁🆂🆃🆄🆅🆆🆇🆈🆉' },
+    typewriter: createFont('Typewriter', {
+      upper:    '𝙰𝙱𝙲𝙳𝙴𝙵𝙶𝙷𝙸𝙹𝙺𝙻𝙼𝙽𝙾𝙿𝚀𝚁𝚂𝚃𝚄𝚅𝚆𝚇𝚈𝚉',
+      lower:    '𝚊𝚋𝚌𝚍𝚎𝚏𝚐𝚑𝚒𝚓𝚔𝚕𝚖𝚗𝚘𝚙𝚚𝚛𝚜𝚝𝚞𝚟𝚠𝚡𝚢𝚣',
+      numerals: '𝟷𝟸𝟹𝟺𝟻𝟼𝟽𝟾𝟿𝟶',
+    }),
+    smallcap: createFont('Smallcap', {
+      upper:    'ᴀʙᴄᴅᴇғɢʜɪᴊᴋʟᴍɴᴏᴘǫʀsᴛᴜᴠᴡxʏᴢ',
+      numerals: '𝟷𝟸𝟹𝟺𝟻𝟼𝟽𝟾𝟿𝟶',
+    }),
+    empire: createFont('Empire', {
+      upper: '𝕬𝕭𝕮𝕯𝕰𝕱𝕲𝕳𝕴𝕵𝕶𝕷𝕸𝕹𝕺𝕻𝕼𝕽𝕾𝕿𝖀𝖁𝖂𝖃𝖄𝖅',
+      lower: '𝖆𝖇𝖈𝖉𝖊𝖋𝖌𝖍𝖎𝖏𝖐𝖑𝖒𝖓𝖔𝖕𝖖𝖗𝖘𝖙𝖚𝖛𝖜𝖝𝖞𝖟',
+    }),
+    whiteball: createFont('White Ball', {
+      upper:    'ⒶⒷⒸⒹⒺⒻⒼⒽⒾⒿⓀⓁⓂⓃⓄⓅⓆⓇⓈⓉⓊⓋⓌⓍⓎⓏ',
+      lower:    'ⓐⓑⓒⓓⓔⓕⓖⓗⓘⓙⓚⓛⓜⓝⓞⓟⓠⓡⓢⓣⓤⓥⓦⓧⓨⓩ',
+      numerals: '①②③④⑤⑥⑦⑧⑨⓪',
+    }),
+    blackball: createFont('Black Ball', {
+      upper:    '🅐🅑🅒🅓🅔🅕🅖🅗🅘🅙🅚🅛🅜🅝🅞🅟🅠🅡🅢🅣🅤🅥🅦🅧🅨🅩',
+      numerals: '➊➋➌➍➎➏➐➑➒⓿',
+    }),
+    blackdice: createFont('Black Dice', {
+      upper: '🅰🅱🅲🅳🅴🅵🅶🅷🅸🅹🅺🅻🅼🅽🅾🅿🆀🆁🆂🆃🆄🆅🆆🆇🆈🆉',
+    }),
   };
 
   window.registerFont = function(key, label, sets) {
     if (FONTS[key]) { console.warn(`Font "${key}" exists`); return false; }
-    FONTS[key] = { label, ...sets };
-    _rmap = null;
+    FONTS[key] = createFont(label, sets);
+    _rmap = null; // invalidate reverse map
     return true;
   };
 
+  // ─── State ───
   let selectedTextFont = null;
-  let selectedNumFont = null;
-  let liveSync = false;
-  let liveSyncHandler = null;
-  let _rmap = null;
+  let selectedNumFont  = null;
+  let liveSync         = false;
+  let liveSyncHandler  = null;
+  let _rmap            = null;
 
+  // ─── Conversion Core ───
   function buildReverseMap() {
     if (_rmap) return _rmap;
     _rmap = {};
@@ -79,6 +110,7 @@
     }).join('');
   }
 
+  // ─── UI Helpers ───
   function preview(key) {
     const font = FONTS[key];
     const parts = [];
@@ -111,10 +143,10 @@
   }
 
   function buildSection(type) {
-    const keys = type === 'numeral' 
+    const keys = type === 'numeral'
       ? Object.keys(FONTS).filter(k => FONTS[k].numerals)
       : Object.keys(FONTS);
-    
+
     const section = document.createElement('div');
     section.className = 'fp-section' + (type === 'text' ? ' active' : '');
     section.dataset.type = type;
@@ -129,11 +161,15 @@
     const actions = document.createElement('div');
     actions.className = 'fp-actions';
 
+    // Revert: reverse-map EVERY font in registry back to plain ASCII
     const revertBtn = document.createElement('button');
     revertBtn.className = 'modal-btn';
     revertBtn.textContent = 'Revert';
     revertBtn.onclick = () => {
-      if (liveSync) { noteTextarea.removeEventListener('input', liveSyncHandler); liveSync = false; liveSyncHandler = null; }
+      if (liveSync) {
+        noteTextarea.removeEventListener('input', liveSyncHandler);
+        liveSync = false; liveSyncHandler = null;
+      }
       noteTextarea.value = toAscii(noteTextarea.value);
       selectedTextFont = selectedNumFont = null;
       document.querySelectorAll('.fp-card.selected').forEach(c => c.classList.remove('selected'));
@@ -164,11 +200,10 @@
         showNotification('Live sync off');
       } else {
         if (!selectedTextFont && !selectedNumFont) return showNotification('Select a font first');
-        applyBtn.click();
+        applyBtn.click(); // apply immediately
         liveSyncHandler = () => {
           const pos = noteTextarea.selectionStart;
-          const val = toAscii(noteTextarea.value);
-          const converted = convert(val, selectedTextFont, selectedNumFont);
+          const converted = convert(toAscii(noteTextarea.value), selectedTextFont, selectedNumFont);
           if (converted !== noteTextarea.value) {
             noteTextarea.value = converted;
             try { noteTextarea.setSelectionRange(pos, pos); } catch(_) {}
@@ -187,6 +222,7 @@
     return section;
   }
 
+  // ─── Modal Entry ───
   window.openFontPickerModal = async function() {
     if (!currentNote || !noteTextarea) return;
 
@@ -212,10 +248,19 @@
 
     body.append(toggleRow, textSection, numSection);
 
-    await showModal({
+    const modalPromise = showModal({
       title: 'Choose Fonts',
       body: body,
       footer: '<button class="modal-btn" onclick="closeModal()">Cancel</button><button class="modal-btn" onclick="closeModal(\'save\')">Save</button>'
     });
+
+    // Force narrow width to match original design
+    const win = modalBackdrop.querySelector('.modal-window');
+    if (win) { win.style.width = '440px'; win.style.maxWidth = '440px'; }
+
+    const result = await modalPromise;
+    if (result === 'save' || (result && result.action === 'Save')) {
+      showNotification('Font settings saved');
+    }
   };
 })();
