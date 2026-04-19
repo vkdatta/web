@@ -1,7 +1,6 @@
 (function () {
   'use strict';
 
-  // ─── Minimal layout styles only ───
   if (!document.getElementById('fp-styles')) {
     const s = document.createElement('style');
     s.id = 'fp-styles';
@@ -12,14 +11,13 @@
       .fp-section { display: none; }
       .fp-section.active { display: block; }
       .fp-search-wrap { position: relative; margin-bottom: 10px; }
-      .fp-search-icon { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--blueink); font-size: 16px; pointer-events: none; }
-      .fp-search-input { width: 100%; box-sizing: border-box; padding: 7px 10px 7px 34px; background: #1e2124; border: 1px solid var(--border); border-radius: 20px; color: #eeeeee; outline: none; font-family: inherit; font-size: 13px; }
+      .fp-search-input { width: 100%; box-sizing: border-box; padding: 7px 12px; background: #1e2124; border: 1px solid var(--border); border-radius: 20px; color: #eeeeee; outline: none; font-family: inherit; font-size: 13px; }
       .fp-search-input:focus { border-color: rgba(100, 116, 255, 0.55); }
       .fp-list { max-height: 310px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; }
       .fp-card { cursor: pointer; border: 1px solid rgba(255,255,255,0.06); border-radius: 10px; padding: 10px 14px; background: rgba(255,255,255,0.03); transition: all 0.2s; display: flex; align-items: center; justify-content: space-between; }
       .fp-card:hover { border-color: rgba(255,255,255,0.15); transform: translateY(-1px); background: rgba(255,255,255,0.05); }
       .fp-card.selected { background: rgba(0,0,0,0.5); backdrop-filter: blur(10px); border-color: rgba(255,255,255,0.2); box-shadow: 0 4px 24px rgba(0,0,0,0.4); }
-      .fp-card-title { font-weight: 600; color: #eee; }
+      .fp-card-title { color: #eee; }
       .fp-card-badge { font-size: 0.8em; color: var(--blueink); background: rgba(100, 116, 255, 0.08); padding: 4px 10px; border-radius: 6px; border: 1px solid rgba(100, 116, 255, 0.18); letter-spacing: 0.5px; }
       .fp-actions { display: flex; gap: 8px; margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.05); }
       .fp-actions button { flex: 1; }
@@ -29,7 +27,6 @@
     document.head.appendChild(s);
   }
 
-  // ─── Font Registry ───
   function createFont(label, sets) {
     const font = { label };
     if (sets.upper)    font.upper    = [...sets.upper];
@@ -73,14 +70,12 @@
     return true;
   };
 
-  // ─── State ───
   let selectedTextFont = null;
   let selectedNumFont  = null;
   let liveSync         = false;
   let liveSyncHandler  = null;
   let _rmap            = null;
 
-  // ─── Conversion Core ───
   function buildReverseMap() {
     if (_rmap) return _rmap;
     _rmap = {};
@@ -113,8 +108,6 @@
     }).join('');
   }
 
-  // ─── UI Helpers ───
-  // Render badge text in the font's own style
   function renderBadgeInFont(font) {
     const parts = [];
     if (font.upper)    parts.push(convert('A-Z', font.label.toLowerCase().replace(/\s/g, ''), null));
@@ -146,10 +139,8 @@
     section.className = 'fp-section' + (type === 'text' ? ' active' : '');
     section.dataset.type = type;
 
-    // Search bar
     const searchWrap = document.createElement('div');
     searchWrap.className = 'fp-search-wrap';
-    searchWrap.innerHTML = `<span class="material-symbols-rounded fp-search-icon">search</span>`;
     const searchInput = document.createElement('input');
     searchInput.className = 'fp-search-input';
     searchInput.type = 'text';
@@ -246,7 +237,6 @@
     return section;
   }
 
-  // ─── Modal Entry ───
   window.openFontPickerModal = async function() {
     if (!currentNote || !noteTextarea) return;
 
