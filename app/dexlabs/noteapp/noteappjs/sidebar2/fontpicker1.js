@@ -1,37 +1,34 @@
-// ════════════════════════════════════════════════════════════════════
-//  fontpicker.js
-//  Depends on (globals from other scripts):
-//    modal.js   → ensureModal, closeModal, modalBackdrop
-//    app        → noteTextarea, currentNote
-//    app        → updateNoteMetadata, showNotification
-// ════════════════════════════════════════════════════════════════════
-
 (function () {
   'use strict';
 
-  // ── 1. CSS ──────────────────────────────────────────────────────
   if (!document.getElementById('fp-styles')) {
     const s = document.createElement('style');
     s.id = 'fp-styles';
     s.textContent = `
       .fp-body {
-        display: flex;
-        gap: 0;
         flex: 1;
         min-height: 0;
-        overflow: hidden;
-      }
-      .fp-panel {
-        flex: 1;
-        min-width: 0;
+        overflow-y: auto;
+        padding: 16px 18px;
         display: flex;
         flex-direction: column;
-        gap: 10px;
-        padding: 16px 18px;
-        overflow: hidden;
+        gap: 18px;
       }
-      .fp-panel + .fp-panel {
-        border-left: 1px solid rgba(255,255,255,0.05);
+      .fp-body::-webkit-scrollbar { width: 3px; }
+      .fp-body::-webkit-scrollbar-thumb {
+        background: var(--border);
+        border-radius: 10px;
+      }
+      .fp-section {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .fp-section-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-shrink: 0;
       }
       .fp-panel-label {
         font-size: 11px;
@@ -40,12 +37,13 @@
         text-transform: uppercase;
         letter-spacing: 0.7px;
         flex-shrink: 0;
+        white-space: nowrap;
       }
       .fp-search {
         position: relative;
         display: flex;
         align-items: center;
-        flex-shrink: 0;
+        flex: 1;
       }
       .fp-search-icon {
         position: absolute;
@@ -57,7 +55,7 @@
       .fp-search-input {
         width: 100%;
         box-sizing: border-box;
-        padding: 7px 10px 7px 32px;
+        padding: 6px 10px 6px 32px;
         background: #1e2124;
         border: 1px solid var(--border);
         border-radius: 20px;
@@ -70,30 +68,26 @@
       .fp-search-input:focus {
         border-color: rgba(100, 116, 255, 0.55);
       }
-      .fp-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(128px, 1fr));
-        gap: 7px;
-        overflow-y: auto;
-        flex: 1;
-        padding-right: 3px;
-        align-content: start;
-      }
-      .fp-grid::-webkit-scrollbar { width: 3px; }
-      .fp-grid::-webkit-scrollbar-thumb {
-        background: var(--border);
-        border-radius: 10px;
+      .fp-list {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
       }
       .fp-card {
         cursor: pointer;
         border: 1px solid var(--border);
         border-radius: 10px;
-        padding: 10px;
+        padding: 12px 16px;
         background: #1e2124;
         transition: border-color 0.18s, background 0.18s, transform 0.15s;
         user-select: none;
         -webkit-user-select: none;
-        overflow: hidden;
+        width: 100%;
+        box-sizing: border-box;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
       }
       .fp-card:hover {
         border-color: rgba(100, 116, 255, 0.4);
@@ -103,60 +97,48 @@
         border-color: rgba(100, 116, 255, 0.7);
         background: rgba(100, 116, 255, 0.09);
       }
-      .fp-card-name {
-        font-size: 10px;
-        font-weight: 700;
-        color: var(--blueink);
-        margin-bottom: 7px;
-        letter-spacing: 0.4px;
-        text-transform: uppercase;
-      }
-      .fp-card-row {
-        font-size: 13px;
-        line-height: 1.55;
+      .fp-card-preview {
+        font-size: 17px;
         color: #d8d8d8;
+        flex: 1;
         overflow: hidden;
         white-space: nowrap;
         text-overflow: ellipsis;
+        line-height: 1.4;
       }
-      .fp-card-row.fp-muted {
-        opacity: 0.42;
-        font-size: 12px;
+      .fp-card-badge {
+        font-size: 9px;
+        font-weight: 700;
+        color: var(--blueink);
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+        background: rgba(100, 116, 255, 0.08);
+        border: 1px solid rgba(100, 116, 255, 0.18);
+        border-radius: 4px;
+        padding: 2px 6px;
+        flex-shrink: 0;
       }
-      .fp-card-row + .fp-card-row {
-        margin-top: 2px;
+      .fp-divider {
+        height: 1px;
+        background: rgba(255,255,255,0.05);
+        margin: 2px 0;
       }
       .fp-empty {
-        grid-column: 1 / -1;
         font-size: 13px;
         color: var(--blueink);
         text-align: center;
-        padding: 28px 0;
+        padding: 14px 0;
         opacity: 0.7;
-      }
-      @media (max-width: 580px) {
-        .fp-body          { flex-direction: column; overflow-y: auto; }
-        .fp-panel         { max-height: 260px; }
-        .fp-panel + .fp-panel {
-          border-left: none;
-          border-top: 1px solid rgba(255,255,255,0.05);
-        }
       }
     `;
     document.head.appendChild(s);
   }
 
-  // ── 2. Font registry ────────────────────────────────────────────
-  // Each font declares only the character sets it actually has.
-  // upper    → A-Z (26 chars), index 0 = A … 25 = Z
-  // lower    → a-z (26 chars), index 0 = a … 25 = z
-  // numerals → 1-9,0 (10 chars), index 0 = '1' … 8 = '9', 9 = '0'
-
   const FONTS = {
     typewriter: {
       label:    'Typewriter',
       upper:    [...'𝙰𝙱𝙲𝙳𝙴𝙵𝙶𝙷𝙸𝙹𝙺𝙻𝙼𝙽𝙾𝙿𝚀𝚁𝚂𝚃𝚄𝚅𝚆𝚇𝚈𝚉'],
-      lower:    [...'𝚊𝚋𝚌𝚍𝚎𝚏𝚐𝚑𝚒𝚓𝚔𝚕𝚖𝚗𝚘𝚙𝚚𝚛𝚜𝚝𝚞𝚟𝚠𝚡𝚢𝚣'],
+      lower:    [...'𝚊𝚋𝚌𝚍𝚎𝚏𝚐𝚑𝚒𝚓𝚔𝚕𝚖𝚗𝚘𝚙𝚚𝚛𝚜𝚝𝚞𝚟𝚠𝚣𝚢𝚣'],
       numerals: [...'𝟷𝟸𝟹𝟺𝟻𝟼𝟽𝟾𝟿𝟶'],
     },
     smallcap: {
@@ -186,17 +168,14 @@
     },
   };
 
-  // ── 3. Module state ─────────────────────────────────────────────
   const state = {
-    textFont:      null,   // key into FONTS or null = "no change"
-    numeralFont:   null,   // key into FONTS (numeral-capable only) or null
+    textFont:      null,
+    numeralFont:   null,
+    originalText:  null,
     liveSyncActive: false,
-    liveSyncFn:    null,   // reference stored for removeEventListener
+    liveSyncFn:    null,
   };
 
-  // ── 4. Reverse map — glyph → ASCII ──────────────────────────────
-  // Built once, cached. Used to decode already-converted text back
-  // to plain ASCII before re-encoding with a different font.
   let _rmap = null;
 
   function getReverseMap() {
@@ -212,14 +191,8 @@
 
   function toAscii(text) {
     const m = getReverseMap();
-    // Spread via iterator so surrogate pairs (emoji) are handled as single code points
     return [...text].map(ch => m[ch] ?? ch).join('');
   }
-
-  // ── 5. Conversion engine ────────────────────────────────────────
-  // textFontKey    → drives A-Z and a-z replacement
-  // numeralFontKey → drives 0-9 replacement
-  // null key = pass-through for that category
 
   function convert(text, textFontKey, numeralFontKey) {
     const tf = textFontKey    ? FONTS[textFontKey]    : null;
@@ -227,15 +200,17 @@
 
     return [...text].map(ch => {
       const c = ch.charCodeAt(0);
-      if (c >= 65 && c <= 90  && tf?.upper)    return tf.upper[c - 65];        // A-Z
-      if (c >= 97 && c <= 122 && tf?.lower)    return tf.lower[c - 97];        // a-z
-      if (c >= 49 && c <= 57  && nf?.numerals) return nf.numerals[c - 49];     // 1-9
-      if (c === 48             && nf?.numerals) return nf.numerals[9];          // 0 → index 9
-      return ch;  // spaces, punctuation, emoji — untouched
+      if (c >= 65 && c <= 90 && tf?.upper) return tf.upper[c - 65];
+      if (c >= 97 && c <= 122) {
+        if (tf?.lower) return tf.lower[c - 97];
+        if (tf?.upper) return tf.upper[c - 97];
+      }
+      if (c >= 49 && c <= 57  && nf?.numerals) return nf.numerals[c - 49];
+      if (c === 48             && nf?.numerals) return nf.numerals[9];
+      return ch;
     }).join('');
   }
 
-  // Decode current textarea → convert → write back, preserve caret
   function applyConversion() {
     if (!noteTextarea) return;
     const pos  = noteTextarea.selectionStart;
@@ -245,9 +220,14 @@
     if (typeof updateNoteMetadata === 'function') updateNoteMetadata();
   }
 
-  // ── 6. Font card ─────────────────────────────────────────────────
-  // panelType = 'text' | 'numeral'
-  // onSelect(key, cardEl)
+  function renderLabelInFont(font) {
+    return [...font.label.toUpperCase()].map(ch => {
+      const c = ch.charCodeAt(0);
+      if (c >= 65 && c <= 90 && font.upper) return font.upper[c - 65];
+      if (ch === ' ') return ' ';
+      return ch;
+    }).join('');
+  }
 
   function buildCard(key, font, panelType, onSelect) {
     const card = document.createElement('div');
@@ -258,71 +238,42 @@
       : state.numeralFont === key;
     if (isActive) card.classList.add('fp-selected');
 
-    // Name badge
-    const name = document.createElement('div');
-    name.className = 'fp-card-name';
-    name.textContent = font.label;
-    card.appendChild(name);
+    const preview = document.createElement('div');
+    preview.className = 'fp-card-preview';
+    preview.textContent = panelType === 'numeral'
+      ? font.numerals.join('')
+      : renderLabelInFont(font);
+    card.appendChild(preview);
 
-    if (panelType === 'text') {
-      // Upper preview — first 4 + ellipsis + last 2
-      if (font.upper) {
-        const r = document.createElement('div');
-        r.className = 'fp-card-row';
-        r.textContent = font.upper.slice(0, 4).join('') + '…' + font.upper.slice(-2).join('');
-        card.appendChild(r);
-      }
-      // Lower preview
-      if (font.lower) {
-        const r = document.createElement('div');
-        r.className = 'fp-card-row';
-        r.textContent = font.lower.slice(0, 4).join('') + '…' + font.lower.slice(-2).join('');
-        card.appendChild(r);
-      }
-      // Numeral hint (muted) — just to indicate availability
-      if (font.numerals) {
-        const r = document.createElement('div');
-        r.className = 'fp-card-row fp-muted';
-        r.textContent = font.numerals.slice(0, 4).join('') + '…';
-        card.appendChild(r);
-      }
-    } else {
-      // Numeral panel — show all 10 numerals as primary preview
-      const r = document.createElement('div');
-      r.className = 'fp-card-row';
-      r.textContent = font.numerals.join('');
-      card.appendChild(r);
-
-      // Muted letter hint so user knows which font they picked
-      if (font.upper) {
-        const hint = document.createElement('div');
-        hint.className = 'fp-card-row fp-muted';
-        hint.textContent = font.upper.slice(0, 3).join('') + '…';
-        card.appendChild(hint);
-      }
-    }
+    const caps = [];
+    if (font.upper) caps.push('A–Z');
+    if (font.lower) caps.push('a–z');
+    if (font.numerals) caps.push('0–9');
+    const badge = document.createElement('div');
+    badge.className = 'fp-card-badge';
+    badge.textContent = caps.join(' · ');
+    card.appendChild(badge);
 
     card.addEventListener('click', () => onSelect(key, card));
     return card;
   }
 
-  // ── 7. Panel ──────────────────────────────────────────────────────
-  function buildPanel(panelType) {
-    // Numeral panel only shows fonts that actually have numerals
+  function buildSection(panelType) {
     const keys = panelType === 'numeral'
       ? Object.keys(FONTS).filter(k => FONTS[k].numerals)
       : Object.keys(FONTS);
 
-    const panel = document.createElement('div');
-    panel.className = 'fp-panel';
+    const section = document.createElement('div');
+    section.className = 'fp-section';
 
-    // Label
+    const sectionHeader = document.createElement('div');
+    sectionHeader.className = 'fp-section-header';
+
     const lbl = document.createElement('div');
     lbl.className = 'fp-panel-label';
     lbl.textContent = panelType === 'text' ? 'Text Font' : 'Numeral Font';
-    panel.appendChild(lbl);
+    sectionHeader.appendChild(lbl);
 
-    // Search
     const searchWrap = document.createElement('div');
     searchWrap.className = 'fp-search';
     const icon = document.createElement('span');
@@ -331,67 +282,81 @@
     const searchInput = document.createElement('input');
     searchInput.className = 'fp-search-input';
     searchInput.type = 'text';
-    searchInput.placeholder = 'Search fonts…';
+    searchInput.placeholder = 'Search…';
     searchInput.autocomplete = 'off';
     searchWrap.append(icon, searchInput);
-    panel.appendChild(searchWrap);
+    sectionHeader.appendChild(searchWrap);
+    section.appendChild(sectionHeader);
 
-    // Grid
-    const grid = document.createElement('div');
-    grid.className = 'fp-grid';
-    panel.appendChild(grid);
+    const list = document.createElement('div');
+    list.className = 'fp-list';
+    section.appendChild(list);
 
-    // Card selection handler
     const onSelect = (key, clickedCard) => {
-      grid.querySelectorAll('.fp-card').forEach(c => c.classList.remove('fp-selected'));
+      list.querySelectorAll('.fp-card').forEach(c => c.classList.remove('fp-selected'));
       clickedCard.classList.add('fp-selected');
       if (panelType === 'text') state.textFont = key;
       else state.numeralFont = key;
-      // If live sync is running, re-apply immediately on font change
       if (state.liveSyncActive) applyConversion();
     };
 
-    // Render cards (re-runs on search input)
     const renderCards = (filter = '') => {
-      grid.innerHTML = '';
+      list.innerHTML = '';
       let count = 0;
       keys.forEach(key => {
         if (filter && !FONTS[key].label.toLowerCase().includes(filter.toLowerCase())) return;
-        grid.appendChild(buildCard(key, FONTS[key], panelType, onSelect));
+        list.appendChild(buildCard(key, FONTS[key], panelType, onSelect));
         count++;
       });
       if (count === 0) {
         const empty = document.createElement('div');
         empty.className = 'fp-empty';
         empty.textContent = 'No matches';
-        grid.appendChild(empty);
+        list.appendChild(empty);
       }
     };
 
     renderCards();
     searchInput.addEventListener('input', e => renderCards(e.target.value.trim()));
-    return panel;
+    return section;
   }
 
-  // ── 8. Apply Once ──────────────────────────────────────────────
   window.handleFontApplyOnce = function () {
     if (!state.textFont && !state.numeralFont) {
       showNotification('Pick at least one font first!');
       return;
+    }
+    if (state.originalText === null) {
+      state.originalText = noteTextarea.value;
     }
     applyConversion();
     showNotification('Font applied!');
     closeModal();
   };
 
-  // ── 9. Live Sync toggle ─────────────────────────────────────────
-  // Attaches an input listener to noteTextarea.
-  // On every keystroke: decode current value → re-encode → write back.
-  // Listener ref is stored so it can be detached cleanly.
+  window.handleFontRevert = function () {
+    if (state.originalText === null) {
+      showNotification('Nothing to revert!');
+      return;
+    }
+    if (state.liveSyncActive) {
+      if (state.liveSyncFn) {
+        noteTextarea.removeEventListener('input', state.liveSyncFn);
+        state.liveSyncFn = null;
+      }
+      state.liveSyncActive = false;
+    }
+    noteTextarea.value = state.originalText;
+    state.originalText = null;
+    state.textFont     = null;
+    state.numeralFont  = null;
+    if (typeof updateNoteMetadata === 'function') updateNoteMetadata();
+    showNotification('Reverted to original!');
+    closeModal();
+  };
 
   window.handleFontLiveSyncToggle = function () {
     if (state.liveSyncActive) {
-      // ─ Turn OFF ─
       if (state.liveSyncFn) {
         noteTextarea.removeEventListener('input', state.liveSyncFn);
         state.liveSyncFn = null;
@@ -402,22 +367,21 @@
       return;
     }
 
-    // ─ Turn ON ─
     if (!state.textFont && !state.numeralFont) {
       showNotification('Pick at least one font first!');
       return;
     }
 
-    // Apply immediately so the textarea is in converted state before we attach
+    if (state.originalText === null) {
+      state.originalText = noteTextarea.value;
+    }
+
     applyConversion();
 
     state.liveSyncFn = function () {
-      // Runs after every user keystroke.
-      // decode converts already-styled chars back to ASCII,
-      // so mixed states (typed char + existing styled chars) are handled cleanly.
       const pos       = noteTextarea.selectionStart;
       const converted = convert(toAscii(noteTextarea.value), state.textFont, state.numeralFont);
-      if (converted === noteTextarea.value) return; // nothing changed — bail early
+      if (converted === noteTextarea.value) return;
       noteTextarea.value = converted;
       try { noteTextarea.setSelectionRange(pos, pos); } catch (_) {}
       if (typeof updateNoteMetadata === 'function') updateNoteMetadata();
@@ -429,22 +393,16 @@
     closeModal();
   };
 
-  // ── 10. Open modal ──────────────────────────────────────────────
-  // Bypasses showModal() to avoid its default footer button listener,
-  // but reuses the same modalBackdrop, CSS classes, and closeModal().
-
   window.openFontPickerModal = function () {
     if (!currentNote || !noteTextarea) return;
 
     ensureModal();
     modalBackdrop.innerHTML = '';
 
-    // ── Window
     const win = document.createElement('div');
     win.className = 'modal-window';
-    win.style.cssText = 'width:880px; max-width:calc(100vw - 40px); max-height:calc(100vh - 6vh); display:flex; flex-direction:column;';
+    win.style.cssText = 'width:500px; max-width:calc(100vw - 40px); max-height:calc(100vh - 6vh); display:flex; flex-direction:column;';
 
-    // ── Header
     const header = document.createElement('div');
     header.className = 'modal-header';
     const htitle = document.createElement('h3');
@@ -456,16 +414,16 @@
     hclose.addEventListener('click', () => closeModal());
     header.append(htitle, hclose);
 
-    // ── Body (two panels side-by-side, flex:1 so it fills window height)
     const body = document.createElement('div');
     body.className = 'fp-body';
-    body.style.flex = '1';
-    body.style.minHeight = '0';
-    body.style.overflow = 'hidden';
-    body.appendChild(buildPanel('text'));
-    body.appendChild(buildPanel('numeral'));
+    body.appendChild(buildSection('text'));
 
-    // ── Footer
+    const divider = document.createElement('div');
+    divider.className = 'fp-divider';
+    body.appendChild(divider);
+
+    body.appendChild(buildSection('numeral'));
+
     const footer = document.createElement('div');
     footer.className = 'modal-footer';
 
@@ -475,20 +433,25 @@
     cancelBtn.style.marginRight = 'auto';
     cancelBtn.addEventListener('click', () => closeModal());
 
+    const revertBtn = document.createElement('button');
+    revertBtn.className = 'modal-btn';
+    revertBtn.innerHTML = '<span class="material-symbols-rounded" style="font-size:15px;vertical-align:-3px;margin-right:5px">history</span>Revert';
+    revertBtn.addEventListener('click', window.handleFontRevert);
+    if (state.originalText === null) revertBtn.style.opacity = '0.4';
+
     const applyBtn = document.createElement('button');
     applyBtn.className = 'modal-btn';
     applyBtn.textContent = 'Apply Once';
     applyBtn.addEventListener('click', window.handleFontApplyOnce);
 
     const syncBtn = document.createElement('button');
-    // Reflect current live sync state when modal is reopened
     syncBtn.className = 'modal-btn' + (state.liveSyncActive ? ' active' : '');
     syncBtn.innerHTML = state.liveSyncActive
       ? '<span class="material-symbols-rounded" style="font-size:15px;vertical-align:-3px;margin-right:5px">sync</span>Live Sync ON'
       : '<span class="material-symbols-rounded" style="font-size:15px;vertical-align:-3px;margin-right:5px">sync</span>Live Sync';
     syncBtn.addEventListener('click', window.handleFontLiveSyncToggle);
 
-    footer.append(cancelBtn, applyBtn, syncBtn);
+    footer.append(cancelBtn, revertBtn, applyBtn, syncBtn);
 
     win.append(header, body, footer);
     modalBackdrop.appendChild(win);
