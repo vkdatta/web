@@ -9,10 +9,8 @@
         flex: 1;
         min-height: 0;
         overflow-y: auto;
-        padding: 14px 16px;
-        display: flex;
-        flex-direction: column;
         gap: 16px;
+        padding: 14px 16px;
       }
       .fp-body::-webkit-scrollbar { width: 3px; }
       .fp-body::-webkit-scrollbar-thumb {
@@ -396,8 +394,10 @@
     hclose.addEventListener('click', () => closeModal());
     header.append(htitle, hclose);
 
+    // Using modal-body alongside fp-body so modal.css's font-size:14px anchors
+    // all text inside — fp-body only overrides the layout/scroll behaviour.
     const body = document.createElement('div');
-    body.className = 'fp-body';
+    body.className = 'modal-body fp-body';
     body.appendChild(buildSection('text'));
 
     const divider = document.createElement('div');
