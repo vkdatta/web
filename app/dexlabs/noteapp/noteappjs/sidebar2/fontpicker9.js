@@ -11,22 +11,25 @@
       .fp-toggle-btn.active { background: rgba(0,0,0,0.4); backdrop-filter: blur(12px); border-color: rgba(255,255,255,0.25); color: #fff; box-shadow: 0 4px 20px rgba(0,0,0,0.5); }
       .fp-section { display: none; }
       .fp-section.active { display: block; }
-      .fp-list { max-height: 260px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; }
+      .fp-search-wrap { position: relative; margin-bottom: 10px; }
+      .fp-search-icon { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--blueink); font-size: 16px; pointer-events: none; }
+      .fp-search-input { width: 100%; box-sizing: border-box; padding: 7px 10px 7px 34px; background: #1e2124; border: 1px solid var(--border); border-radius: 20px; color: #eeeeee; outline: none; font-family: inherit; font-size: 13px; }
+      .fp-search-input:focus { border-color: rgba(100, 116, 255, 0.55); }
+      .fp-list { max-height: 310px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; }
       .fp-card { cursor: pointer; border: 1px solid rgba(255,255,255,0.06); border-radius: 10px; padding: 10px 14px; background: rgba(255,255,255,0.03); transition: all 0.2s; display: flex; align-items: center; justify-content: space-between; }
       .fp-card:hover { border-color: rgba(255,255,255,0.15); transform: translateY(-1px); background: rgba(255,255,255,0.05); }
       .fp-card.selected { background: rgba(0,0,0,0.5); backdrop-filter: blur(10px); border-color: rgba(255,255,255,0.2); box-shadow: 0 4px 24px rgba(0,0,0,0.4); }
       .fp-card-title { font-weight: 600; color: #eee; }
-      .fp-card-sample { color: #888; margin-top: 3px; font-size: 0.95em; }
-      .fp-card-badge { font-size: 0.7em; color: #666; background: rgba(255,255,255,0.05); padding: 3px 8px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.08); letter-spacing: 0.5px; }
+      .fp-card-badge { font-size: 0.8em; color: var(--blueink); background: rgba(100, 116, 255, 0.08); padding: 4px 10px; border-radius: 6px; border: 1px solid rgba(100, 116, 255, 0.18); letter-spacing: 0.5px; }
       .fp-actions { display: flex; gap: 8px; margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.05); }
       .fp-actions button { flex: 1; }
-      @media (max-width: 480px) { .fp-list { max-height: 180px; } }
+      .fp-empty { color: var(--blueink); text-align: center; padding: 16px 0; opacity: 0.6; font-size: 13px; }
+      @media (max-width: 480px) { .fp-list { max-height: 230px; } }
     `;
     document.head.appendChild(s);
   }
 
   // ─── Font Registry ───
-  // CRITICAL: glyphs must be stored as ARRAYS so surrogate pairs stay intact
   function createFont(label, sets) {
     const font = { label };
     if (sets.upper)    font.upper    = [...sets.upper];
@@ -66,7 +69,7 @@
   window.registerFont = function(key, label, sets) {
     if (FONTS[key]) { console.warn(`Font "${key}" exists`); return false; }
     FONTS[key] = createFont(label, sets);
-    _rmap = null; // invalidate reverse map
+    _rmap = null;
     return true;
   };
 
@@ -111,21 +114,13 @@
   }
 
   // ─── UI Helpers ───
-  function preview(key) {
-    const font = FONTS[key];
+  // Render badge text in the font's own style
+  function renderBadgeInFont(font) {
     const parts = [];
-    if (font.upper)    parts.push(convert('ABC', key, null));
-    if (font.lower)    parts.push(convert('abc', key, null));
-    if (font.numerals) parts.push(convert('123', null, key));
-    return parts.join('  ');
-  }
-
-  function badge(font) {
-    const caps = [];
-    if (font.upper)    caps.push('A–Z');
-    if (font.lower)    caps.push('a–z');
-    if (font.numerals) caps.push('0–9');
-    return caps.join(' · ');
+    if (font.upper)    parts.push(convert('A-Z', font.label.toLowerCase().replace(/\s/g, ''), null));
+    if (font.lower)    parts.push(convert('a-z', font.label.toLowerCase().replace(/\s/g, ''), null));
+    if (font.numerals) parts.push(convert('0-9', null, font.label.toLowerCase().replace(/\s/g, '')));
+    return parts.join(' · ');
   }
 
   function createCard(key, type, onSelect) {
@@ -133,7 +128,7 @@
     const isSel = (type === 'text' ? selectedTextFont : selectedNumFont) === key;
     const card = document.createElement('div');
     card.className = 'fp-card' + (isSel ? ' selected' : '');
-    card.innerHTML = `<div><div class="fp-card-title">${font.label}</div><div class="fp-card-sample">${preview(key)}</div></div><div class="fp-card-badge">${badge(font)}</div>`;
+    card.innerHTML = `<div class="fp-card-title">${font.label}</div><div class="fp-card-badge">${renderBadgeInFont(font)}</div>`;
     card.onclick = () => {
       document.querySelectorAll(`.fp-section[data-type="${type}"] .fp-card`).forEach(c => c.classList.remove('selected'));
       card.classList.add('selected');
@@ -151,17 +146,46 @@
     section.className = 'fp-section' + (type === 'text' ? ' active' : '');
     section.dataset.type = type;
 
+    // Search bar
+    const searchWrap = document.createElement('div');
+    searchWrap.className = 'fp-search-wrap';
+    searchWrap.innerHTML = `<span class="material-symbols-rounded fp-search-icon">search</span>`;
+    const searchInput = document.createElement('input');
+    searchInput.className = 'fp-search-input';
+    searchInput.type = 'text';
+    searchInput.placeholder = 'Search fonts…';
+    searchInput.autocomplete = 'off';
+    searchWrap.appendChild(searchInput);
+    section.appendChild(searchWrap);
+
     const list = document.createElement('div');
     list.className = 'fp-list';
-    keys.forEach(key => list.appendChild(createCard(key, type, k => {
-      if (type === 'text') selectedTextFont = k; else selectedNumFont = k;
-    })));
+
+    const renderCards = (filter = '') => {
+      list.innerHTML = '';
+      let count = 0;
+      keys.forEach(key => {
+        if (filter && !FONTS[key].label.toLowerCase().includes(filter.toLowerCase())) return;
+        list.appendChild(createCard(key, type, k => {
+          if (type === 'text') selectedTextFont = k; else selectedNumFont = k;
+        }));
+        count++;
+      });
+      if (!count) {
+        const empty = document.createElement('div');
+        empty.className = 'fp-empty';
+        empty.textContent = 'No matches';
+        list.appendChild(empty);
+      }
+    };
+
+    renderCards();
+    searchInput.addEventListener('input', e => renderCards(e.target.value.trim()));
     section.appendChild(list);
 
     const actions = document.createElement('div');
     actions.className = 'fp-actions';
 
-    // Revert: reverse-map EVERY font in registry back to plain ASCII
     const revertBtn = document.createElement('button');
     revertBtn.className = 'modal-btn';
     revertBtn.textContent = 'Revert';
@@ -200,7 +224,7 @@
         showNotification('Live sync off');
       } else {
         if (!selectedTextFont && !selectedNumFont) return showNotification('Select a font first');
-        applyBtn.click(); // apply immediately
+        applyBtn.click();
         liveSyncHandler = () => {
           const pos = noteTextarea.selectionStart;
           const converted = convert(toAscii(noteTextarea.value), selectedTextFont, selectedNumFont);
@@ -254,7 +278,6 @@
       footer: '<button class="modal-btn" onclick="closeModal()">Cancel</button><button class="modal-btn" onclick="closeModal(\'save\')">Save</button>'
     });
 
-    // Force narrow width to match original design
     const win = modalBackdrop.querySelector('.modal-window');
     if (win) { win.style.width = '440px'; win.style.maxWidth = '440px'; }
 
