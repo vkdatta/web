@@ -9,8 +9,10 @@
         flex: 1;
         min-height: 0;
         overflow-y: auto;
-        gap: 16px;
         padding: 14px 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
       }
       .fp-body::-webkit-scrollbar { width: 3px; }
       .fp-body::-webkit-scrollbar-thumb {
@@ -136,10 +138,17 @@
     return font;
   }
 
+  /* 
+     CENTRAL FONT REGISTRY
+     To add a new font in the future:
+     1. Add a new entry here with a unique key
+     2. Provide upper / lower / numerals arrays (26 letters + 10 digits)
+     3. Everything else (reverse map, conversion, cards, live sync) updates automatically
+  */
   const FONTS = {
     typewriter: createFont('Typewriter', {
       upper:    '𝙰𝙱𝙲𝙳𝙴𝙵𝙶𝙷𝙸𝙹𝙺𝙻𝙼𝙽𝙾𝙿𝚀𝚁𝚂𝚃𝚄𝚅𝚆𝚇𝚈𝚉',
-      lower:    '𝚊𝚋𝚌𝚍𝚎𝚏𝚐𝚑𝚒𝚓𝚔𝚕𝚖𝚗𝚘𝚙𝚚𝚛𝚜𝚝𝚞𝚟𝚠𝚣𝚢𝚣',
+      lower:    '𝚊𝚋𝚌𝚍𝚎𝚏𝚐𝚑𝚒𝚓𝚔𝚕𝚖𝚗𝚘𝚙𝚚𝚛𝚜𝚝𝚞𝚟𝚠𝚡𝚢𝚣',
       numerals: '𝟷𝟸𝟹𝟺𝟻𝟼𝟽𝟾𝟿𝟶',
     }),
     smallcap: createFont('Smallcap', {
@@ -226,6 +235,18 @@
     }).join('');
   }
 
+  function renderSample(font, panelType) {
+    if (panelType === 'numeral' && font.numerals) {
+      return [...'0123456789'].map(ch => {
+        const c = ch.charCodeAt(0);
+        if (c === 48) return font.numerals[9];
+        if (c >= 49 && c <= 57) return font.numerals[c - 49];
+        return ch;
+      }).join('');
+    }
+    return renderLabelInFont(font);
+  }
+
   function buildCard(key, font, panelType, onSelect) {
     const card = document.createElement('div');
     card.className = 'fp-card';
@@ -235,7 +256,7 @@
 
     const preview = document.createElement('div');
     preview.className = 'fp-card-preview';
-    preview.textContent = renderLabelInFont(font);
+    preview.textContent = renderSample(font, panelType);
     card.appendChild(preview);
 
     const caps = [];
@@ -381,7 +402,8 @@
 
     const win = document.createElement('div');
     win.className = 'modal-window';
-    win.style.width = '440px';
+    // No hard-coded width → lets modal.css (including mobile @media) control size
+    // Body is already flex + scrollable → never exceeds viewport
 
     const header = document.createElement('div');
     header.className = 'modal-header';
@@ -394,10 +416,8 @@
     hclose.addEventListener('click', () => closeModal());
     header.append(htitle, hclose);
 
-    // Using modal-body alongside fp-body so modal.css's font-size:14px anchors
-    // all text inside — fp-body only overrides the layout/scroll behaviour.
     const body = document.createElement('div');
-    body.className = 'modal-body fp-body';
+    body.className = 'fp-body';           // already has overflow-y:auto + flex:1
     body.appendChild(buildSection('text'));
 
     const divider = document.createElement('div');
