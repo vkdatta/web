@@ -76,13 +76,19 @@
   let liveSyncHandler  = null;
   let _rmap            = null;
 
-  function buildReverseMap() {
+   function buildReverseMap() {
     if (_rmap) return _rmap;
     _rmap = {};
     Object.values(FONTS).forEach(f => {
-      (f.upper    || []).forEach((ch, i) => { _rmap[ch] = String.fromCharCode(65 + i); });
-      (f.lower    || []).forEach((ch, i) => { _rmap[ch] = String.fromCharCode(97 + i); });
-      (f.numerals || []).forEach((ch, i) => { _rmap[ch] = i === 9 ? '0' : String(i + 1); });
+      (f.upper || []).forEach((ch, i) => {
+        if (ch.charCodeAt(0) > 127) _rmap[ch] = String.fromCharCode(65 + i);
+      });
+      (f.lower || []).forEach((ch, i) => {
+        if (ch.charCodeAt(0) > 127) _rmap[ch] = String.fromCharCode(97 + i);
+      });
+      (f.numerals || []).forEach((ch, i) => {
+        if (ch.charCodeAt(0) > 127) _rmap[ch] = i === 9 ? '0' : String(i + 1);
+      });
     });
     return _rmap;
   }
