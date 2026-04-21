@@ -61,6 +61,11 @@
     blackdice: createFont('Black Dice', {
       upper: '🅰🅱🅲🅳🅴🅵🅶🅷🅸🅹🅺🅻🅼🅽🅾🅿🆀🆁🆂🆃🆄🆅🆆🆇🆈🆉',
     }),
+      samurai: createFont('Samurai', {
+      upper:    '卂乃匚刀乇千Ꮆ卄工ﾌҜㄥ爪𠘨ㄖ尸Ɋ尺丂ㄒㄩᐯ山乂ㄚ乙',
+      numerals: '一二三四五六七八九〇',
+    }),
+
   };
 
   window.registerFont = function(key, label, sets) {
