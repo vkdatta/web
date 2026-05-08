@@ -140,7 +140,7 @@ window.currentHighlightLanguage = "none";
 window.prismInitialized = !1;
 window.updateTimeout = null;
 window.debounceTimer = null;
-const LARGE_TEXT_THRESHOLD = 1e7;
+const LARGE_TEXT_THRESHOLD = 1e5;
 function fastEscapeHtml(e) {
   return e
     .replace(/&/g, "&amp;")
