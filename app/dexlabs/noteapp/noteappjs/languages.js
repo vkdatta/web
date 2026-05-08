@@ -1,4 +1,4 @@
-class prismLanguages {
+export class prismLanguages {
   constructor() {
     this.loadedLanguages = new Set(["markup", "css", "clike", "javascript"]);
     this.loadingLanguages = new Set();
