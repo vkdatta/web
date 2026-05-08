@@ -1,32 +1,25 @@
 
 // ============================================================
-// DEXLABS NOTE APP - OPTIMIZED PRISM SYNTAX HIGHLIGHTER
-// Full-text backdrop mirror with debounced async highlighting
-// Compatible with: findBackdrop, undo/redo, Firestore sync
+// DEXLABS NOTE APP - OPTIMIZED PRISM SYNTAX HIGHLIGHTER v5
+// Fix: Wrap highlighted content in <code class="language-xxx">
+// so prism-vsc-dark-plus.css theme selectors match properly
 // ============================================================
 
 (() => {
-    // ============================================================
-    // CONFIGURATION
-    // ============================================================
-    const LARGE_FILE_THRESHOLD = 80000;   // Max chars for syntax highlighting
-    const HIGHLIGHT_DEBOUNCE = 250;       // ms to wait after typing stops
-    const PLAIN_DEBOUNCE = 16;           // 1 frame for plain text render
+    const LARGE_FILE_THRESHOLD = 80000;
+    const HIGHLIGHT_DEBOUNCE = 250;
 
-    // ============================================================
-    // STATE
-    // ============================================================
     let languageLoader = null;
     let currentLanguage = "none";
     let isLargeFile = false;
     let highlightTimer = null;
-    let plainTimer = null;
     let isHighlighting = false;
     let lastHighlightedContent = "";
     let lastHighlightedLang = "none";
+    let initComplete = false;
 
     // ============================================================
-    // LANGUAGE LOADER (Complete)
+    // LANGUAGE LOADER
     // ============================================================
     class CompletePrismLanguageLoader {
         constructor() {
@@ -239,10 +232,8 @@
     }
 
     // ============================================================
-    // CORE RENDERING (Same architecture as original, just optimized)
+    // CORE RENDERING
     // ============================================================
-
-    // Immediate plain text render - ALWAYS runs first
     function immediatePlainRender() {
         const ta = document.getElementById('noteTextarea');
         const bd = document.getElementById('noteBackdrop');
@@ -250,19 +241,14 @@
 
         const text = ta.value;
         let html = escapeHtml(text);
-
-        // Ensure last line has content for proper height
         if (!text.endsWith('\n') && !text.endsWith('\r')) {
             html += ' ';
         }
-
         bd.innerHTML = html;
         bd.style.color = "var(--color)";
-
         syncScroll();
     }
 
-    // Async syntax highlighting - debounced
     async function updateBackdrop() {
         const ta = document.getElementById('noteTextarea');
         const bd = document.getElementById('noteBackdrop');
@@ -271,72 +257,68 @@
         const text = ta.value;
         const lang = currentLanguage;
 
-        // Large file: stay in plain text mode
+        // Large file check
         if (text.length > LARGE_FILE_THRESHOLD) {
             if (!isLargeFile) {
                 isLargeFile = true;
-                console.log('Large file mode (>80KB): syntax highlighting disabled');
+                console.log('[Prism] Large file mode active');
             }
-            // Plain text already rendered by immediatePlainRender
             return;
         }
-
         isLargeFile = false;
 
-        // Skip if nothing changed
-        if (text === lastHighlightedContent && lang === lastHighlightedLang) {
-            return;
-        }
+        // Skip if no language
+        if (lang === "none" || !lang) return;
+
+        // Skip if unchanged
+        if (text === lastHighlightedContent && lang === lastHighlightedLang) return;
+
+        // Ensure Prism is ready
+        if (!window.Prism) return;
 
         // Load language if needed
-        if (lang !== "none" && !languageLoader.isLanguageLoaded(lang)) {
+        if (!languageLoader.isLanguageLoaded(lang)) {
             try {
                 await languageLoader.loadLanguage(lang);
             } catch (e) {
-                console.warn('Language load failed:', e);
                 return;
             }
         }
 
-        // Skip if no language or Prism not ready
-        if (lang === "none" || !window.Prism || !Prism.languages[lang]) {
-            return;
-        }
+        // Check if grammar exists
+        if (!Prism.languages[lang]) return;
 
-        // Highlight asynchronously
+        // Highlight
         try {
             isHighlighting = true;
-
-            // Yield to main thread before heavy work
             await new Promise(resolve => setTimeout(resolve, 0));
 
             const highlighted = Prism.highlight(text, Prism.languages[lang], lang);
             let html = highlighted;
 
-            // Ensure last line has content
             if (!text.endsWith('\n') && !text.endsWith('\r')) {
                 html += ' ';
             }
 
-            bd.innerHTML = html;
-            bd.style.color = ""; // Let Prism token colors show
+            // CRITICAL FIX: Wrap in <code class="language-xxx"> so theme CSS selectors match
+            // The prism-vsc-dark-plus.css theme uses: code[class*="language-"] for base color
+            bd.innerHTML = `<code class="language-${lang}">${html}</code>`;
+            bd.style.color = ""; // Remove inline color, let theme CSS handle it
 
             lastHighlightedContent = text;
             lastHighlightedLang = lang;
 
             syncScroll();
         } catch (e) {
-            console.warn('Highlight failed:', e);
-            // Keep plain text (already rendered)
+            console.error('[Prism] Highlight error:', e);
         } finally {
             isHighlighting = false;
         }
     }
 
-    // Debounced wrapper
     const scheduleUpdate = debounce((force = false) => {
         if (force) {
-            lastHighlightedContent = ""; // Force re-highlight
+            lastHighlightedContent = "";
         }
         requestAnimationFrame(updateBackdrop);
     }, HIGHLIGHT_DEBOUNCE);
@@ -348,12 +330,9 @@
         const ta = document.getElementById('noteTextarea');
         const bd = document.getElementById('noteBackdrop');
         const fd = document.getElementById('findBackdrop');
-
         if (!ta || !bd) return;
-
         bd.scrollTop = ta.scrollTop;
         bd.scrollLeft = ta.scrollLeft;
-
         if (fd) {
             fd.scrollTop = ta.scrollTop;
             fd.scrollLeft = ta.scrollLeft;
@@ -364,10 +343,7 @@
     // INPUT HANDLING
     // ============================================================
     function onInput() {
-        // Immediate plain text render (fast, non-blocking)
         immediatePlainRender();
-
-        // Debounced syntax highlighting
         scheduleUpdate();
     }
 
@@ -375,20 +351,20 @@
     // LANGUAGE UPDATE
     // ============================================================
     async function updateLanguage() {
-        if (!window.currentNote) {
+        const note = window.currentNote;
+        if (!note) {
             currentLanguage = "none";
             window.currentHighlightLanguage = "none";
             return;
         }
 
-        const newLang = window.currentNote.extension
-            ? languageLoader.detectLanguageFromFilename(`file.${window.currentNote.extension}`)
-            : "none";
+        const ext = note.extension || '';
+        const newLang = ext ? languageLoader.detectLanguageFromFilename(`file.${ext}`) : "none";
 
         if (newLang !== currentLanguage) {
             currentLanguage = newLang;
             window.currentHighlightLanguage = newLang;
-            lastHighlightedContent = ""; // Force re-highlight
+            lastHighlightedContent = "";
             lastHighlightedLang = "none";
 
             if (newLang !== "none") {
@@ -399,9 +375,6 @@
                     window.currentHighlightLanguage = "none";
                 }
             }
-
-            // Trigger render
-            onInput();
         }
     }
 
@@ -416,9 +389,7 @@
         ta.addEventListener('scroll', syncScroll, { passive: true });
 
         ta.addEventListener('keydown', (e) => {
-            if (e.key === 'Tab') {
-                setTimeout(onInput, 0);
-            }
+            if (e.key === 'Tab') setTimeout(onInput, 0);
         });
 
         ['paste', 'cut'].forEach(evt => {
@@ -427,32 +398,29 @@
     }
 
     // ============================================================
-    // HOOKS (Compatible with existing app)
+    // HOOKS
     // ============================================================
     function hookFunctions() {
-        // Hook openNote
         const originalOpenNote = window.openNote;
         window.openNote = function(noteId) {
             if (originalOpenNote) originalOpenNote(noteId);
-            setTimeout(() => {
-                updateLanguage();
+            updateLanguage().then(() => {
                 lastHighlightedContent = "";
                 onInput();
-            }, 50);
+            });
         };
 
-        // Hook handleRenameSubmit
         const originalRename = window.handleRenameSubmit;
         window.handleRenameSubmit = function() {
             if (originalRename) originalRename();
             setTimeout(() => {
-                updateLanguage();
-                lastHighlightedContent = "";
-                onInput();
+                updateLanguage().then(() => {
+                    lastHighlightedContent = "";
+                    onInput();
+                });
             }, 50);
         };
 
-        // Hook textarea.value setter for Firestore sync
         const ta = document.getElementById('noteTextarea');
         if (ta) {
             const descriptor = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value');
@@ -461,10 +429,12 @@
                 Object.defineProperty(ta, 'value', {
                     set: function(newValue) {
                         originalSet.call(this, newValue);
-                        setTimeout(() => {
-                            lastHighlightedContent = "";
-                            onInput();
-                        }, 0);
+                        if (initComplete) {
+                            setTimeout(() => {
+                                lastHighlightedContent = "";
+                                onInput();
+                            }, 0);
+                        }
                     },
                     get: function() {
                         return descriptor.get.call(this);
@@ -479,7 +449,6 @@
     // INIT
     // ============================================================
     async function init() {
-        // Wait for Prism core
         if (!window.Prism) {
             await new Promise((resolve) => {
                 const check = () => {
@@ -494,20 +463,23 @@
 
         attachEvents();
         hookFunctions();
-        updateLanguage();
 
-        // Expose functions globally for compatibility
+        if (window.currentNote) {
+            await updateLanguage();
+        }
+
         window.immediatePlainRender = immediatePlainRender;
         window.scheduleUpdate = scheduleUpdate;
         window.updateBackdrop = updateBackdrop;
         window.syncScroll = syncScroll;
 
-        // Initial render
+        initComplete = true;
+
         setTimeout(() => {
             onInput();
         }, 100);
 
-        console.log('DexLabs Prism: Optimized highlighting active');
+        console.log('[Prism] Init complete. Language:', currentLanguage);
     }
 
     if (document.readyState === 'loading') {
