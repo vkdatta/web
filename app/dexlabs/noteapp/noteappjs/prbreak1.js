@@ -1,6 +1,8 @@
 import {
-  prismLanguages
-} from 'https://cdn.jsdelivr.net/gh/vkdatta/web@main/app/dexlabs/noteapp/noteappjs/languages.js';
+extensionMap,
+dependencies,
+languageNames
+} from 'https://cdn.jsdelivr.net/gh/vkdatta/web@main/app/dexlabs/noteapp/noteappjs/languagemap.js';
 
 (() => {
     async function forceSyntaxHighlightUpdate() {
@@ -57,6 +59,12 @@ import {
     }, 50);
 })();
 
+class CompletePrismLanguageLoader {
+  constructor() {
+    this.loadedLanguages = new Set(["markup", "css", "clike", "javascript"]);
+    this.loadingLanguages = new Set();
+    this.loadPromises = new Map();
+ }
   detectLanguageFromFilename(filename) {
     if (!filename || !filename.includes(".")) {
       return "none";
@@ -272,7 +280,7 @@ window.updateBackdrop = async function () {
           document.head.appendChild(o);
       }).catch((e) => console.error("Could not load Prism core:", e))),
     window.languageLoader ||
-      ((window.languageLoader = new prismLanguages()),
+      ((window.languageLoader = new CompletePrismLanguageLoader()),
       (window.prismInitialized = !0)),
     o.addEventListener("input", () => {
       window.immediatePlainRender(), window.scheduleUpdate();
