@@ -61,6 +61,9 @@ languageNames
 
 class CompletePrismLanguageLoader {
   constructor() {
+    this.extensionMap = extensionMap;
+    this.dependencies = dependencies;
+    this.languageNames = languageNames;  
     this.loadedLanguages = new Set(["markup", "css", "clike", "javascript"]);
     this.loadingLanguages = new Set();
     this.loadPromises = new Map();
