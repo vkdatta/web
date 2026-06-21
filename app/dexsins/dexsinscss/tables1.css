@@ -1,23 +1,20 @@
 .table-wrapper {
-  overflow: auto;
+  overflow-x: auto;
   border-radius: 10px;
   display: block;
+  max-width: 100%;
   -webkit-overflow-scrolling: touch;
 }
 .table-wrapper::-webkit-scrollbar {
-  width: 120px;
-  height: 120px;
+  height: 8px;
 }
-
 .table-wrapper::-webkit-scrollbar-thumb {
   background-color: #909090;
   border-radius: 9999px;
 }
-
 .table-wrapper::-webkit-scrollbar-track {
   background: transparent;
 }
-
 .table-wrapper {
   scrollbar-width: thin;
   scrollbar-color: #909090 transparent;
@@ -26,8 +23,9 @@
 .post-body table {
   border-collapse: collapse;
   font-size: 80%;
-  width: auto;
-  white-space: nowrap;
+  width: 100%;
+  table-layout: fixed;
+  white-space: normal;
 }
 
 .post-body thead tr,
@@ -49,8 +47,9 @@
   padding: 10px;
   text-align: left;
   outline: none;
-  white-space: nowrap;
-  min-width: 30px;
+  white-space: normal;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
   word-break: normal;
   border: 2px solid #000;
   border-radius: 10px;
