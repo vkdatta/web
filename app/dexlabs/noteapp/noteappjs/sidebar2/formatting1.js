@@ -25,9 +25,9 @@ window.handleFormat = function (t) {
       header: `<div class="modal-title">${
         t[0].toUpperCase() + t.slice(1)
       } Text</div>`,
-      body: ` <label class="modal-label">Choose Format</label> <div class="custom-dropdown"> <div id="formatType" class="custom-dropdown-trigger modal-input" data-options='${JSON.stringify(
+      body: `<div style="display:flex;flex-direction:column;gap:10px;"><div><label class="modal-label">Choose Format</label><div class="custom-dropdown"><div id="formatType" class="custom-dropdown-trigger modal-input" data-options='${JSON.stringify(
         optionsArray
-      )}'>Select option</div> </div> `,
+      )}'>Select option</div></div></div></div>`,
       footer: ` <button onclick="closeModal()">Cancel</button> <button onclick="handleFormatSubmit('${t}')" class="modal-btn">OK</button> `
     });
     if (!result || result.action !== "OK") return;
@@ -76,9 +76,9 @@ window.handleBulletList = function () {
     ];
     const result = await showModal({
       header: `<div class="modal-title">Bullet List</div>`,
-      body: ` <label class="modal-label">Choose Format</label> <div class="custom-dropdown"> <div id="listFormat" class="custom-dropdown-trigger modal-input" data-options='${JSON.stringify(
+      body: `<div style="display:flex;flex-direction:column;gap:10px;"><div><label class="modal-label">Choose Format</label><div class="custom-dropdown"><div id="listFormat" class="custom-dropdown-trigger modal-input" data-options='${JSON.stringify(
         optionsArray
-      )}'>Select option</div> </div> `,
+      )}'>Select option</div></div></div></div>`,
       footer: ` <button onclick="closeModal()">Cancel</button> <button onclick="handleListSubmit('bullet')" class="modal-btn">OK</button> `
     });
     if (!result || result.action !== "OK") return;
@@ -117,9 +117,9 @@ window.handleNumberedList = function () {
     ];
     const result = await showModal({
       header: `<div class="modal-title">Numbered List</div>`,
-      body: ` <label class="modal-label">Choose Format</label> <div class="custom-dropdown"> <div id="listFormat" class="custom-dropdown-trigger modal-input" data-options='${JSON.stringify(
+      body: `<div style="display:flex;flex-direction:column;gap:10px;"><div><label class="modal-label">Choose Format</label><div class="custom-dropdown"><div id="listFormat" class="custom-dropdown-trigger modal-input" data-options='${JSON.stringify(
         optionsArray
-      )}'>Select option</div> </div> `,
+      )}'>Select option</div></div></div></div>`,
       footer: ` <button onclick="closeModal()">Cancel</button> <button onclick="handleListSubmit('numbered')" class="modal-btn">OK</button> `
     });
     if (!result || result.action !== "OK") return;
