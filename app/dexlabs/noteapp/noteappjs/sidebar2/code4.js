@@ -1357,9 +1357,7 @@ window.__latexToUnicode = function (input) {
     while (i < len) {
       const c = src[i];
 
-      // % : only treat as a LaTeX comment if it looks like real comment usage
-      // (preceded by whitespace/start-of-line/brace, NOT glued to a number like "6.0%").
-      // Otherwise treat as a literal percent sign.
+      // % : only treat as a LaTeX comment if it's NOT glued to a number (e.g. "6.0%").
       if (c === "%") {
         const prev = i > 0 ? src[i - 1] : "\n";
         const isLiteralPercent = /[0-9]/.test(prev);
@@ -1368,13 +1366,11 @@ window.__latexToUnicode = function (input) {
           i++;
           continue;
         }
-        // real comment: skip to end of line
         while (i < len && src[i] !== "\n") i++;
         continue;
       }
 
-      // $ : only treat as a math-mode delimiter if NOT immediately followed by a digit
-      // (so "$10M", "$200,000" stay literal currency signs).
+      // $ : only treat as a math-mode delimiter if NOT immediately followed by a digit.
       if (c === "$") {
         if (/[0-9]/.test(src[i + 1] || "")) {
           toks.push({ type: "char", value: "$" });
@@ -1387,7 +1383,10 @@ window.__latexToUnicode = function (input) {
 
       if (c === "\\") {
         if (src[i + 1] === "\\") { toks.push({ type: "linebreak" }); i += 2; continue; }
-        const m = /^\\([a-zA-Z]+)\s*/.exec(src.slice(i));
+        // FIX: do NOT swallow trailing whitespace after the command name.
+        // Previously /^\\([a-zA-Z]+)\s*/ ate the space following e.g. "\times ",
+        // which collapsed rendered symbols against the next token ("×0.940" instead of "× 0.940").
+        const m = /^\\([a-zA-Z]+)/.exec(src.slice(i));
         if (m) { toks.push({ type: "command", name: m[1] }); i += m[0].length; continue; }
         const ch = src[i + 1];
         if (ch !== undefined) { toks.push({ type: "char", value: ch }); i += 2; continue; }
@@ -1485,6 +1484,7 @@ window.__latexToUnicode = function (input) {
           continue;
         }
         if (t.type === "amp") {
+          // Inside a real environment, "&" IS a column separator — consume it here.
           advance();
           rows[rowIdx].push([]);
           cellIdx++;
@@ -1533,7 +1533,10 @@ window.__latexToUnicode = function (input) {
       if (t.type === "command") return parseCommand(t.name);
       if (t.type === "char") return { kind: "text", value: t.value };
       if (t.type === "linebreak") return { kind: "text", value: "\n" };
-      if (t.type === "amp") return { kind: "text", value: "\t" };
+      // FIX: a stray "&" reaching here means we're NOT inside an environment
+      // (environments consume their own "&" tokens in parseEnvironment above).
+      // So this is just a literal ampersand in prose, e.g. "Net P&L" — not a tab/column break.
+      if (t.type === "amp") return { kind: "text", value: "&" };
       return { kind: "group", children: [] };
     }
 
