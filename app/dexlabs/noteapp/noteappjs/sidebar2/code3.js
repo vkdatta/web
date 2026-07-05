@@ -1346,29 +1346,49 @@ window.__latexToUnicode = function (input) {
       if (map[ch]) out += map[ch];
       else { ok = false; break; }
     }
-    return ok ? out : null; // null => can't render as true superscript/subscript chars
+    return ok ? out : null;
   }
 
   // ---------- Tokenizer ----------
-  // Produces a flat list of tokens: {type:'command', name} | {type:'char', value} |
-  // {type:'brace_open'} | {type:'brace_close'} | {type:'sup'} | {type:'sub'} |
-  // {type:'bracket_open'} | {type:'bracket_close'} (only meaningful right after \sqrt etc, handled contextually)
   function tokenize(src) {
     const toks = [];
     let i = 0;
     const len = src.length;
     while (i < len) {
       const c = src[i];
-      if (c === "%") { // comment to end of line
+
+      // % : only treat as a LaTeX comment if it looks like real comment usage
+      // (preceded by whitespace/start-of-line/brace, NOT glued to a number like "6.0%").
+      // Otherwise treat as a literal percent sign.
+      if (c === "%") {
+        const prev = i > 0 ? src[i - 1] : "\n";
+        const isLiteralPercent = /[0-9]/.test(prev);
+        if (isLiteralPercent) {
+          toks.push({ type: "char", value: "%" });
+          i++;
+          continue;
+        }
+        // real comment: skip to end of line
         while (i < len && src[i] !== "\n") i++;
         continue;
       }
+
+      // $ : only treat as a math-mode delimiter if NOT immediately followed by a digit
+      // (so "$10M", "$200,000" stay literal currency signs).
+      if (c === "$") {
+        if (/[0-9]/.test(src[i + 1] || "")) {
+          toks.push({ type: "char", value: "$" });
+          i++;
+          continue;
+        }
+        i++; // drop as math delimiter
+        continue;
+      }
+
       if (c === "\\") {
-        // \\ (line break) or \command or \{ \} \$ \% etc (escaped literal)
         if (src[i + 1] === "\\") { toks.push({ type: "linebreak" }); i += 2; continue; }
         const m = /^\\([a-zA-Z]+)\s*/.exec(src.slice(i));
         if (m) { toks.push({ type: "command", name: m[1] }); i += m[0].length; continue; }
-        // escaped single char e.g. \{ \} \$ \& \%
         const ch = src[i + 1];
         if (ch !== undefined) { toks.push({ type: "char", value: ch }); i += 2; continue; }
         i++;
@@ -1380,7 +1400,6 @@ window.__latexToUnicode = function (input) {
       if (c === "]") { toks.push({ type: "bracket_close" }); i++; continue; }
       if (c === "^") { toks.push({ type: "sup" }); i++; continue; }
       if (c === "_") { toks.push({ type: "sub" }); i++; continue; }
-      if (c === "$") { i++; continue; } // drop math delimiters
       if (c === "&") { toks.push({ type: "amp" }); i++; continue; }
       if (c === "\n") { toks.push({ type: "char", value: "\n" }); i++; continue; }
       toks.push({ type: "char", value: c });
@@ -1390,8 +1409,6 @@ window.__latexToUnicode = function (input) {
   }
 
   // ---------- Parser: builds AST ----------
-  // Node kinds: 'group'(children), 'text'(string), 'command'(name,args[]), 'script'(base,sup,sub),
-  // 'env'(name, rows[][cells AST[]])
   function parse(tokens) {
     let pos = 0;
     function peek() { return tokens[pos]; }
@@ -1408,7 +1425,6 @@ window.__latexToUnicode = function (input) {
     }
 
     function parseBracedGroup() {
-      // assumes current token is brace_open
       advance();
       const nodes = parseGroupContents(["brace_close"]);
       if (peek() && peek().type === "brace_close") advance();
@@ -1416,7 +1432,7 @@ window.__latexToUnicode = function (input) {
     }
 
     function parseBracketGroup() {
-      advance(); // [
+      advance();
       const nodes = parseGroupContents(["bracket_close"]);
       if (peek() && peek().type === "bracket_close") advance();
       return { kind: "group", children: nodes };
@@ -1426,7 +1442,6 @@ window.__latexToUnicode = function (input) {
       const t = peek();
       if (!t) return { kind: "group", children: [] };
       if (t.type === "brace_open") return parseBracedGroup();
-      // single token argument, e.g. \sqrt2 or x^2
       if (t.type === "command") { advance(); return parseCommand(t.name); }
       if (t.type === "char") { advance(); return { kind: "text", value: t.value }; }
       return { kind: "group", children: [] };
@@ -1437,11 +1452,10 @@ window.__latexToUnicode = function (input) {
       const two = new Set(["frac","binom","dfrac","tfrac"]);
       if (two.has(name)) return 2;
       if (zero.has(name)) return 0;
-      return null; // 0 or 1 depending on braces present, handled specially
+      return null;
     }
 
     function parseEnvironment() {
-      // after \begin, expect {name}
       let name = "";
       if (peek() && peek().type === "brace_open") {
         advance();
@@ -1451,7 +1465,7 @@ window.__latexToUnicode = function (input) {
         }
         if (peek() && peek().type === "brace_close") advance();
       }
-      const rows = [[[]]]; // rows -> cells -> nodes
+      const rows = [[[]]];
       let rowIdx = 0, cellIdx = 0;
       while (pos < tokens.length) {
         const t = peek();
@@ -1484,9 +1498,8 @@ window.__latexToUnicode = function (input) {
     function parseCommand(name) {
       if (name === "begin") return parseEnvironment();
       if (name === "left" || name === "right") {
-        // consume the following delimiter token (char or command like \{ )
         if (peek() && (peek().type === "char" || peek().type === "command")) advance();
-        return { kind: "group", children: [] }; // invisible; spacing handled by renderer
+        return { kind: "group", children: [] };
       }
       const argc = commandArgCount(name);
       if (argc === 2) {
@@ -1509,9 +1522,8 @@ window.__latexToUnicode = function (input) {
         return { kind: "command", name, args: [arg] };
       }
       if (["sum","prod","int","oint","lim","max","min","log","ln","sin","cos","tan","exp"].includes(name)) {
-        return { kind: "command", name, args: [] }; // sub/sup handled by parseAtomWithScripts
+        return { kind: "command", name, args: [] };
       }
-      // generic: no known args -> treat as symbol/greek/zero-arg
       return { kind: "command", name, args: [] };
     }
 
@@ -1614,7 +1626,7 @@ window.__latexToUnicode = function (input) {
       case "tan": return "tan";
       case "exp": return "exp";
       default:
-        return name; // unknown macro: fall back to its name, no backslash
+        return name;
     }
   }
 
