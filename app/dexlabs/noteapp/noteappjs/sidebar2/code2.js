@@ -137,7 +137,7 @@ window.openFetchModal = function () {
     const r = await showModal({
       header: '<div class="modal-title">Fetch Website Source</div>',
       body:
-        '<div style="display:flex;flex-direction:column;gap:8px;"><label class="modal-label">URL</label><input type="text" id="fetchUrlInput" placeholder="https://example.com" class="modal-input" /></div>',
+        '<div style="display:flex;flex-direction:column;gap:8px;"><div><label class="modal-label">URL</label><input type="text" id="fetchUrlInput" placeholder="https://example.com" class="modal-input" /></div></div>',
       footer: '<button onclick="closeModal()">Cancel</button><button onclick="handleFetchSubmit()" class="modal-btn">Fetch</button>',
       html: true
     });
