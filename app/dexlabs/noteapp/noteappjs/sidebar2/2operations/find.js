@@ -1,4 +1,4 @@
-function openfindbackdrop() {
+export function openfindbackdrop() {
     function normalizeNewlines(s) {
         if (!s) return "";
         s = s.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
@@ -167,10 +167,12 @@ function openfindbackdrop() {
         };
     }
 }
-    
 
-
-window.findandreplace = (function () {
+// Factory that builds and wires up the find/replace feature.
+// Calling this performs the same setup the original IIFE did immediately
+// on load, and returns the toggle function (previously assigned straight
+// to window.findandreplace).
+export function createFindAndReplace() {
   let isOpen = false;
   const state = {
     matches: [],
@@ -305,43 +307,43 @@ window.findandreplace = (function () {
     renderMatches();
   }
 
-function renderMatches() {
-  const els = getElements();
-  if (!els.backdrop || !els.textarea) return;
-  const rawText = els.textarea.value || "";
-  const normalizedForCheck = rawText.replace(/\r\n/g, "\n").replace(/\r/g, "\n").replace(/\u2028|\u2029/g, "\n");
-  let html = "";
-  let cursor = 0;
-  if (els.matchCount) {
-    const total = state.matches.length;
-    const currentDisplay = state.currentIndex >= 0 ? state.currentIndex + 1 : 0;
-    els.matchCount.textContent = `${currentDisplay}/${total}`;
-  }
-  if (els.replaceCount) {
-    const total = state.matches.length;
-    const currentDisplay = state.currentIndex >= 0 ? state.currentIndex + 1 : 0;
-    els.replaceCount.textContent = `${currentDisplay}/${total}`;
-  }
-  state.matches.forEach((m, idx) => {
-    html += escapeHtml(rawText.substring(cursor, m.start));
-    const spanClass = idx === state.currentIndex ? "hl-match hl-current" : "hl-match";
-    html += `<span class="${spanClass}">${escapeHtml(m.text)}</span>`;
-    cursor = m.end;
-  });
-  html += escapeHtml(rawText.substring(cursor));
-  if (normalizedForCheck.endsWith("\n")) {
-    html += "&#8203;";
-  }
-  try {
-    els.backdrop.innerHTML = html;
-  } catch (e) {
+  function renderMatches() {
+    const els = getElements();
+    if (!els.backdrop || !els.textarea) return;
+    const rawText = els.textarea.value || "";
+    const normalizedForCheck = rawText.replace(/\r\n/g, "\n").replace(/\r/g, "\n").replace(/\u2028|\u2029/g, "\n");
+    let html = "";
+    let cursor = 0;
+    if (els.matchCount) {
+      const total = state.matches.length;
+      const currentDisplay = state.currentIndex >= 0 ? state.currentIndex + 1 : 0;
+      els.matchCount.textContent = `${currentDisplay}/${total}`;
+    }
+    if (els.replaceCount) {
+      const total = state.matches.length;
+      const currentDisplay = state.currentIndex >= 0 ? state.currentIndex + 1 : 0;
+      els.replaceCount.textContent = `${currentDisplay}/${total}`;
+    }
+    state.matches.forEach((m, idx) => {
+      html += escapeHtml(rawText.substring(cursor, m.start));
+      const spanClass = idx === state.currentIndex ? "hl-match hl-current" : "hl-match";
+      html += `<span class="${spanClass}">${escapeHtml(m.text)}</span>`;
+      cursor = m.end;
+    });
+    html += escapeHtml(rawText.substring(cursor));
+    if (normalizedForCheck.endsWith("\n")) {
+      html += "&#8203;";
+    }
     try {
-      els.backdrop.textContent = html;
-    } catch (e2) {}
+      els.backdrop.innerHTML = html;
+    } catch (e) {
+      try {
+        els.backdrop.textContent = html;
+      } catch (e2) {}
+    }
+    syncBackdropStyles();
+    updateCaretColor();
   }
-  syncBackdropStyles();
-  updateCaretColor();
-}
 
   function focusCurrentMatch() {
     if (state.currentIndex < 0 || !state.matches.length) return;
@@ -703,7 +705,7 @@ function renderMatches() {
     els.menu.classList.toggle("find-replace-on-top", isOpen);
 
     if (isOpen) {
-openfindbackdrop();
+      openfindbackdrop();
       document
         .querySelectorAll(".sidebar, .secondary-sidebar, .topbar")
         .forEach((el) => (el.style.display = "none"));
@@ -756,4 +758,4 @@ openfindbackdrop();
       console.debug("[find] closed");
     }
   };
-})();
+}
