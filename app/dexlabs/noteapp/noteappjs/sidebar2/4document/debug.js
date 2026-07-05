@@ -32,15 +32,15 @@ export function createDebugTool() {
     .debuginfo { color:#A1F39E; }
     .debugwarn { color:#fbbc04; }
     .debugerror { color:#f28b82; }
-    .netentry { display:flex; gap:10px; padding:4px 0; border-bottom:1px solid #151515; align-items:baseline; }
-    .netmethod { color:#c58af9; width:42px; flex-shrink:0; }
-    .netstatus { width:34px; flex-shrink:0; }
+    .netentry { display:flex; flex-wrap:wrap; column-gap:8px; row-gap:2px; padding:6px 0; border-bottom:1px solid #151515; align-items:center; font-size:11.5px; }
+    .netmethod { color:#c58af9; flex-shrink:0; order:1; }
+    .netstatus { flex-shrink:0; order:2; }
     .netstatus.ok { color:#A1F39E; }
     .netstatus.bad { color:#f28b82; }
     .netstatus.na { color:#666; }
-    .nettype { color:#fbbc04; width:64px; flex-shrink:0; }
-    .neturl { flex:1; color:#e0e0e0; overflow-wrap:anywhere; }
-    .netmeta { color:#777; flex-shrink:0; white-space:nowrap; }
+    .nettype { color:#fbbc04; flex-shrink:0; order:3; }
+    .neturl { order:5; flex:1 1 100%; width:100%; color:#e0e0e0; overflow-wrap:anywhere; margin-top:2px; }
+    .netmeta { color:#777; flex-shrink:0; order:4; white-space:nowrap; margin-left:auto; }
     #debugfooter { padding:8px 12px; border-top:1px solid #222; background:linear-gradient(180deg, rgba(0,0,0,0.02), transparent); font-size:12px; color:#999; display:flex; justify-content:space-between; align-items:center; }
     #debugactions button { background:none; border:1px solid #444; color:#fff; padding:4px 8px; cursor:pointer; font-size:12px; }
   `;
@@ -172,8 +172,8 @@ export function createDebugTool() {
       <span class="netmethod">${entry.method}</span>
       <span class="netstatus ${statusClass}">${entry.status}</span>
       <span class="nettype">${entry.initiatorType}</span>
-      <span class="neturl">${entry.url}</span>
       <span class="netmeta">${Math.round(entry.duration)}ms · ${formatBytes(entry.transferSize)}</span>
+      <span class="neturl">${entry.url}</span>
     `;
     netPanel.appendChild(line);
     if (scroll) netPanel.scrollTop = netPanel.scrollHeight;
