@@ -2,7 +2,7 @@ import {
 extensionMap,
 dependencies,
 languageNames
-} from 'https://cdn.jsdelivr.net/gh/vkdatta/web@main/app/dexlabs/noteapp/noteappjs/languagemap.js';
+} from './languagemap.js';
 
 (() => {
     async function forceSyntaxHighlightUpdate() {
