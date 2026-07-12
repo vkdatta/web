@@ -1,4 +1,4 @@
-// ===================== HTML Tools (Remove / Escape / Unescape) =====================
+// ===================== HTML Tools (Remove / Escape / Unescape / Text→Table) =====================
 
 export function htmlToPlainText(html) {
   if (!html) return "";
@@ -214,11 +214,124 @@ export function unescapeHtmlText(text) {
     .replace(/&amp;/g, "&");
 }
 
+// ---- Text To HTML Table ----
+
+export function textToHtmlTable(text, { hasHeader, separator }) {
+  if (!text) return "";
+  const lines = text.replace(/\r\n?/g, "\n").split("\n").filter((line) => line.length > 0);
+  if (lines.length === 0) return "";
+
+  let headerLine = null;
+  let bodyLines = lines;
+  if (hasHeader) {
+    headerLine = lines[0];
+    bodyLines = lines.slice(1);
+  }
+
+  function splitRow(line) {
+    return line.split(separator).map((cell) => cell.trim());
+  }
+
+  function buildRow(line, cellTag) {
+    const cells = splitRow(line);
+    const cellsHtml = cells.map((cell) => `<${cellTag}>${escapeHtmlText(cell)}</${cellTag}>`).join("");
+    return `<tr>${cellsHtml}</tr>`;
+  }
+
+  let thead = "";
+  if (headerLine !== null) {
+    thead = `<thead>${buildRow(headerLine, "th")}</thead>`;
+  }
+
+  const tbody = `<tbody>${bodyLines.map((line) => buildRow(line, "td")).join("")}</tbody>`;
+
+  return `<div style="overflow-x:auto;"><table border="1">${thead}${tbody}</table></div>`;
+}
+
+async function showTextToTableOptionsModal() {
+  const r = await showModal({
+    header: `<div class="modal-title">Text To HTML Table</div>`,
+    body: `
+      <div style="display:flex;flex-direction:column;gap:14px;">
+        <div>
+          <label class="modal-label">Does the table have headers?</label>
+          <div style="display:flex;gap:16px;margin-top:6px;">
+            <label><input type="radio" name="ttt_hasHeader" value="yes" checked> Yes</label>
+            <label><input type="radio" name="ttt_hasHeader" value="no"> No</label>
+          </div>
+        </div>
+        <div>
+          <label class="modal-label">Separator</label>
+          <div style="display:flex;flex-direction:column;gap:6px;margin-top:6px;">
+            <label><input type="radio" name="ttt_separator" value="comma" checked onchange="toggleTTTOtherSeparator(false)"> Comma</label>
+            <label><input type="radio" name="ttt_separator" value="pipe" onchange="toggleTTTOtherSeparator(false)"> Pipe</label>
+            <label><input type="radio" name="ttt_separator" value="tab" onchange="toggleTTTOtherSeparator(false)"> Tab</label>
+            <label><input type="radio" name="ttt_separator" value="space" onchange="toggleTTTOtherSeparator(false)"> Space</label>
+            <label style="display:flex;align-items:center;gap:6px;">
+              <input type="radio" name="ttt_separator" value="other" onchange="toggleTTTOtherSeparator(true)"> Other
+              <input type="text" id="ttt_customSeparator" maxlength="1" placeholder="char" style="display:none;width:40px;" oninput="this.value=this.value.slice(0,1)">
+            </label>
+          </div>
+        </div>
+      </div>
+    `,
+    footer: `<button onclick="closeModal()">Cancel</button><button onclick="handleTextToTableOptionsSubmit()">Convert</button>`,
+    html: true
+  });
+  if (!r || r.action !== "submit") return null;
+  return { hasHeader: r.hasHeader === "yes", separator: r.separator };
+}
+
+export function toggleTTTOtherSeparator(show) {
+  const el = document.getElementById("ttt_customSeparator");
+  if (el) el.style.display = show ? "inline-block" : "none";
+}
+
+export function handleTextToTableOptionsSubmit() {
+  const hasHeaderEl = document.querySelector('input[name="ttt_hasHeader"]:checked');
+  const separatorEl = document.querySelector('input[name="ttt_separator"]:checked');
+  if (!hasHeaderEl || !separatorEl) return showNotification("Please select all options!");
+
+  const hasHeader = hasHeaderEl.value;
+  const separatorChoice = separatorEl.value;
+  let separator;
+
+  switch (separatorChoice) {
+    case "comma":
+      separator = ",";
+      break;
+    case "pipe":
+      separator = "|";
+      break;
+    case "tab":
+      separator = "\t";
+      break;
+    case "space":
+      separator = " ";
+      break;
+    case "other": {
+      const customEl = document.getElementById("ttt_customSeparator");
+      const customVal = customEl ? customEl.value : "";
+      if (!customVal || customVal.length !== 1) {
+        return showNotification("Please enter a single character separator!");
+      }
+      separator = customVal;
+      break;
+    }
+    default:
+      return showNotification("Please select a separator!");
+  }
+
+  closeModal({ action: "submit", hasHeader, separator });
+}
+
+// ---- Main HTML Tools entry ----
+
 export async function handleHTML() {
   if (!currentNote || !noteTextarea) return;
   const r = await showModal({
     header: `<div class="modal-title">HTML Tools</div>`,
-    body: `<div style="display:flex;flex-direction:column;gap:10px;"><div><label class="modal-label">Choose Action</label><div class="custom-dropdown"><div id="htmlAction" class="custom-dropdown-trigger modal-input" data-options='[{"label":"Select Action","value":""},{"label":"Remove HTML","value":"remove_html"},{"label":"Escape HTML","value":"escape_html"},{"label":"Unescape HTML","value":"unescape_html"}]' data-value="">Select Action</div></div></div></div>`,
+    body: `<div style="display:flex;flex-direction:column;gap:10px;"><div><label class="modal-label">Choose Action</label><div class="custom-dropdown"><div id="htmlAction" class="custom-dropdown-trigger modal-input" data-options='[{"label":"Select Action","value":""},{"label":"Remove HTML","value":"remove_html"},{"label":"Escape HTML","value":"escape_html"},{"label":"Unescape HTML","value":"unescape_html"},{"label":"Text To HTML Table","value":"text_to_table"}]' data-value="">Select Action</div></div></div></div>`,
     footer: `<button onclick="closeModal()">Cancel</button><button onclick="handleHTMLSubmit()">Apply</button>`,
     html: true
   });
@@ -238,6 +351,18 @@ export async function handleHTML() {
     text = escapeHtmlText(text);
   } else if (htmlAction === "unescape_html") {
     text = unescapeHtmlText(text);
+  } else if (htmlAction === "text_to_table") {
+    const params = await showTextToTableOptionsModal();
+    if (!params) return;
+    try {
+      text = textToHtmlTable(text, params);
+    } catch (err) {
+      console.error("TextToHTMLTable error:", err);
+      showNotification("Text To HTML Table failed: " + (err && err.message ? err.message : String(err)));
+      return;
+    }
+  } else {
+    return;
   }
 
   noteTextarea.value = text;
