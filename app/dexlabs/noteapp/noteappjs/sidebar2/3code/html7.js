@@ -269,7 +269,7 @@ async function showTextToTableOptionsModal() {
             <label><input type="radio" name="ttt_separator" value="space" onchange="toggleTTTOtherSeparator(false)"> Space</label>
             <label style="display:flex;flex-direction:column;gap:6px;align-items:flex-start;">
               <span><input type="radio" name="ttt_separator" value="other" onchange="toggleTTTOtherSeparator(true)"> Other</span>
-              <input type="text" id="ttt_customSeparator" maxlength="1" placeholder="char" style="display:none;width:60px;margin-left:22px;" oninput="this.value=this.value.slice(0,1)" data-skip-validation>
+              <input type="text" id="ttt_customSeparator" maxlength="1" placeholder="char" style="display:none" oninput="this.value=this.value.slice(0,1)" data-skip-validation>
             </label>
           </div>
         </div>
