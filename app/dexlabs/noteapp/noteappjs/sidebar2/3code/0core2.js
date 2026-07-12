@@ -1,7 +1,7 @@
 import { MD5 } from "./md5.js";
 import { SHA256 } from "./sha256.js";
 import { cipher } from "./cipher.js";
-import { handleHTML, handleHTMLSubmit, toggleTTTOtherSeparator, handleTextToTableOptionsSubmit } from "./html.js";
+import { handleHTML, handleHTMLSubmit, toggleTTTOtherSeparator, handleTextToTableOptionsSubmit } from "./html1.js";
 import { optimisecss, minifycss } from "./css.js";
 import { optimisejs, minifyjs } from "./js.js";
 import { handleLatex } from "./latex.js";
