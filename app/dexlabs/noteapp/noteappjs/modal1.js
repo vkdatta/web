@@ -44,7 +44,7 @@ function renderDropdownMenuPortal(trigger, options, callback) {
         opt.setAttribute("aria-selected", "true");
       }
       opt.textContent = lbl;
-      
+
       opt.addEventListener("click", () => {
         callback(o);
         closeMenu();
@@ -78,7 +78,7 @@ function renderDropdownMenuPortal(trigger, options, callback) {
 
   renderItems();
   updatePosition();
-  
+
   requestAnimationFrame(() => {
     menu.classList.add("active");
     trigger.setAttribute("aria-expanded", "true");
@@ -89,7 +89,7 @@ function renderDropdownMenuPortal(trigger, options, callback) {
   const closeMenu = () => {
     menu.classList.remove("active");
     trigger.setAttribute("aria-expanded", "false");
-    setTimeout(() => { if(menu.parentNode) menu.remove(); }, 230);
+    setTimeout(() => { if (menu.parentNode) menu.remove(); }, 230);
     document.removeEventListener("mousedown", closeOnOutside);
     window.removeEventListener("resize", updatePosition);
   };
@@ -113,6 +113,7 @@ function renderDropdownMenuPortal(trigger, options, callback) {
 let modalBackdrop = null;
 let modalResolver = null;
 let modalScope = {};
+let modalClearTimer = null; // tracks the pending "wipe backdrop" timeout so it can be cancelled
 
 function ensureModal() {
   if (modalBackdrop) return;
@@ -140,8 +141,17 @@ function closeModal(result = null) {
     modalResolver(result);
     modalResolver = null;
   }
-  setTimeout(() => {
-    if (modalBackdrop) modalBackdrop.innerHTML = "";
+
+  // Cancel any previously-scheduled clear so it can't fire after a new modal opens
+  if (modalClearTimer) {
+    clearTimeout(modalClearTimer);
+  }
+  modalClearTimer = setTimeout(() => {
+    // Only wipe if the backdrop is still inactive — i.e. nothing reopened it in the meantime
+    if (modalBackdrop && !modalBackdrop.classList.contains("active")) {
+      modalBackdrop.innerHTML = "";
+    }
+    modalClearTimer = null;
   }, 300);
 }
 
@@ -150,7 +160,7 @@ function applyModalStyles(element) {
   else if (element.tagName === "TEXTAREA") element.classList.add("modal-textarea");
   else if (element.tagName === "SELECT") element.classList.add("modal-select");
   else if (element.tagName === "BUTTON") element.classList.add("modal-btn");
-  
+
   element.querySelectorAll("input, textarea, select, button").forEach(child => {
     applyModalStyles(child);
   });
@@ -205,12 +215,20 @@ function collectFormValues(container) {
 
 window.showModal = function (options = {}) {
   ensureModal();
+
+  // A new modal is opening — cancel any stale clear-timer left over from a prior close,
+  // otherwise it can fire ~300ms later and wipe this modal's freshly-rendered content.
+  if (modalClearTimer) {
+    clearTimeout(modalClearTimer);
+    modalClearTimer = null;
+  }
+
   return new Promise((resolve) => {
     modalResolver = resolve;
     modalBackdrop.innerHTML = "";
     const modalWindow = document.createElement("div");
     modalWindow.className = "modal-window";
-    
+
     const headerDiv = document.createElement("div");
     headerDiv.className = "modal-header";
     if (options.header) {
@@ -272,7 +290,7 @@ window.createModalElement = function (type, opts = {}) {
   const out = { el: null, input: null };
   const wrapper = document.createElement("div");
   wrapper.className = "modal-element";
-  
+
   if (opts.label) {
     const lbl = document.createElement("label");
     lbl.className = "modal-label";
