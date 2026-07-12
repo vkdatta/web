@@ -272,6 +272,9 @@ window.showModal = function (options = {}) {
     });
 
     footerDiv.querySelectorAll("button").forEach((btn) => {
+      // If the button already declares its own onclick (e.g. onclick="handleXSubmit()"),
+      // don't also attach this generic listener — otherwise closeModal() fires twice per click.
+      if (btn.hasAttribute("onclick")) return;
       btn.addEventListener("click", () => {
         if (validateModalFields(bodyDiv)) {
           closeModal({ action: btn.textContent, values: collectFormValues(bodyDiv) });
@@ -281,6 +284,14 @@ window.showModal = function (options = {}) {
 
     modalWindow.append(headerDiv, bodyDiv, footerDiv);
     modalBackdrop.appendChild(modalWindow);
+
+    // Force a synchronous style flush BEFORE re-adding "active".
+    // Without this, closing modal #1 (removes "active") and opening modal #2
+    // (adds "active") can happen so close together that the browser coalesces
+    // them into one style recalculation, so any CSS transition/animation tied
+    // to the active-class toggle never visibly restarts for modal #2.
+    void modalBackdrop.offsetWidth;
+
     document.documentElement.style.overflow = "hidden";
     modalBackdrop.classList.add("active");
   });

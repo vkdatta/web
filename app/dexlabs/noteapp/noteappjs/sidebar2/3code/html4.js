@@ -1,4 +1,4 @@
-// ===================== HTML Tools (Remove / Escape / Unescape / Text→Table) =====================
+// ===================== HTML Tools (Remove / Escape / Unescape / Text-to-Table) =====================
 
 export function htmlToPlainText(html) {
   if (!html) return "";
@@ -144,7 +144,7 @@ export function htmlToPlainText(html) {
               p = p.parentElement;
             }
             const indent = "  ".repeat(Math.max(0, level - 1));
-            append(indent + "• ");
+            append(indent + "\u2022 ");
             for (let ch = node.firstChild; ch; ch = ch.nextSibling) walk(ch, depth + 1);
             ensureNewline(1);
           }
