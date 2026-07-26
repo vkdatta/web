@@ -62,10 +62,11 @@
       if (sel && excludeSelectors.indexOf(sel) === -1) excludeSelectors.push(sel);
     });
     persistExclude();
-    // Purge anything already saved that is now excluded, so it can't be
-    // restored on a later load.
-    saveNowDynamic();
-    saveNowStatic();
+    // NOTE: intentionally NOT saving here. Registering an exclusion must
+    // not write to storage on the spot — doing so during page load can
+    // overwrite good data with a not-yet-settled snapshot. Restore and
+    // every future save already skip excluded fields, so exclusion takes
+    // effect without a purge.
     return excludeSelectors.slice();
   }
 
