@@ -8,6 +8,13 @@
   const ID_PREFIX = 'webURLLINK';
   const SAVE_DELAY = 120;
 
+  const STATIC_SELECTOR = 'input:not([type=password]), textarea, select, button, [contenteditable]';
+
+  let DEBUG = false;
+  function dlog() {
+    if (DEBUG) { try { console.log.apply(console, ['[autosave]'].concat([].slice.call(arguments))); } catch (e) {} }
+  }
+
   function debounce(fn, wait) {
     let t;
     return function (...a) {
@@ -327,6 +334,7 @@
     loadExclude(); // read exclude list before saving anything
     const arr = snapshotStatic();
     writeStored(STATIC_KEY, arr);
+    dlog('saved', arr.length, 'fields', arr);
   }
 
   const saveDebouncedStatic = debounce(saveNowStatic, SAVE_DELAY);
@@ -352,19 +360,26 @@
     });
   }
 
+  // Delegated handler: works no matter when a field appears or gets
+  // re-rendered/moved by the page (e.g. Blogger), because it listens on
+  // document rather than on each element once at load.
+  function onStaticEvent(e) {
+    const t = e.target;
+    if (!t || t.nodeType !== 1) return;
+    const el = t.closest ? t.closest(STATIC_SELECTOR) : null;
+    if (!el) return;
+    ensureId(el);
+    dlog(e.type, '->', el.id || '(no id)');
+    saveDebouncedStatic();
+  }
+
   function observeStatic() {
-    const els = document.querySelectorAll('input:not([type=password]), textarea, select, button, [contenteditable]');
-    Array.from(els).forEach(el => {
-      ensureId(el);
-      if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable) {
-        el.addEventListener('input', saveDebouncedStatic);
-        el.addEventListener('change', saveDebouncedStatic);
-      } else if (el.tagName === 'SELECT') {
-        el.addEventListener('change', saveDebouncedStatic);
-      } else if (el.tagName === 'BUTTON') {
-        el.addEventListener('click', saveDebouncedStatic);
-      }
-    });
+    // Capture phase (true) so nothing can stop these from firing.
+    document.addEventListener('input', onStaticEvent, true);
+    document.addEventListener('change', onStaticEvent, true);
+    document.addEventListener('click', onStaticEvent, true);
+    // Assign ids to whatever is present right now.
+    document.querySelectorAll(STATIC_SELECTOR).forEach(ensureId);
   }
 
   function init() {
@@ -397,6 +412,7 @@
   window.dexsins.autosave.getExcludes = getExcludes; // current exclude list
   window.dexsins.autosave.clearExcludes = clearExcludes;
   window.dexsins.autosave.save = () => { saveNowDynamic(); saveNowStatic(); };
+  window.dexsins.autosave.debug = (on) => { DEBUG = (on !== false); dlog('debug', DEBUG ? 'on' : 'off'); return DEBUG; };
 
   window.__autosave_force_restore_generated = restoreDynamic;
   window.__autosave_force_restore_static = restoreStatic;
