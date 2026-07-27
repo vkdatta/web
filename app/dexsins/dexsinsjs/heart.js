@@ -1,6 +1,6 @@
 /*
 Heart by vkd
-Read: for usage
+Read https://dexsins.blogspot.com/p/heart-by-vkd.html for usage
 */
 (function() {
   'use strict';
