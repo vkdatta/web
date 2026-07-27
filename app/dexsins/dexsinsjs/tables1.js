@@ -76,8 +76,8 @@
 
     var actions = document.createElement('div');
     actions.className = 'table-actions';
-    var copyBtn = makeButton('copy', 'ph ph-copy', 'Copy');
-    var dlBtn = makeButton('download', 'ph ph-download-simple', 'Download');
+    var copyBtn = makeButton('copy', 'ph-fill ph-copy', 'Copy');
+    var dlBtn = makeButton('download', 'ph-fill ph-download-simple', 'Download');
     actions.appendChild(copyBtn);
     actions.appendChild(dlBtn);
 
@@ -98,10 +98,10 @@
       var csv = tableToCSV(table);
       if (navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText(csv)
-          .then(function () { flashIcon(copyBtn, 'ph ph-check'); })
-          .catch(function () { flashIcon(copyBtn, 'ph ph-x'); });
+          .then(function () { flashIcon(copyBtn, 'ph-fill ph-check'); })
+          .catch(function () { flashIcon(copyBtn, 'ph-fill ph-x'); });
       } else {
-        flashIcon(copyBtn, 'ph ph-x');
+        flashIcon(copyBtn, 'ph-fill ph-x');
       }
     });
 
