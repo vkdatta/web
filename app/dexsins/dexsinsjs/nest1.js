@@ -61,10 +61,17 @@ function flatten(node){
 Array.from(node.childNodes).forEach(child=>{
 const isHeading=child.nodeType===1&&/^H[1-6]$/.test(child.tagName);
 
+// Treat any imported widget (e.g. heart_by_vkd) as an atomic leaf: keep the
+// element and its attributes intact instead of descending into it and
+// discarding the wrapper. Without this, empty/self-contained widget
+// elements are destroyed when the post body is rebuilt below.
+const isImport=child.nodeType===1&&child.hasAttribute&&child.hasAttribute("data-import");
+
 if(
 child.nodeType===1 &&
 (child.tagName==="DIV"||child.tagName==="SPAN") &&
 !isHeading &&
+!isImport &&
 !child.className.includes("nested-section") &&
 !child.className.includes("separator")
 ){
