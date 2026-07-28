@@ -12,45 +12,60 @@
   s.textContent = css;
   document.head.appendChild(s);
   const MIN_TIME = 400;
-  const wrappedHandlers = new WeakMap();
 
-  // --- exclusion API: dexsins.loader.exclude(...) ---
-  const excludedSelectors = new Set();
+  // ---- exclusion API: dexsins.loader.exclude(...) ----
   let excludeAll = false;
+  const excludedSelectors = [];
+
   function normalizeExcludeSelector(sel) {
     if (typeof sel !== 'string') return null;
     sel = sel.trim();
     if (!sel) return null;
-    // bare word (no #, ., [ etc.) is treated as a data-action shorthand,
-    // e.g. exclude('save') === exclude('[data-action="save"]')
-    if (/^[a-zA-Z0-9_-]+$/.test(sel)) {
-      return '[data-action="' + sel.replace(/"/g, '\\"') + '"]';
+    // already a valid CSS selector form: #id, .class, [attr=...], tag, etc.
+    if (sel[0] === '#' || sel[0] === '.' || sel[0] === '[') return sel;
+    // data-action style shorthand, with or without a value:
+    //   data-action            -> [data-action]
+    //   data-action=submit     -> [data-action="submit"]
+    //   data-action="submit"   -> [data-action="submit"]
+    if (/^data-[\w-]+/i.test(sel)) {
+      const eqIndex = sel.indexOf('=');
+      if (eqIndex === -1) return `[${sel}]`;
+      const attr = sel.slice(0, eqIndex).trim();
+      const val = sel.slice(eqIndex + 1).trim().replace(/^['"]|['"]$/g, '');
+      return `[${attr}="${val}"]`;
     }
+    // fallback: pass through as-is (e.g. a raw tag or custom selector)
     return sel;
   }
-  function isLoaderExcluded(el) {
+
+  function isExcluded(el) {
     if (excludeAll) return true;
-    if (!excludedSelectors.size || !el || typeof el.closest !== 'function') return false;
+    if (!el || !excludedSelectors.length) return false;
     for (const sel of excludedSelectors) {
       try {
-        if (el.closest(sel)) return true;
-      } catch (e) { /* invalid selector, ignore */ }
+        if (el.closest && el.closest(sel)) return true;
+      } catch (e) {
+        // ignore invalid selector
+      }
     }
     return false;
   }
+
   window.dexsins = window.dexsins || {};
   window.dexsins.loader = window.dexsins.loader || {};
-  window.dexsins.loader.exclude = function(...selectors) {
+  window.dexsins.loader.exclude = function (...selectors) {
     if (!selectors.length) {
       excludeAll = true;
       return;
     }
-    selectors.forEach(function(sel) {
+    selectors.forEach((sel) => {
       const normalized = normalizeExcludeSelector(sel);
-      if (normalized) excludedSelectors.add(normalized);
+      if (normalized) excludedSelectors.push(normalized);
     });
   };
+  // ---- end exclusion API ----
 
+  const wrappedHandlers = new WeakMap();
   const origAddEventListener = EventTarget.prototype.addEventListener;
   EventTarget.prototype.addEventListener = function(type, handler, options){
     if (type === 'click' && typeof handler === 'function') {
@@ -174,7 +189,6 @@
     } catch(e) {}
   }
   function startLoading(button, options = {}) {
-    if (isLoaderExcluded(button)) return null;
     const {
       startTime = performance.now(),
       promise = null,
@@ -183,6 +197,7 @@
       elapsedSync = 0
     } = options;
     if (button.dataset.loading === 'true') return null;
+    if (isExcluded(button)) return null;
     const state = setupLoadingState(button);
     if (!state) return null;
     let forcedTimeoutId = null;
@@ -222,6 +237,7 @@
     const btn = evt.target.closest && evt.target.closest('.post-body button');
     if (!btn) return;
     if (btn.dataset.loading === 'true') return;
+    if (isExcluded(btn)) return;
     const start = performance.now();
     let captureDone = false;
     const onAfterSync = function(){
