@@ -179,19 +179,18 @@ body.item-view .Blog .post-title-container {
   box-sizing: border-box;
   display: block;
   width: 100%;
-  margin-top:48px;
+  margin-top:10px;
 }
 body.item-view .Blog .post-title,
-body.item-view .Blog .post-title a,
-.post-body{
+body.item-view .Blog .post-title a {
   background:#272727;
   border-radius:25px;
 }
 body.item-view .Blog .post-title-container * {
-  text-align: left !important;
+  text-align: center !important;
   letter-spacing: 2px;
   word-spacing: 5px;
-  font-size: 105%;
+  font-size: 115%;
 }
 .post-title,
 .post-title a {
