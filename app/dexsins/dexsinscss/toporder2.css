@@ -171,18 +171,6 @@ body.item-view .post-body-container img {
   height: auto;
   max-width: 100%;
 }
-/*
-.post-body .separator {
-  text-align: center !important;
-  clear: both !important;
-}
-.post-body .separator a,
-.post-body .separator img {
-  float: none !important;
-  display: block;
-  margin: 0 auto;
-}
-*/
 body.item-view .Blog .post-body-container {
   position: relative;
   margin-top: 0px;
@@ -194,10 +182,10 @@ body.item-view .Blog .post-title-container {
   margin-top:48px;
 }
 body.item-view .Blog .post-title-container * {
-  text-align: left !important;
-  letter-spacing: 2px;
+  text-align: center !important;
+  letter-spacing: 5px;
   word-spacing: 5px;
-  font-size: 105%;
+  font-size: 120%;
 }
 .post-title,
 .post-title a {
