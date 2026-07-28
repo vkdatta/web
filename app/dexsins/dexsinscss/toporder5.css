@@ -219,9 +219,3 @@ body.item-view .Blog .post-title, body.item-view .Blog .post-title a, .post-body
  padding: 15px;
 }
 }
-body.item-view .Blog .post-title,
-body.item-view .Blog .post-title a,
-{
-  background:#272727;
-  border-radius:25px;
-}
