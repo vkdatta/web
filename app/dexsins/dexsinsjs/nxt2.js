@@ -44,7 +44,7 @@ function injectStyles(){
     .ns-edge.is-on{ stroke:var(--ns-green); }
     .ns-dot{ fill:#0c0c0e; stroke:var(--ns-grey); stroke-width:2; }
     .ns-dot.is-on{ stroke:var(--ns-green); }
-    .ns-num{ fill:var(--ns-grey); font-family:'classy',system-ui,sans-serif; font-size:11px; text-anchor:middle; dominant-baseline:central; }
+    .ns-num{ fill:var(--ns-grey); font-family:'classy',system-ui,sans-serif; font-size:11px; text-anchor:middle; dominant-baseline:central; letter-spacing:0 !important; }
     .ns-num.is-on{ fill:var(--ns-green); }
 
     .nested-section{
@@ -101,6 +101,9 @@ function injectStyles(){
       -webkit-tap-highlight-color:transparent;
     }
     .ns-heading:focus-visible{ outline:2px solid rgba(255,255,255,0.25); outline-offset:3px; }
+    /* empty heading gets a non-breaking-space line-box so its height matches a
+       normal single-line heading (font-metric independent) */
+    .ns-heading.ns-empty::before{ content:"\\00a0"; }
 
     .ns-body{
       display:block;
@@ -392,13 +395,26 @@ function applyNestedSections(){
     const body = sec.querySelector(":scope > .ns-body");
     const heading = sec.querySelector(":scope > .ns-heading");
     if(!body || !heading) return;
+
+    // a heading with no text (e.g. <h1></h1>) needs a placeholder line-box so it
+    // renders at the same height as a normal single-line heading
+    if(!heading.textContent.trim()) heading.classList.add("ns-empty");
+
     const hasContent = Array.from(body.childNodes).some(function(n){
       if(n.nodeType === 3) return n.textContent.trim().length > 0;
       if(n.nodeType === 1){ const tg = n.tagName.toLowerCase(); return tg !== "br" && tg !== "hr"; }
       return false;
     }) || body.querySelector(":scope > .nested-section");
 
-    if(hasContent) heading.appendChild(makeToggle());
+    if(hasContent){
+      const btn = makeToggle();
+      heading.appendChild(btn);
+      // default state: collapsed at every level; user opens sections as needed
+      sec.classList.add("ns-collapsed");
+      btn.innerHTML = SVG_EYE_SLASH;
+      btn.setAttribute("aria-expanded", "false");
+      btn.setAttribute("aria-label", "Show section");
+    }
 
     heading.setAttribute("tabindex", "0");
     heading.setAttribute("role", "button");
