@@ -13,6 +13,44 @@
   document.head.appendChild(s);
   const MIN_TIME = 400;
   const wrappedHandlers = new WeakMap();
+
+  // --- exclusion API: dexsins.loader.exclude(...) ---
+  const excludedSelectors = new Set();
+  let excludeAll = false;
+  function normalizeExcludeSelector(sel) {
+    if (typeof sel !== 'string') return null;
+    sel = sel.trim();
+    if (!sel) return null;
+    // bare word (no #, ., [ etc.) is treated as a data-action shorthand,
+    // e.g. exclude('save') === exclude('[data-action="save"]')
+    if (/^[a-zA-Z0-9_-]+$/.test(sel)) {
+      return '[data-action="' + sel.replace(/"/g, '\\"') + '"]';
+    }
+    return sel;
+  }
+  function isLoaderExcluded(el) {
+    if (excludeAll) return true;
+    if (!excludedSelectors.size || !el || typeof el.closest !== 'function') return false;
+    for (const sel of excludedSelectors) {
+      try {
+        if (el.closest(sel)) return true;
+      } catch (e) { /* invalid selector, ignore */ }
+    }
+    return false;
+  }
+  window.dexsins = window.dexsins || {};
+  window.dexsins.loader = window.dexsins.loader || {};
+  window.dexsins.loader.exclude = function(...selectors) {
+    if (!selectors.length) {
+      excludeAll = true;
+      return;
+    }
+    selectors.forEach(function(sel) {
+      const normalized = normalizeExcludeSelector(sel);
+      if (normalized) excludedSelectors.add(normalized);
+    });
+  };
+
   const origAddEventListener = EventTarget.prototype.addEventListener;
   EventTarget.prototype.addEventListener = function(type, handler, options){
     if (type === 'click' && typeof handler === 'function') {
@@ -136,6 +174,7 @@
     } catch(e) {}
   }
   function startLoading(button, options = {}) {
+    if (isLoaderExcluded(button)) return null;
     const {
       startTime = performance.now(),
       promise = null,
