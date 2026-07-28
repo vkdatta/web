@@ -179,13 +179,13 @@ body.item-view .Blog .post-title-container {
   box-sizing: border-box;
   display: block;
   width: 100%;
-  margin-top:48px;
+  margin-top:10px;
 }
 body.item-view .Blog .post-title-container * {
   text-align: center !important;
   letter-spacing: 5px;
   word-spacing: 5px;
-  font-size: 120%;
+  font-size: 110%;
 }
 .post-title,
 .post-title a {
@@ -218,4 +218,10 @@ body.item-view .Blog .post-title-container, body.item-view .Blog .post-body-cont
 body.item-view .Blog .post-title, body.item-view .Blog .post-title a, .post-body {
  padding: 15px;
 }
+}
+body.item-view .Blog .post-title,
+body.item-view .Blog .post-title a,
+{
+  background:var(--matte3);
+  border-radius:25px;
 }
