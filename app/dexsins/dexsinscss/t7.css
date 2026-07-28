@@ -171,18 +171,6 @@ body.item-view .post-body-container img {
   height: auto;
   max-width: 100%;
 }
-/*
-.post-body .separator {
-  text-align: center !important;
-  clear: both !important;
-}
-.post-body .separator a,
-.post-body .separator img {
-  float: none !important;
-  display: block;
-  margin: 0 auto;
-}
-*/
 body.item-view .Blog .post-body-container {
   position: relative;
   margin-top: 0px;
@@ -196,7 +184,7 @@ body.item-view .Blog .post-title-container {
 body.item-view .Blog .post-title,
 body.item-view .Blog .post-title a,
 .post-body{
-  background:#171717;
+  background:#272727;
   border-radius:25px;
 }
 body.item-view .Blog .post-title-container * {
