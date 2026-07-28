@@ -5,7 +5,8 @@
 const SVGNS = "http://www.w3.org/2000/svg";
 const R = 11;              // node circle radius
 const BODY_INDENT = 14;    // px each level indents (creates the gutter for branches)
-const CIRCLE_GAP = 7;     // circle centre sits this far left of a card's edge
+const CIRCLE_GAP = 15;    // circle centre sits this far left of a card's edge
+                          // (>= R + clearance so the bubble's right edge clears the heading)
 
 /* Phosphor "regular" icons */
 const SVG_EYE='<svg viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M247.31,124.76c-.35-.79-8.82-19.58-27.65-38.41C194.57,61.26,162.88,48,128,48S61.43,61.26,36.34,86.35C17.51,105.18,9,124,8.69,124.76a8,8,0,0,0,0,6.5c.35.79,8.82,19.57,27.65,38.4C61.43,194.74,93.12,208,128,208s66.57-13.26,91.66-38.34c18.83-18.83,27.3-37.61,27.65-38.4A8,8,0,0,0,247.31,124.76ZM128,192c-30.78,0-57.67-11.19-79.93-33.25A133.16,133.16,0,0,1,25,128,133.16,133.16,0,0,1,48.07,97.25C70.33,75.19,97.22,64,128,64s57.67,11.19,79.93,33.25A133.16,133.16,0,0,1,231,128,133.16,133.16,0,0,1,207.93,158.75C185.67,180.81,158.78,192,128,192Zm0-112a48,48,0,1,0,48,48A48,48,0,0,0,128,80Zm0,80a32,32,0,1,1,32-32A32,32,0,0,1,128,160Z"></path></svg>';
@@ -23,9 +24,12 @@ function injectStyles(){
       --ns-grey:#171717;
       --ns-green:#474747;
       position:relative;
-      padding-left:40px;
       font-family:'classy',system-ui,-apple-system,sans-serif;
     }
+    /* the left gutter only exists to hold the tree; apply it only when there
+       are actually nested sections, otherwise a heading-less post gets an
+       unwanted gap on the left */
+    .post-body.ns-has-tree{ padding-left:40px; }
 
     /* the tree: one static svg, drawn ABOVE the cards so nothing covers it */
     .ns-tree{
@@ -72,6 +76,12 @@ function injectStyles(){
       position:relative;
       margin: 0 0 10px 0;
       padding:7px 14px;
+      /* 28px toggle button + 5px breathing room, so an empty <h1></h1>
+         still gives the hide/unhide button space to sit in */
+      min-height:33px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
       color:#fff;
       font-family:'dexy',sans-serif;
       font-size:15px;
@@ -119,7 +129,7 @@ function injectStyles(){
     .ns-toggle svg{ width:15px; height:15px; display:block; fill:currentColor; pointer-events:none; }
 
     @media (max-width:600px){
-      .post-body{ padding-left:22px; }
+      .post-body.ns-has-tree{ padding-left:22px; }
       .ns-body{ padding-left:20px; }
     }
   `;
@@ -127,7 +137,7 @@ function injectStyles(){
 }
 
 /* ---------- tree geometry ---------- */
-let activeIndex = 0;
+let activeTops = new Set([0]);   // indices of every top-level section currently "active"
 
 function el(name, attrs){
   const n = document.createElementNS(SVGNS, name);
@@ -239,7 +249,8 @@ function recolorTree(){
   const svg = post.querySelector(":scope > .ns-tree");
   if(!svg) return;
   svg.querySelectorAll("[data-top]").forEach(node => {
-    node.classList.toggle("is-on", node.getAttribute("data-top") === String(activeIndex));
+    const dt = parseInt(node.getAttribute("data-top"), 10);
+    node.classList.toggle("is-on", dt >= 0 && activeTops.has(dt));
   });
 }
 
@@ -256,7 +267,7 @@ function updateFocus(){
   if(!tops.length) return;
 
   if(tops.length === 1){
-    activeIndex = 0;
+    activeTops = new Set([0]);
     tops[0].classList.add("ns-active");
     tops[0].classList.remove("ns-dim");
     recolorTree();
@@ -264,18 +275,36 @@ function updateFocus(){
   }
 
   const vh = window.innerHeight || document.documentElement.clientHeight;
+
+  // A section stays ACTIVE unless more than 70% of the space it takes up is
+  // scrolled off-screen (i.e. dim only when < 30% of its own height is visible).
+  // This lets several sections be active at once when they share the screen,
+  // instead of anointing a single "most visible" winner.
+  const next = new Set();
   let best = 0, bestVisible = -1;
   tops.forEach(function(sec, i){
     const r = sec.getBoundingClientRect();
     const visible = Math.max(0, Math.min(r.bottom, vh) - Math.max(r.top, 0));
+    const height  = r.height || 1;
+    const selfFrac = visible / height;          // how much of the section is on screen
+    const viewFrac = vh > 0 ? visible / vh : 0;  // how much of the screen it fills
+
+    // active if >=30% of itself is visible, OR it dominates the viewport
+    // (guards a section taller than the screen from wrongly dimming while it fills it)
+    if(selfFrac >= 0.30 || viewFrac >= 0.60) next.add(i);
+
     if(visible > bestVisible){ bestVisible = visible; best = i; }
   });
-  activeIndex = best;
+
+  // never dim everything: if nothing cleared the bar, keep the most-visible one lit
+  if(next.size === 0) next.add(best);
 
   tops.forEach(function(sec, i){
-    if(i === best){ sec.classList.add("ns-active"); sec.classList.remove("ns-dim"); }
+    if(next.has(i)){ sec.classList.add("ns-active"); sec.classList.remove("ns-dim"); }
     else { sec.classList.remove("ns-active"); sec.classList.add("ns-dim"); }
   });
+
+  activeTops = next;
   recolorTree();
 }
 
@@ -390,6 +419,10 @@ function applyNestedSections(){
   post.innerHTML = "";
   post.appendChild(fragment);
   post.setAttribute("data-applied", "true");
+
+  // only reserve the left gutter when there is a tree to draw there
+  if(post.querySelector(":scope > .nested-section")) post.classList.add("ns-has-tree");
+  else post.classList.remove("ns-has-tree");
 
   buildTree();
   scheduleFocus();
