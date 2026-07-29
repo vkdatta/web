@@ -8,8 +8,10 @@
     return rows.map(function (row) {
       return Array.prototype.slice.call(row.querySelectorAll('th, td'))
         .map(function (cell) {
-          var text = cell.textContent.trim().replace(/\s+/g, ' ').replace(/"/g, '""');
-          if (/[",\n]/.test(text)) { text = '"' + text + '"'; }
+          var raw = cell.textContent.trim();
+          var needsQuotes = /[",\n]/.test(raw);
+          var text = raw.replace(/\s+/g, ' ').replace(/"/g, '""');
+          if (needsQuotes) { text = '"' + text + '"'; }
           return text;
         })
         .join(',');
@@ -62,7 +64,7 @@
     if (table.closest('.table-card')) { table.dataset.enhanced = 'true'; return null; }
 
     var name = (table.getAttribute('name') || '').trim() || DEFAULT_NAME;
-    var hasHead = !!table.querySelector('thead');
+    var hasHead = !!table.querySelector('thead, th');
 
     var card = document.createElement('div');
     card.className = 'table-card' + (hasHead ? '' : ' is-plain');
