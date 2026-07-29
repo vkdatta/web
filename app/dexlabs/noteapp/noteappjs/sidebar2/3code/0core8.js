@@ -3,7 +3,7 @@ import { SHA256 } from "./sha256.js";
 import { cipher } from "./cipher.js";
 import { handleHTML, handleHTMLSubmit, toggleTTTOtherSeparator, handleTextToTableOptionsSubmit } from "./html7.js";
 import { optimisecss, minifycss } from "./css.js";
-import { optimisejs, minifyjs } from "./js.js";
+import { optimisejs, minifyjs } from "./js-n.js";
 import { handleLatex } from "./latex.js";
 import { fetchUrlToCurrentNote, openFetchModal, handleFetchSubmit } from "./fetch.js";
 
