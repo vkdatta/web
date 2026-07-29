@@ -4,10 +4,7 @@
   border: 1px solid #494949;
   border-radius: 14px;
   overflow: hidden;
-}
-
-.table-card + .table-card {
-  margin-top: 20px;
+margin: 20px;
 }
 
 .table-bar {
