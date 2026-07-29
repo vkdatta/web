@@ -1,6 +1,3 @@
-// Builds the debug overlay UI, patches console/fetch/XHR to capture logs,
-// and returns the `debug()` function that used to be assigned directly to
-// window.debug. Returns null if it was already initialized.
 export function createDebugTool() {
   if (window.debuginitialized) return null;
   window.debuginitialized = true;
