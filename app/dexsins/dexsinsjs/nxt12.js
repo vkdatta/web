@@ -199,17 +199,25 @@ function applyNestedSections(){
   if(!post || post.getAttribute("data-applied")) return;
 
   const flatNodes = [];
+  // We only unwrap a <div>/<span> when we must dig into it to reach a heading.
+  // Any wrapper that does NOT contain a heading is kept whole, so everything it
+  // carries — inline styles, classes, align, backgrounds, borders, etc. — survives
+  // instead of being stripped by flattening. Non-div/span elements are always kept.
+  function containsHeading(elm){
+    return !!(elm.querySelector && elm.querySelector("h1,h2,h3,h4,h5,h6"));
+  }
   function flatten(node){
     Array.from(node.childNodes).forEach(function(child){
       const isHeading = child.nodeType === 1 && /^H[1-6]$/.test(child.tagName);
       const isImport = child.nodeType === 1 && child.hasAttribute && child.hasAttribute("data-import");
-      if(
+      const isWrapper =
         child.nodeType === 1 &&
         (child.tagName === "DIV" || child.tagName === "SPAN") &&
         !isHeading && !isImport &&
         !child.className.includes("nested-section") &&
-        !child.className.includes("separator")
-      ){ flatten(child); } else { flatNodes.push(child); }
+        !child.className.includes("separator");
+      if(isWrapper && containsHeading(child)){ flatten(child); }
+      else { flatNodes.push(child); }
     });
   }
   flatten(post);
