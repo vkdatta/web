@@ -201,8 +201,11 @@ export function createDebugTool() {
   try {
     const perfObserver = new PerformanceObserver((list) => {
       for (const e of list.getEntries()) {
+        // fetch and XHR are captured explicitly by the patches below, which
+        // report accurate method + status. Skip them here to avoid double-logging.
+        if (e.initiatorType === 'fetch' || e.initiatorType === 'xmlhttprequest') continue;
         recordNetwork({
-          method: e.initiatorType === 'xmlhttprequest' || e.initiatorType === 'fetch' ? 'REQ' : 'GET',
+          method: 'GET',
           status: typeof e.responseStatus === 'number' && e.responseStatus > 0 ? e.responseStatus : '—',
           initiatorType: e.initiatorType || 'other',
           url: e.name,
@@ -262,6 +265,24 @@ export function createDebugTool() {
   };
   window.addEventListener('error', onErrorHandler);
   window.addEventListener('unhandledrejection', onRejection);
+
+  // Resource load failures (link/img/script/etc.) fire an `error` event on the
+  // element itself and do NOT bubble to window, so the handler above misses them.
+  // Listening in the capture phase (third arg = true) is the only way to catch them.
+  const onResourceError = function (ev) {
+    try {
+      const el = ev.target;
+      if (!el || el === window || !el.tagName) return; // JS errors handled elsewhere
+      const tag = el.tagName.toUpperCase();
+      const resourceTags = { LINK: 'href', IMG: 'src', SCRIPT: 'src', SOURCE: 'src', AUDIO: 'src', VIDEO: 'src', TRACK: 'src' };
+      const attr = resourceTags[tag];
+      if (!attr) return;
+      const url = el[attr] || el.getAttribute(attr) || '(unknown)';
+      record('error', ['Resource failed to load <' + tag.toLowerCase() + '>:', url]);
+      recordNetwork({ method: 'GET', status: 'ERR', initiatorType: tag.toLowerCase(), url, duration: 0, transferSize: 0 });
+    } catch (e) {}
+  };
+  window.addEventListener('error', onResourceError, true);
 
   const methods = ['log', 'info', 'warn', 'error', 'debug'];
   for (const m of methods) {
