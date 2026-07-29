@@ -2,11 +2,8 @@
 (function(){
 "use strict";
 
-const SVGNS = "http://www.w3.org/2000/svg";
-const R = 11;              // node circle radius
-const BODY_INDENT = 14;    // px each level indents (creates the gutter for branches)
-const CIRCLE_GAP = 15;    // circle centre sits this far left of a card's edge
-                          // (>= R + clearance so the bubble's right edge clears the heading)
+const BODY_INDENT = 10;    // px each level indents (subtle hierarchy cue; kept small now
+                           // that the level badge shows depth, to save width on mobile)
 
 /* Phosphor "regular" icons */
 const SVG_EYE='<svg viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M247.31,124.76c-.35-.79-8.82-19.58-27.65-38.41C194.57,61.26,162.88,48,128,48S61.43,61.26,36.34,86.35C17.51,105.18,9,124,8.69,124.76a8,8,0,0,0,0,6.5c.35.79,8.82,19.57,27.65,38.4C61.43,194.74,93.12,208,128,208s66.57-13.26,91.66-38.34c18.83-18.83,27.3-37.61,27.65-38.4A8,8,0,0,0,247.31,124.76ZM128,192c-30.78,0-57.67-11.19-79.93-33.25A133.16,133.16,0,0,1,25,128,133.16,133.16,0,0,1,48.07,97.25C70.33,75.19,97.22,64,128,64s57.67,11.19,79.93,33.25A133.16,133.16,0,0,1,231,128,133.16,133.16,0,0,1,207.93,158.75C185.67,180.81,158.78,192,128,192Zm0-112a48,48,0,1,0,48,48A48,48,0,0,0,128,80Zm0,80a32,32,0,1,1,32-32A32,32,0,0,1,128,160Z"></path></svg>';
@@ -21,31 +18,8 @@ function injectStyles(){
     @font-face{ font-family:'classy'; src:url('https://vkfonts.storage.googleapis.com/classy.woff2') format('woff2'); font-weight:normal; font-style:normal; font-display:swap; }
 
     .post-body{
-      --ns-grey:#171717;
-      --ns-green:#474747;
-      position:relative;
       font-family:'classy',system-ui,-apple-system,sans-serif;
     }
-    /* the left gutter only exists to hold the tree; apply it only when there
-       are actually nested sections, otherwise a heading-less post gets an
-       unwanted gap on the left */
-    .post-body.ns-has-tree{ padding-left:40px; }
-
-    /* the tree: one static svg, drawn ABOVE the cards so nothing covers it */
-    .ns-tree{
-      position:absolute;
-      top:0; left:0;
-      width:100%; height:100%;
-      pointer-events:none;
-      z-index:5;
-      overflow:visible;
-    }
-    .ns-edge{ fill:none; stroke:var(--ns-grey); stroke-width:2; stroke-linecap:round; }
-    .ns-edge.is-on{ stroke:var(--ns-green); }
-    .ns-dot{ fill:#0c0c0e; stroke:var(--ns-grey); stroke-width:2; }
-    .ns-dot.is-on{ stroke:var(--ns-green); }
-    .ns-num{ fill:var(--ns-grey); font-family:'classy',system-ui,sans-serif; font-size:11px; text-anchor:middle; dominant-baseline:central; letter-spacing:0 !important; }
-    .ns-num.is-on{ fill:var(--ns-green); }
 
     .nested-section{
       position:relative;
@@ -71,39 +45,61 @@ function injectStyles(){
     .nested-section.ns-dim{ opacity:0.5; }
     .nested-section.ns-active{ opacity:1; }
 
-    /* ===== restored pill heading (centred, uniform size across all levels) ===== */
+    /* pill heading: title fills the row, level badge + toggle sit together at the right */
     .ns-heading{
-      position:relative;
       margin: 0 0 10px 0;
-      padding:7px 14px;
-      /* 28px toggle button + 5px breathing room, so an empty <h1></h1>
-         still gives the hide/unhide button space to sit in */
-      min-height:33px;
+      padding:7px 12px;
+      min-height:33px;            /* 28px controls + breathing room */
       display:flex;
       align-items:center;
-      justify-content:center;
+      gap:8px;
       color:#fff;
       font-family:'dexy',sans-serif;
       font-size:15px;
       font-weight:normal;
       letter-spacing:3px;
-      text-align:center;
       background:#272727;
       border:1px solid rgba(255,255,255,0.08);
       border-radius:50px;
-      white-space:normal;
-      overflow-wrap:break-word;
-      word-break:break-word;
-      hyphens:auto;
       cursor:pointer;
       user-select:none;
       -webkit-user-select:none;
       -webkit-tap-highlight-color:transparent;
     }
     .ns-heading:focus-visible{ outline:2px solid rgba(255,255,255,0.25); outline-offset:3px; }
-    /* empty heading gets a non-breaking-space line-box so its height matches a
-       normal single-line heading (font-metric independent) */
-    .ns-heading.ns-empty::before{ content:"\\00a0"; }
+
+    .ns-title{
+      flex:1 1 auto;
+      min-width:0;
+      text-align:center;
+      white-space:normal;
+      overflow-wrap:break-word;
+      word-break:break-word;
+      hyphens:auto;
+    }
+    /* keep an empty heading (<h1></h1>) the same height as a filled one */
+    .ns-title:empty::before{ content:"\\00a0"; }
+
+    .ns-controls{
+      flex:0 0 auto;
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+    }
+
+    /* level-number bubble, moved out of the old tree and into the heading */
+    .ns-badge{
+      flex:0 0 auto;
+      display:inline-flex; align-items:center; justify-content:center;
+      width:28px; height:28px;
+      color:#c9c9c9;
+      background:rgba(255,255,255,0.05);
+      border:1px solid rgba(255,255,255,0.1);
+      border-radius:50%;
+      font-family:'classy',system-ui,sans-serif;
+      font-size:12px; line-height:1; letter-spacing:0;
+      pointer-events:none; user-select:none;
+    }
 
     .ns-body{
       display:block;
@@ -113,9 +109,6 @@ function injectStyles(){
     .nested-section.ns-collapsed > .ns-body{ display:none; }
 
     .ns-toggle{
-      position:absolute;
-      right:8px; top:50%;
-      transform:translateY(-50%);
       display:inline-flex; align-items:center; justify-content:center;
       width:28px; height:28px;
       padding:0; margin:0;
@@ -130,131 +123,8 @@ function injectStyles(){
     }
     .ns-toggle:hover{ background:rgba(255,255,255,0.12); color:#fff; border-color:rgba(255,255,255,0.25); }
     .ns-toggle svg{ width:15px; height:15px; display:block; fill:currentColor; pointer-events:none; }
-
-    @media (max-width:600px){
-      .post-body.ns-has-tree{ padding-left:22px; }
-      .ns-body{ padding-left:20px; }
-    }
   `;
   document.head.appendChild(style);
-}
-
-/* ---------- tree geometry ---------- */
-let activeTops = new Set([0]);   // indices of every top-level section currently "active"
-
-function el(name, attrs){
-  const n = document.createElementNS(SVGNS, name);
-  for(const k in attrs) n.setAttribute(k, attrs[k]);
-  return n;
-}
-
-function topAncestor(sec){
-  let cur = sec, top = sec;
-  while(true){
-    const parent = cur.parentElement ? cur.parentElement.closest(".nested-section") : null;
-    if(!parent) break;
-    top = parent; cur = parent;
-  }
-  return top;
-}
-
-function branchPath(x1, y1, x2, y2){
-  const mx = x1 + (x2 - x1) * 0.5;
-  return `M ${x1} ${y1} C ${mx} ${y1}, ${mx} ${y2}, ${x2} ${y2}`;
-}
-
-function buildTree(){
-  const post = document.querySelector(".post-body");
-  if(!post || !post.getAttribute("data-applied")) return;
-
-  let svg = post.querySelector(":scope > .ns-tree");
-  if(!svg){ svg = el("svg", {class:"ns-tree"}); post.insertBefore(svg, post.firstChild); }
-  while(svg.firstChild) svg.removeChild(svg.firstChild);
-
-  const svgRect = svg.getBoundingClientRect();
-  const tops = Array.from(post.children).filter(c => c.nodeType === 1 && c.classList.contains("nested-section"));
-  const sections = Array.from(post.querySelectorAll(".nested-section")).filter(s => s.offsetParent !== null || tops.indexOf(s) !== -1);
-
-  const pt = new Map();
-  sections.forEach(sec => {
-    const heading = sec.querySelector(":scope > .ns-heading");
-    if(!heading) return;
-    const sr = sec.getBoundingClientRect();
-    const hr = heading.getBoundingClientRect();
-    if(hr.width === 0 && hr.height === 0) return;
-    const fs = parseFloat(getComputedStyle(heading).fontSize) || 15;
-    const x = sr.left - svgRect.left - CIRCLE_GAP;            // circle in the gutter, left of the card
-    const y = hr.top - svgRect.top + Math.min(hr.height / 2, fs * 1.8);
-    const lm = /ns-level-(\d)/.exec(sec.className);
-    pt.set(sec, { x, y, top: topAncestor(sec), level: lm ? lm[1] : "" });
-  });
-
-  const visTops = tops.filter(t => pt.has(t));
-
-  // root trunk + branches to each top node
-  if(visTops.length){
-    let rootX = Math.min.apply(null, visTops.map(t => pt.get(t).x)) - 16;
-    if(rootX < 2) rootX = 2;
-    const firstY = pt.get(visTops[0]).y;
-    const lastY = pt.get(visTops[visTops.length - 1]).y;
-    const trunk = el("line", {class:"ns-edge", x1:rootX, y1:firstY, x2:rootX, y2:lastY});
-    trunk.setAttribute("data-top", "-1");
-    svg.appendChild(trunk);
-    visTops.forEach((t, i) => {
-      const P = pt.get(t);
-      const b = el("path", {class:"ns-edge", d:branchPath(rootX, P.y, P.x - R, P.y)});
-      b.setAttribute("data-top", String(i));
-      svg.appendChild(b);
-    });
-  }
-
-  // spine + branches for every parent that has visible children
-  sections.forEach(parent => {
-    if(!pt.has(parent)) return;
-    const body = parent.querySelector(":scope > .ns-body");
-    if(!body) return;
-    const kids = Array.from(body.children).filter(c => c.classList && c.classList.contains("nested-section") && pt.has(c));
-    if(!kids.length) return;
-    const P = pt.get(parent);
-    const topIdx = visTops.indexOf(P.top);
-    const lastY = pt.get(kids[kids.length - 1]).y;
-    const spine = el("line", {class:"ns-edge", x1:P.x, y1:P.y + R, x2:P.x, y2:lastY});
-    spine.setAttribute("data-top", String(topIdx));
-    svg.appendChild(spine);
-    kids.forEach(k => {
-      const K = pt.get(k);
-      const b = el("path", {class:"ns-edge", d:branchPath(P.x, K.y, K.x - R, K.y)});
-      b.setAttribute("data-top", String(topIdx));
-      svg.appendChild(b);
-    });
-  });
-
-  // node circles + numbers on top
-  sections.forEach(sec => {
-    if(!pt.has(sec)) return;
-    const P = pt.get(sec);
-    const topIdx = visTops.indexOf(P.top);
-    const c = el("circle", {class:"ns-dot", cx:P.x, cy:P.y, r:R});
-    c.setAttribute("data-top", String(topIdx));
-    svg.appendChild(c);
-    const t = el("text", {class:"ns-num", x:P.x, y:P.y});
-    t.setAttribute("data-top", String(topIdx));
-    t.textContent = P.level;
-    svg.appendChild(t);
-  });
-
-  recolorTree();
-}
-
-function recolorTree(){
-  const post = document.querySelector(".post-body");
-  if(!post) return;
-  const svg = post.querySelector(":scope > .ns-tree");
-  if(!svg) return;
-  svg.querySelectorAll("[data-top]").forEach(node => {
-    const dt = parseInt(node.getAttribute("data-top"), 10);
-    node.classList.toggle("is-on", dt >= 0 && activeTops.has(dt));
-  });
 }
 
 /* ---------- active session detection ---------- */
@@ -270,10 +140,8 @@ function updateFocus(){
   if(!tops.length) return;
 
   if(tops.length === 1){
-    activeTops = new Set([0]);
     tops[0].classList.add("ns-active");
     tops[0].classList.remove("ns-dim");
-    recolorTree();
     return;
   }
 
@@ -306,9 +174,6 @@ function updateFocus(){
     if(next.has(i)){ sec.classList.add("ns-active"); sec.classList.remove("ns-dim"); }
     else { sec.classList.remove("ns-active"); sec.classList.add("ns-dim"); }
   });
-
-  activeTops = next;
-  recolorTree();
 }
 
 /* ---------- collapse toggle ---------- */
@@ -332,7 +197,6 @@ function makeToggle(){
     btn.innerHTML = collapsed ? SVG_EYE_SLASH : SVG_EYE;
     btn.setAttribute("aria-expanded", collapsed ? "false" : "true");
     btn.setAttribute("aria-label", collapsed ? "Show section" : "Hide section");
-    buildTree();
     scheduleFocus();
   });
   return btn;
@@ -396,9 +260,24 @@ function applyNestedSections(){
     const heading = sec.querySelector(":scope > .ns-heading");
     if(!body || !heading) return;
 
-    // a heading with no text (e.g. <h1></h1>) needs a placeholder line-box so it
-    // renders at the same height as a normal single-line heading
-    if(!heading.textContent.trim()) heading.classList.add("ns-empty");
+    // wrap the heading's own text so the badge + toggle can sit beside it
+    const title = document.createElement("span");
+    title.className = "ns-title";
+    while(heading.firstChild) title.appendChild(heading.firstChild);
+    heading.appendChild(title);
+
+    const controls = document.createElement("span");
+    controls.className = "ns-controls";
+
+    // level-number bubble (the old tree node, now inside the heading)
+    const lm = /ns-level-(\d)/.exec(sec.className);
+    if(lm){
+      const badge = document.createElement("span");
+      badge.className = "ns-badge";
+      badge.setAttribute("aria-hidden", "true");
+      badge.textContent = lm[1];
+      controls.appendChild(badge);
+    }
 
     const hasContent = Array.from(body.childNodes).some(function(n){
       if(n.nodeType === 3) return n.textContent.trim().length > 0;
@@ -408,13 +287,15 @@ function applyNestedSections(){
 
     if(hasContent){
       const btn = makeToggle();
-      heading.appendChild(btn);
+      controls.appendChild(btn);
       // default state: collapsed at every level; user opens sections as needed
       sec.classList.add("ns-collapsed");
       btn.innerHTML = SVG_EYE_SLASH;
       btn.setAttribute("aria-expanded", "false");
       btn.setAttribute("aria-label", "Show section");
     }
+
+    heading.appendChild(controls);
 
     heading.setAttribute("tabindex", "0");
     heading.setAttribute("role", "button");
@@ -436,11 +317,6 @@ function applyNestedSections(){
   post.appendChild(fragment);
   post.setAttribute("data-applied", "true");
 
-  // only reserve the left gutter when there is a tree to draw there
-  if(post.querySelector(":scope > .nested-section")) post.classList.add("ns-has-tree");
-  else post.classList.remove("ns-has-tree");
-
-  buildTree();
   scheduleFocus();
 }
 
@@ -455,15 +331,13 @@ if(document.readyState === "loading"){
 }
 
 window.addEventListener("load", function(){
-  setTimeout(function(){ applyNestedSections(); buildTree(); scheduleFocus(); }, 220);
+  setTimeout(function(){ applyNestedSections(); scheduleFocus(); }, 220);
 });
-
-if(document.fonts && document.fonts.ready){ document.fonts.ready.then(function(){ buildTree(); }); }
 
 let sizeRaf = null;
 window.addEventListener("resize", function(){
   if(sizeRaf) return;
-  sizeRaf = requestAnimationFrame(function(){ sizeRaf = null; buildTree(); });
+  sizeRaf = requestAnimationFrame(function(){ sizeRaf = null; scheduleFocus(); });
 });
 window.addEventListener("scroll", scheduleFocus, {passive:true});
 
