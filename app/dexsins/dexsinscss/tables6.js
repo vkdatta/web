@@ -99,22 +99,8 @@ margin: 20px;
   color: #c7c8cc;
 }
 
-.table-card thead th {
-  background: #1f1f1f;
-  color: #f2f3f5;
-  font-weight: 600;
-  text-align: left;
-  padding: 13px 20px;
-  border-bottom: 1px solid #494949;
-  border-right: 1px solid #494949;
-  min-width: 110px;
-}
-
-.table-card thead th:last-child {
-  border-right: none;
-}
-
-.table-card td {
+.table-card td,
+.table-card th {
   background: #292929;
   color: #c7c8cc;
   padding: 13px 20px;
@@ -125,17 +111,26 @@ margin: 20px;
   min-width: 110px;
 }
 
-.table-card td:last-child {
+.table-card th {
+  font-weight: bold;
+}
+
+.table-card td:last-child,
+.table-card th:last-child {
   border-right: none;
 }
 
 .table-card tbody tr:last-child td,
-.table-card tr:last-child td {
+.table-card tr:last-child td,
+.table-card tbody tr:last-child th,
+.table-card tr:last-child th {
   border-bottom: none;
 }
 
 .table-card tbody tr:hover td,
-.table-card tr:hover td {
+.table-card tr:hover td,
+.table-card tbody tr:hover th,
+.table-card tr:hover th {
   background: #313131;
 }
 
