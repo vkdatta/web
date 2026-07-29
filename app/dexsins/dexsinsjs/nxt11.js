@@ -41,7 +41,7 @@ function injectStyles(){
     .nested-section.ns-dim{ opacity:0.5; }
     .nested-section.ns-active{ opacity:1; }
 
-    /* pill heading: title fills the row, level badge + toggle sit together at the right */
+    /* pill heading: badge on the left, title fills the middle, toggle on the right */
     .ns-heading{
       margin: 0 0 10px 0;
       padding:7px 12px;
@@ -50,7 +50,7 @@ function injectStyles(){
       align-items:center;
       gap:8px;
       color:#fff;
-      font-family:'dexy',sans-serif;
+      font-family:'classy',system-ui,sans-serif;
       font-size:15px;
       font-weight:normal;
       letter-spacing:3px;
@@ -75,13 +75,6 @@ function injectStyles(){
     }
     /* keep an empty heading (<h1></h1>) the same height as a filled one */
     .ns-title:empty::before{ content:"\\00a0"; }
-
-    .ns-controls{
-      flex:0 0 auto;
-      display:inline-flex;
-      align-items:center;
-      gap:6px;
-    }
 
     /* level-number bubble, moved out of the old tree and into the heading */
     .ns-badge{
@@ -256,24 +249,22 @@ function applyNestedSections(){
     const heading = sec.querySelector(":scope > .ns-heading");
     if(!body || !heading) return;
 
-    // wrap the heading's own text so the badge + toggle can sit beside it
+    // wrap the heading's own text so the badge (left) and toggle (right) can flank it
     const title = document.createElement("span");
     title.className = "ns-title";
     while(heading.firstChild) title.appendChild(heading.firstChild);
-    heading.appendChild(title);
 
-    const controls = document.createElement("span");
-    controls.className = "ns-controls";
-
-    // level-number bubble (the old tree node, now inside the heading)
+    // level-number bubble on the LEFT (the old tree node, now inside the heading)
     const lm = /ns-level-(\d)/.exec(sec.className);
     if(lm){
       const badge = document.createElement("span");
       badge.className = "ns-badge";
       badge.setAttribute("aria-hidden", "true");
       badge.textContent = lm[1];
-      controls.appendChild(badge);
+      heading.appendChild(badge);
     }
+
+    heading.appendChild(title);
 
     const hasContent = Array.from(body.childNodes).some(function(n){
       if(n.nodeType === 3) return n.textContent.trim().length > 0;
@@ -283,15 +274,13 @@ function applyNestedSections(){
 
     if(hasContent){
       const btn = makeToggle();
-      controls.appendChild(btn);
+      heading.appendChild(btn);   // toggle on the RIGHT
       // default state: collapsed at every level; user opens sections as needed
       sec.classList.add("ns-collapsed");
       btn.innerHTML = SVG_EYE_SLASH;
       btn.setAttribute("aria-expanded", "false");
       btn.setAttribute("aria-label", "Show section");
     }
-
-    heading.appendChild(controls);
 
     heading.setAttribute("tabindex", "0");
     heading.setAttribute("role", "button");
