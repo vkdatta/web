@@ -17,12 +17,6 @@ function injectStyles(){
     @font-face{ font-family:'dexy'; src:url('https://vkfonts.storage.googleapis.com/dexy.woff2') format('woff2'); font-weight:normal; font-style:normal; font-display:swap; }
     @font-face{ font-family:'classy'; src:url('https://vkfonts.storage.googleapis.com/classy.woff2') format('woff2'); font-weight:normal; font-style:normal; font-display:swap; }
 
-    .post-body{
-      font-family:'classy',system-ui,-apple-system,sans-serif;
-      padding-left:0;
-      margin-left:0;
-    }
-
     .nested-section{
       position:relative;
       z-index:0;
