@@ -4,7 +4,7 @@ import { cipher } from "./cipher.js";
 import { handleHTML, handleHTMLSubmit, toggleTTTOtherSeparator, handleTextToTableOptionsSubmit } from "./html7.js";
 import { optimisecss, minifycss } from "./css.js";
 import { optimisejs, minifyjs } from "./js-n.js";
-import { handleLatex } from "./latex-n1.js";
+import { handleLatex } from "./latex-n2.js";
 import { fetchUrlToCurrentNote, openFetchModal, handleFetchSubmit } from "./fetch.js";
 
 window.MD5 = MD5;
