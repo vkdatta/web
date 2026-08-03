@@ -158,16 +158,21 @@ function literalRun(text) {                     // untouched literal text (foolp
 // ---- Math -------------------------------------------------------------------
 function mathToOmml(tex, display) {
   let mml = window.temml.renderToString(tex, { displayMode: display, throwOnError: false });
-  // Temml encodes the shrink factors for nested math (fractions, scripts, roots)
-  // as relative `mathsize` hints. mathml2omml bakes those into ABSOLUTE font
-  // sizes that then COMPOUND per nesting level — which is why big equations come
-  // out microscopic. Remove the hint before conversion so Word scales natively.
+  // Temml encodes shrink factors for nested math (fractions, scripts, roots) as
+  // relative `mathsize` hints; mathml2omml bakes those into ABSOLUTE font sizes
+  // that compound per level. Remove the hint before conversion.
   mml = mml.replace(/\s+mathsize="[^"]*"/g, '');
   let omml = _mml2omml(mml);
   if (!omml || omml.indexOf('<m:oMath') === -1) return null;
-  // Belt-and-suspenders: drop any explicit run sizes still emitted, so Word's
-  // equation engine renders every level at the normal size.
-  omml = omml.replace(/<w:sz\b[^>]*\/>/g, '').replace(/<w:szCs\b[^>]*\/>/g, '');
+  // Drop every explicit run size the converter emits — BOTH the self-closing
+  // form <w:sz w:val=".."/> and the paired form <w:sz ..></w:sz> (the paired
+  // form is what shrinks fraction numerators/denominators). Word then sizes all
+  // levels natively.
+  omml = omml
+    .replace(/<w:sz\b[^>]*\/>/g, '')
+    .replace(/<w:sz\b[^>]*>[\s\S]*?<\/w:sz>/g, '')
+    .replace(/<w:szCs\b[^>]*\/>/g, '')
+    .replace(/<w:szCs\b[^>]*>[\s\S]*?<\/w:szCs>/g, '');
   return omml;
 }
 
