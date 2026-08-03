@@ -1,5 +1,5 @@
 // ============================================================================
-// latex-to-docx.js
+// latex-n.js
 // Convert the LaTeX in a <textarea> into a .docx with NATIVE, EDITABLE equation
 // objects (OMML) and auto-download it. Non-destructive: the textarea is never
 // touched. Import the resulting file into Google Docs and equations arrive as
@@ -7,17 +7,20 @@
 //
 // Pipeline:  LaTeX --(Temml)--> MathML --(mathml2omml)--> OMML --> hand-built OOXML .docx
 //
-// "Foolproof" here means: ANY input yields a valid, openable .docx. Standard
-// math renders as real equations; anything the parser can't handle is written
-// as its literal LaTeX source, never silently mangled.
+// TWO INPUT MODES (chosen automatically):
+//   • Delimited mode — used when the text contains $$…$$ / \[…\] (display) or
+//     \(…\) / $…$ (inline). Only delimited spans are treated as math.
+//   • Auto-detect mode — used when NO delimiters are present (e.g. LaTeX pasted
+//     from an AI chat). Each line is classified: lines with a LaTeX command,
+//     a sub/superscript, or a bare "= …" equation become display equations;
+//     everything else stays prose.
+//   Force either with the opts.autodetect flag (true / false).
 //
-// Drop-in: replaces the old handleLatex(). Wire it as:
-//     import { handleLatex } from './latex-to-docx.js';
-//     button.addEventListener('click', () => handleLatex(noteTextarea, showNotification));
-// (both args optional — see handleLatex below)
+// "Foolproof": ANY input yields a valid, openable .docx. What can't be parsed
+// is written as its literal LaTeX source, never silently mangled.
 //
-// Delimiters recognised:  $$...$$  and  \[...\]  = display   |   \(...\)  and  $...$  = inline
-// A '$' glued to a digit (e.g. "$5") is treated as currency, not a math opener.
+// Drop-in: import { handleLatex } from './latex-n.js';
+//          button.onclick = () => handleLatex(noteTextarea, showNotification);
 // ============================================================================
 
 // ---------------------------------------------------------------- dependencies
@@ -28,21 +31,18 @@ let _temmlReady = null;
 function loadScript(src) {
   return new Promise((resolve, reject) => {
     const s = document.createElement('script');
-    s.src = src;
-    s.onload = resolve;
+    s.src = src; s.onload = resolve;
     s.onerror = () => reject(new Error('Failed to load ' + src));
     document.head.appendChild(s);
   });
 }
 
 async function loadDeps() {
-  // Temml (LaTeX -> MathML) as a UMD global `temml`.
   if (!window.temml) {
     _temmlReady = _temmlReady ||
       loadScript('https://cdn.jsdelivr.net/npm/temml@0.11/dist/temml.min.js');
     await _temmlReady;
   }
-  // mathml2omml (MathML -> OMML) and JSZip as ES modules.
   if (!_mml2omml) {
     const m = await import('https://cdn.jsdelivr.net/npm/mathml2omml@0.5/+esm');
     _mml2omml = m.mml2omml || (m.default && m.default.mml2omml) || m.default;
@@ -54,8 +54,7 @@ async function loadDeps() {
 }
 
 // ------------------------------------------------------------- XML boilerplate
-// (These strings mirror a container that was rendered & verified to carry
-//  native equations correctly. Do not "prettify" — whitespace is deliberate.)
+// (Container verified to carry native equations correctly — do not prettify.)
 const CONTENT_TYPES =
 `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
@@ -88,7 +87,6 @@ const DOC_OPEN =
 `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:m="http://schemas.openxmlformats.org/officeDocument/2006/math" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><w:body>`;
 
-// US Letter page (DXA units: 1440 = 1 inch), 1" margins.
 const SECTPR =
 `<w:sectPr><w:pgSz w:w="12240" w:h="15840"/><w:pgMar w:top="1440" w:right="1440" w:bottom="1440" w:left="1440" w:header="720" w:footer="720" w:gutter="0"/></w:sectPr>`;
 const DOC_CLOSE = SECTPR + `</w:body></w:document>`;
@@ -101,12 +99,21 @@ function textRun(s) {
   return `<w:r><w:t xml:space="preserve">${xmlEscape(s)}</w:t></w:r>`;
 }
 
-// Split raw text into ordered text / math segments.
+// Convert one math string to an <m:oMath> string, or null if it can't be done.
+function mathToOmml(tex, display) {
+  const mml = window.temml.renderToString(tex, { displayMode: display, throwOnError: false });
+  const omml = _mml2omml(mml);
+  if (!omml || omml.indexOf('<m:oMath') === -1) return null;
+  return omml;
+}
+
+// ---- Delimiter detection & splitting ---------------------------------------
+const DELIM_RE = /\$\$([\s\S]+?)\$\$|\\\[([\s\S]+?)\\\]|\\\(([\s\S]+?)\\\)|\$(?!\d)([\s\S]+?)\$/;
+function hasDelimiters(input) { return new RegExp(DELIM_RE.source).test(input); }
+
 function segment(input) {
-  //  $$..$$  |  \[..\]  |  \(..\)  |  $..$ (opener not followed by a digit)
-  const RE = /\$\$([\s\S]+?)\$\$|\\\[([\s\S]+?)\\\]|\\\(([\s\S]+?)\\\)|\$(?!\d)([\s\S]+?)\$/g;
-  const segs = [];
-  let last = 0, m;
+  const RE = new RegExp(DELIM_RE.source, 'g');
+  const segs = []; let last = 0, m;
   while ((m = RE.exec(input)) !== null) {
     if (m.index > last) segs.push({ type: 'text', value: input.slice(last, m.index) });
     if (m[1] !== undefined)      segs.push({ type: 'math', display: true,  tex: m[1], raw: m[0] });
@@ -119,57 +126,64 @@ function segment(input) {
   return segs;
 }
 
-// Convert one math segment to an <m:oMath> string, or null if it can't be done.
-function mathToOmml(tex, display) {
-  const mml = window.temml.renderToString(tex, { displayMode: display, throwOnError: false });
-  const omml = _mml2omml(mml);
-  if (!omml || omml.indexOf('<m:oMath') === -1) return null;
-  return omml;
+// ---- Auto-detect: is this delimiter-free line an equation? ------------------
+function isMathLine(line) {
+  if (/\\[a-zA-Z]/.test(line)) return true;   // a LaTeX command: \frac \max \times \text …
+  if (/[_^]/.test(line)) return true;         // a sub/superscript: C_{uu}, x^2, C_0
+  const t = line.trim();                       // a bare equation: "1 - p = 0.3765"
+  if (t.includes('=') && /\d/.test(t) && !/[A-Za-z]{3,}/.test(t)) return true;
+  return false;                                // …otherwise it's prose
 }
 
-// Build the <w:body> inner XML from segments. `stats` collects ok/fail counts.
-function buildBody(segs, stats) {
-  const paras = [];
-  let cur = '';
+// ------------------------------------------------------------------ body builders
+// Delimited mode: math only inside delimiters; inline math stays in its paragraph.
+function buildBodyDelimited(segs, stats) {
+  const paras = []; let cur = '';
   const flush = () => { paras.push(`<w:p>${cur}</w:p>`); cur = ''; };
-
   for (const s of segs) {
     if (s.type === 'text') {
       const parts = s.value.split('\n');
-      parts.forEach((piece, idx) => {
-        if (piece.length) cur += textRun(piece);
-        if (idx < parts.length - 1) flush();     // newline => paragraph break (blank lines preserved)
-      });
+      parts.forEach((p, i) => { if (p.length) cur += textRun(p); if (i < parts.length - 1) flush(); });
       continue;
     }
-    // math
-    let omath = null;
-    try { omath = mathToOmml(s.tex, s.display); } catch (_) { omath = null; }
-    if (omath) {
+    let o = null; try { o = mathToOmml(s.tex, s.display); } catch (_) { o = null; }
+    if (o) {
       stats.ok++;
-      if (s.display) {
-        if (cur.length) flush();                 // close any open text paragraph first
-        paras.push(`<w:p><m:oMathPara>${omath}</m:oMathPara></w:p>`);
-      } else {
-        cur += omath;                            // inline: stays in the current paragraph
-      }
-    } else {
-      stats.fail++;
-      cur += textRun(s.raw);                      // FOOLPROOF fallback: literal LaTeX, uncorrupted
-    }
+      if (s.display) { if (cur.length) flush(); paras.push(`<w:p><m:oMathPara>${o}</m:oMathPara></w:p>`); }
+      else cur += o;
+    } else { stats.fail++; cur += textRun(s.raw); }
   }
   if (cur.length) flush();
-  if (paras.length === 0) paras.push('<w:p></w:p>');
+  if (!paras.length) paras.push('<w:p></w:p>');
+  return paras.join('');
+}
+
+// Auto mode: line-by-line. Equation lines -> display equations, else prose.
+function buildBodyAuto(input, stats) {
+  const paras = [];
+  for (const line of input.split('\n')) {
+    if (line.trim() === '') { paras.push('<w:p></w:p>'); continue; }   // preserve blank lines
+    if (isMathLine(line)) {
+      let o = null; try { o = mathToOmml(line.trim(), true); } catch (_) { o = null; }
+      if (o) { stats.ok++; paras.push(`<w:p><m:oMathPara>${o}</m:oMathPara></w:p>`); }
+      else { stats.fail++; paras.push(`<w:p>${textRun(line)}</w:p>`); }
+    } else {
+      paras.push(`<w:p>${textRun(line)}</w:p>`);
+    }
+  }
+  if (!paras.length) paras.push('<w:p></w:p>');
   return paras.join('');
 }
 
 // ------------------------------------------------------------------- public API
-
-// Build a .docx Blob from a LaTeX string. Returns { blob, stats }.
-export async function latexToDocxBlob(latex) {
+// opts.autodetect: true forces line-mode, false forces delimiter-mode.
+// Default: auto-detect when no delimiters are present.
+export async function latexToDocxBlob(latex, opts = {}) {
   await loadDeps();
+  const input = latex ?? '';
   const stats = { ok: 0, fail: 0 };
-  const body = buildBody(segment(latex ?? ''), stats);
+  const auto = (opts.autodetect !== undefined) ? opts.autodetect : !hasDelimiters(input);
+  const body = auto ? buildBodyAuto(input, stats) : buildBodyDelimited(segment(input), stats);
   const documentXml = DOC_OPEN + body + DOC_CLOSE;
 
   const zip = new _JSZip();
@@ -183,40 +197,34 @@ export async function latexToDocxBlob(latex) {
     type: 'blob',
     mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
   });
-  return { blob, stats };
+  return { blob, stats, mode: auto ? 'auto' : 'delimited' };
 }
 
 function triggerDownload(blob, filename) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 1500);
 }
 
-// Drop-in replacement for the old handleLatex().
-// Both args optional: pass your textarea element and a notify(msg) function.
-// Falls back to window.noteTextarea / window.showNotification / a sensible selector.
-export async function handleLatex(textarea, notify) {
+export async function handleLatex(textarea, notify, opts = {}) {
   const ta = textarea
     || (typeof window !== 'undefined' && window.noteTextarea)
     || document.querySelector('textarea#noteTextarea, textarea[data-note], textarea');
   const say = notify
     || (typeof window !== 'undefined' && window.showNotification)
-    || ((msg) => console.log('[latex-to-docx]', msg));
+    || ((msg) => console.log('[latex-n]', msg));
 
   if (!ta) { say('LaTeX export: no textarea found.'); return; }
 
   try {
     say('Building .docx…');
-    const { blob, stats } = await latexToDocxBlob(ta.value || '');
+    const { blob, stats } = await latexToDocxBlob(ta.value || '', opts);
     const stamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-');
     triggerDownload(blob, `latex-notes-${stamp}.docx`);
     const tail = stats.fail
-      ? ` (${stats.fail} expression${stats.fail > 1 ? 's' : ''} left as literal text)`
+      ? ` (${stats.fail} left as literal text)`
       : '';
     say(`Downloaded .docx — ${stats.ok} equation${stats.ok === 1 ? '' : 's'} converted${tail}.`);
   } catch (err) {
