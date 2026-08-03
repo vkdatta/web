@@ -157,9 +157,17 @@ function literalRun(text) {                     // untouched literal text (foolp
 
 // ---- Math -------------------------------------------------------------------
 function mathToOmml(tex, display) {
-  const mml = window.temml.renderToString(tex, { displayMode: display, throwOnError: false });
-  const omml = _mml2omml(mml);
+  let mml = window.temml.renderToString(tex, { displayMode: display, throwOnError: false });
+  // Temml encodes the shrink factors for nested math (fractions, scripts, roots)
+  // as relative `mathsize` hints. mathml2omml bakes those into ABSOLUTE font
+  // sizes that then COMPOUND per nesting level — which is why big equations come
+  // out microscopic. Remove the hint before conversion so Word scales natively.
+  mml = mml.replace(/\s+mathsize="[^"]*"/g, '');
+  let omml = _mml2omml(mml);
   if (!omml || omml.indexOf('<m:oMath') === -1) return null;
+  // Belt-and-suspenders: drop any explicit run sizes still emitted, so Word's
+  // equation engine renders every level at the normal size.
+  omml = omml.replace(/<w:sz\b[^>]*\/>/g, '').replace(/<w:szCs\b[^>]*\/>/g, '');
   return omml;
 }
 
