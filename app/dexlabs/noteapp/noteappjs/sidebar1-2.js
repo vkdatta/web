@@ -9,6 +9,8 @@ const selected = new Set();
 let currentFolderId = normalizeFolderId(localStorage.getItem("dexCurrentFolder"));
 let clipboard = null;
 let pathFolderIds = new Set();
+let searchQuery = "";
+let sortMode = localStorage.getItem("dexSortMode") || "date_new";
 let expanded = loadExpanded();
 function loadExpanded() { try { return new Set(JSON.parse(localStorage.getItem("dexExpanded") || "[]")); } catch (e) { return new Set(); } }
 function saveExpanded() { localStorage.setItem("dexExpanded", JSON.stringify([...expanded])); }
@@ -31,6 +33,7 @@ const IC = {
   paste: '<svg fill="none" stroke="currentColor" stroke-width="1.7" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>',
   download: '<svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v12m0 0l-4-4m4 4l4-4M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2"/></svg>',
   chev: '<svg fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 6l6 6-6 6"/></svg>',
+  sort: '<svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 7h13M3 12h9M3 17h5M17 8V4m0 0l-3 3m3-3l3 3M17 16v4m0 0l-3-3m3 3l3-3"/></svg>',
   selectAll: '<svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h10M4 12h10M4 18h7M15 16l2.5 2.5L22 14"/></svg>',
   edit: '<svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>'
 };
@@ -111,6 +114,17 @@ function injectSidebarStyles() {
   .dex-check svg { width:13px; height:13px; }
   .dex-check.on { background:#9ab0ff; border-color:#9ab0ff; }
   .dex-empty { padding:16px 12px; text-align:center; color:#55555e; font-size:12.5px; }
+  #sidebar1 .dex-subhead { display:flex; align-items:center; gap:8px; padding:8px 12px; border-bottom:1px solid rgba(255,255,255,0.06); }
+  #sidebar1 .dex-search { flex:1; min-width:0; background:#1a1a1f; border:1px solid #2a2a32; color:#d8d8dc; border-radius:8px; padding:8px 10px; font-family:inherit; font-size:13px; outline:none; }
+  #sidebar1 .dex-search::placeholder { color:#66666e; }
+  #sidebar1 .dex-search:focus { border-color:#3a3a5a; }
+  #sidebar1 .dex-sort { width:34px; height:34px; flex-shrink:0; display:flex; align-items:center; justify-content:center; border-radius:8px; background:#1a1a1f; border:1px solid #2a2a32; color:#b8b8c0; cursor:pointer; }
+  #sidebar1 .dex-sort:hover { background:#24242c; color:#e8e8ec; }
+  #sidebar1 .dex-sort svg { width:17px; height:17px; }
+  .dex-sort-menu { position:fixed; z-index:100003; background:#141419; border:1px solid #2a2a32; border-radius:10px; padding:6px; box-shadow:0 10px 30px rgba(0,0,0,.5); min-width:210px; }
+  .dex-sort-item { padding:9px 12px; border-radius:7px; font-size:13px; color:#c8c8d0; cursor:pointer; white-space:nowrap; }
+  .dex-sort-item:hover { background:rgba(255,255,255,.06); }
+  .dex-sort-item.on { color:#a78bfa; }
   .dex-chev { width:16px; height:16px; display:flex; align-items:center; justify-content:center; color:#9a9aa2; transition:transform .2s ease; flex-shrink:0; }
   .dex-chev.open { transform:rotate(90deg); }
   .dex-chev svg { width:14px; height:14px; }
@@ -125,12 +139,79 @@ function injectSidebarStyles() {
   document.head.appendChild(s);
 }
 
+const SORT_LABELS = {
+  az: "Name A \u2192 Z", za: "Name Z \u2192 A",
+  date_new: "Modified \u2014 new to old", date_old: "Modified \u2014 old to new",
+  size_hi: "Size \u2014 large to small", size_lo: "Size \u2014 small to large"
+};
+function noteSize(n) { return (n.content || "").length; }
+function applySortFiles(arr) {
+  const a = arr.slice();
+  a.sort((x, y) => {
+    switch (sortMode) {
+      case "az": return (x.title || "").localeCompare(y.title || "");
+      case "za": return (y.title || "").localeCompare(x.title || "");
+      case "date_old": return parseTimestamp(x.lastEdited) - parseTimestamp(y.lastEdited);
+      case "size_hi": return noteSize(y) - noteSize(x) || (x.title || "").localeCompare(y.title || "");
+      case "size_lo": return noteSize(x) - noteSize(y) || (x.title || "").localeCompare(y.title || "");
+      case "date_new": default: return parseTimestamp(y.lastEdited) - parseTimestamp(x.lastEdited);
+    }
+  });
+  return a;
+}
+function applySortFolders(arr) {
+  const a = arr.slice();
+  a.sort((x, y) => sortMode === "za" ? (y.name || "").localeCompare(x.name || "") : (x.name || "").localeCompare(y.name || ""));
+  return a;
+}
+function pathLabel(folderId) {
+  const p = folderPath(folderId).map(f => f.name);
+  return p.length ? "root / " + p.join(" / ") : "root";
+}
+
+function openSortMenu(anchor) {
+  const existing = document.getElementById("dexSortMenu");
+  if (existing) { existing.remove(); return; }
+  const menu = document.createElement("div");
+  menu.id = "dexSortMenu";
+  menu.className = "dex-sort-menu";
+  Object.keys(SORT_LABELS).forEach(key => {
+    const it = document.createElement("div");
+    it.className = "dex-sort-item" + (key === sortMode ? " on" : "");
+    it.textContent = SORT_LABELS[key];
+    it.onclick = () => { sortMode = key; localStorage.setItem("dexSortMode", key); menu.remove(); renderSidebar(); };
+    menu.appendChild(it);
+  });
+  document.body.appendChild(menu);
+  const r = anchor.getBoundingClientRect();
+  menu.style.top = (r.bottom + 4) + "px";
+  menu.style.right = Math.max(8, (window.innerWidth - r.right)) + "px";
+  setTimeout(() => {
+    const off = (e) => { if (!menu.contains(e.target) && e.target !== anchor) { menu.remove(); document.removeEventListener("click", off); } };
+    document.addEventListener("click", off);
+  }, 0);
+}
+
+function clearSearch() {
+  searchQuery = "";
+  const si = document.getElementById("dexSearch");
+  if (si) si.value = "";
+}
+
 function buildSidebar() {
   const sb = document.getElementById("sidebar1");
   if (!sb) return;
   sb.innerHTML =
     '<div class="dex-head"><div class="dex-crumbs" id="dexCrumbs"></div><div class="dex-tools" id="dexTools"></div></div>' +
+    '<div class="dex-subhead">' +
+      '<input class="dex-search" id="dexSearch" placeholder="Search files & folders" autocomplete="off" spellcheck="false" />' +
+      '<div class="dex-sort" id="dexSortBtn" title="Sort">' + IC.sort + '</div>' +
+    '</div>' +
     '<div class="dex-tree" id="noteTree"></div>';
+  const si = document.getElementById("dexSearch");
+  if (si) { si.value = searchQuery; si.oninput = () => { searchQuery = si.value; renderSidebar(); }; }
+  const sbtn = document.getElementById("dexSortBtn");
+  if (sbtn) sbtn.onclick = () => openSortMenu(sbtn);
   renderSidebar();
 }
 
@@ -226,8 +307,8 @@ function renderFolderNode(f) {
   if (isOpen && !selectMode) {
     const ch = document.createElement("div");
     ch.className = "dex-children";
-    const subs = foldersInFolder(f.id).sort((a, b) => a.name.localeCompare(b.name));
-    const files = notesInFolder(f.id).sort((a, b) => parseTimestamp(b.lastEdited) - parseTimestamp(a.lastEdited));
+    const subs = applySortFolders(foldersInFolder(f.id));
+    const files = applySortFiles(notesInFolder(f.id));
     subs.forEach(sf => ch.appendChild(renderFolderNode(sf)));
     files.forEach(n => ch.appendChild(renderFileRow(n)));
     if (!subs.length && !files.length) { const e = document.createElement("div"); e.className = "dex-empty"; e.textContent = "Empty"; ch.appendChild(e); }
@@ -248,9 +329,23 @@ function renderSidebar() {
   const tree = document.getElementById("noteTree");
   if (!tree) return;
   tree.innerHTML = "";
-  const subs = foldersInFolder(currentFolderId).sort((a, b) => a.name.localeCompare(b.name));
-  const files = notesInFolder(currentFolderId).sort((a, b) => parseTimestamp(b.lastEdited) - parseTimestamp(a.lastEdited));
   const frag = document.createDocumentFragment();
+
+  const q = searchQuery.trim().toLowerCase();
+  if (q) {
+    const mFolders = applySortFolders(folders.filter(f => (f.name || "").toLowerCase().indexOf(q) !== -1));
+    const mNotes = applySortFiles(notes.filter(n => (n.title || "").toLowerCase().indexOf(q) !== -1));
+    mFolders.forEach(f => frag.appendChild(renderFolderMatchRow(f)));
+    mNotes.forEach(n => frag.appendChild(renderFileRow(n)));
+    tree.appendChild(frag);
+    if (!mFolders.length && !mNotes.length) {
+      const e = document.createElement("div"); e.className = "dex-empty"; e.textContent = "No matches"; tree.appendChild(e);
+    }
+    return;
+  }
+
+  const subs = applySortFolders(foldersInFolder(currentFolderId));
+  const files = applySortFiles(notesInFolder(currentFolderId));
   subs.forEach(f => frag.appendChild(renderFolderNode(f)));
   files.forEach(n => frag.appendChild(renderFileRow(n)));
   tree.appendChild(frag);
@@ -262,6 +357,18 @@ function renderSidebar() {
   }
 }
 
+function renderFolderMatchRow(f) {
+  const item = document.createElement("div");
+  item.className = "dex-item";
+  const row = document.createElement("div");
+  row.className = "dex-row";
+  row.title = pathLabel(f.parentId || null);
+  row.innerHTML = '<div class="dex-ic">' + IC.folder + "</div><div class=\"dex-name folder\">" + escapeHtml(f.name) + "</div><div class=\"dex-add\" title=\"Open\">" + IC.enter + "</div>";
+  row.onclick = () => { navigateTo(f.id); };
+  item.appendChild(row);
+  return item;
+}
+
 function populateNoteList() { renderSidebar(); }
 
 function navigateTo(id) {
@@ -269,6 +376,7 @@ function navigateTo(id) {
   localStorage.setItem("dexCurrentFolder", currentFolderId || "");
   selectMode = false;
   selected.clear();
+  clearSearch();
   renderSidebar();
 }
 function dexMoveOut() {
