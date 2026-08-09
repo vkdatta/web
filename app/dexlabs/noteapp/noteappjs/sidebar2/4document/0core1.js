@@ -1,6 +1,6 @@
 import { handleRename, handleRenameSubmit } from "./rename.js";
 import { handleDownload, handleDownloadSubmit } from "./download.js";
-import { handleOpenFile } from "./open.js";
+import { handleOpenFile } from "./open1.js";
 import { toggleFullscreen } from "./fullscreen.js";
 import { increaseFontSize, decreaseFontSize } from "./fontsize.js";
 import { createDebugTool } from "./debug.js";
