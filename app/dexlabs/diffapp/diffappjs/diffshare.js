@@ -1,0 +1,169 @@
+// ============================================================================
+// Shared file architecture between the Note App and the Diff Checker.
+// Raw and Morph panes are backed by real notes: editing a pane edits a note
+// (autosaved, synced, and visible in the sidebar tree, exactly like any note).
+// Re-clicking an already-active Raw/Morph button opens the sidebar in "pick"
+// mode so the user can bind an existing note to that pane.
+// Depends on globals from main.js (notes, saveNotes, populateNoteList,
+// isSignedIn, syncWithDrive, showNotification, showDiffChecker) and
+// sidebar1.js (genNoteId, currentFolderId, renderSidebar), and on diffElements
+// / diffusion from diffusionv3.js.
+// ============================================================================
+(function () {
+  function el(pane) { return pane === "raw" ? diffElements.raw : diffElements.morph; }
+  function boundKey(pane) { return pane === "raw" ? "diffRawNoteId" : "diffMorphNoteId"; }
+
+  window.diffGetBoundId = function (pane) { return localStorage.getItem(boundKey(pane)) || null; };
+  window.diffSetBoundId = function (pane, id) { localStorage.setItem(boundKey(pane), id || ""); };
+  function diffNoteById(id) { return (typeof notes !== "undefined" && Array.isArray(notes)) ? notes.find(n => String(n.id) === String(id)) : null; }
+
+  function makeNote(pane, content) {
+    const firstLine = (String(content || "").split("\n").find(l => l.trim()) || "").trim().slice(0, 50);
+    const note = {
+      id: genNoteId(),
+      title: firstLine || (pane === "raw" ? "Raw" : "Morph"),
+      content: content || "",
+      extension: "txt",
+      folderId: (typeof currentFolderId !== "undefined" && currentFolderId) ? currentFolderId : null,
+      lastEdited: new Date().toISOString(),
+      _created: true, _dirty: true
+    };
+    notes.push(note);
+    return note;
+  }
+
+  let syncTimer = null;
+  function scheduleSync() {
+    if (typeof isSignedIn !== "function" || !isSignedIn()) return;
+    clearTimeout(syncTimer);
+    syncTimer = setTimeout(() => { try { syncWithDrive(false); } catch (e) {} }, 1500);
+  }
+
+  // Commit a pane's current text into its bound note (creating one on first write).
+  window.diffCommitPane = function (pane) {
+    const t = el(pane);
+    if (!t) return;
+    const val = t.value;
+    const id = window.diffGetBoundId(pane);
+    let note = id ? diffNoteById(id) : null;
+    if (!note) {
+      if (!val.trim()) return;                 // don't create empty notes
+      note = makeNote(pane, val);
+      window.diffSetBoundId(pane, note.id);
+    } else {
+      if (note.content === val) return;
+      note.content = val;
+      note.lastEdited = new Date().toISOString();
+      note._dirty = true;
+    }
+    if (typeof saveNotes === "function") saveNotes();
+    if (typeof populateNoteList === "function") populateNoteList();
+    scheduleSync();
+  };
+
+  const saveTimers = { raw: null, morph: null };
+  function saveBack(pane) {
+    clearTimeout(saveTimers[pane]);
+    saveTimers[pane] = setTimeout(() => window.diffCommitPane(pane), 250);
+  }
+
+  // Load bound notes' content into the panes (on entering the Diff Checker / on load).
+  window.diffLoadBoundNotes = function () {
+    ["raw", "morph"].forEach(pane => {
+      const t = el(pane);
+      if (!t) return;
+      const id = window.diffGetBoundId(pane);
+      const note = id ? diffNoteById(id) : null;
+      if (note) t.value = note.content || "";
+      else if (id) window.diffSetBoundId(pane, "");   // stale binding (note was deleted)
+    });
+    if (typeof diffusion === "function") diffusion();
+  };
+
+  // Swap bindings when the user swaps the two panes (content is already swapped).
+  window.diffSwapBindings = function () {
+    const r = window.diffGetBoundId("raw"), m = window.diffGetBoundId("morph");
+    window.diffSetBoundId("raw", m);
+    window.diffSetBoundId("morph", r);
+  };
+
+  // ---- note picker (opened by re-clicking an already-active Raw/Morph button) ----
+  function showPickBanner(pane) {
+    hidePickBanner();
+    const sb = document.getElementById("sidebar1");
+    if (!sb) return;
+    const b = document.createElement("div");
+    b.id = "diffPickBanner";
+    b.className = "diff-pick-banner";
+    b.innerHTML = "<span>Pick a note for <b>" + (pane === "raw" ? "Raw" : "Morph") + "</b></span>" +
+                  '<button onclick="diffCancelPick()">Cancel</button>';
+    sb.insertBefore(b, sb.firstChild);
+  }
+  function hidePickBanner() { const b = document.getElementById("diffPickBanner"); if (b) b.remove(); }
+
+  window.diffOpenNotePicker = function (pane) {
+    window.__dexNotePick = function (noteId) { bindPicked(pane, noteId); };
+    const sb = document.getElementById("sidebar1");
+    if (sb) sb.classList.add("open");
+    if (typeof renderSidebar === "function") renderSidebar();
+    showPickBanner(pane);
+    if (typeof showNotification === "function") showNotification("Pick a note for " + (pane === "raw" ? "Raw" : "Morph"));
+  };
+
+  function bindPicked(pane, noteId) {
+    window.__dexNotePick = null;
+    hidePickBanner();
+    const sb = document.getElementById("sidebar1");
+    if (sb) sb.classList.remove("open");
+    const note = diffNoteById(noteId);
+    if (!note) return;
+    window.diffSetBoundId(pane, note.id);
+    const t = el(pane);
+    if (t) t.value = note.content || "";
+    if (typeof diffusion === "function") diffusion();
+    if (typeof showNotification === "function") showNotification((pane === "raw" ? "Raw" : "Morph") + " \u2190 " + (note.title || "note"));
+  }
+
+  window.diffCancelPick = function () {
+    window.__dexNotePick = null;
+    hidePickBanner();
+    const sb = document.getElementById("sidebar1");
+    if (sb) sb.classList.remove("open");
+  };
+
+  // ---- wiring ----
+  function init() {
+    // The sidebar lives inside the note-app container (display:none while in the
+    // Diff Checker). Reparent it to <body> so it can overlay either app.
+    const sb = document.getElementById("sidebar1");
+    if (sb && sb.parentElement !== document.body) document.body.appendChild(sb);
+
+    if (typeof diffElements !== "undefined") {
+      if (diffElements.raw) diffElements.raw.addEventListener("input", () => saveBack("raw"));
+      if (diffElements.morph) diffElements.morph.addEventListener("input", () => saveBack("morph"));
+    }
+
+    // Reload bound content whenever the Diff Checker is opened.
+    if (typeof window.showDiffChecker === "function") {
+      const orig = window.showDiffChecker;
+      window.showDiffChecker = function () { const r = orig.apply(this, arguments); try { window.diffLoadBoundNotes(); } catch (e) {} return r; };
+    }
+
+    if (!document.getElementById("diffShareStyles")) {
+      const st = document.createElement("style");
+      st.id = "diffShareStyles";
+      st.textContent =
+        ".diff-pick-banner{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 12px;background:rgba(144,209,200,.14);border-bottom:1px solid rgba(144,209,200,.3);color:#cfeee9;font-size:13px;}" +
+        ".diff-pick-banner b{color:#90d1c8;}" +
+        ".diff-pick-banner button{background:#1a1a1f;border:1px solid #2a2a32;color:#c8c8d0;border-radius:7px;padding:6px 12px;font-family:inherit;font-size:12.5px;cursor:pointer;}" +
+        ".diff-pick-banner button:hover{background:#24242c;color:#fff;}";
+      document.head.appendChild(st);
+    }
+
+    // If the page boots straight into the Diff Checker, load once notes are ready.
+    setTimeout(() => { try { window.diffLoadBoundNotes(); } catch (e) {} }, 1200);
+  }
+
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
+  else init();
+})();

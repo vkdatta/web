@@ -1,3 +1,5 @@
+  function diffCommit(type) { if (typeof diffCommitPane === 'function') diffCommitPane(type); }
+
   function diffHandleFile(input, type) {
     const file = input.files[0];
     if (!file) return;
@@ -6,9 +8,10 @@
       if (type === 'raw') diffElements.raw.value = e.target.result;
       else diffElements.morph.value = e.target.result;
       diffusion();
+      diffCommit(type);
     };
     r.readAsText(file);
-    input.value = ''; 
+    input.value = '';
   }
 
   function diffSwapTexts() {
@@ -16,12 +19,14 @@
     diffElements.raw.value = diffElements.morph.value;
     diffElements.morph.value = temp;
     diffusion();
+    if (typeof diffSwapBindings === 'function') diffSwapBindings();
   }
 
   function diffClearText(type) {
     if (type === 'raw') diffElements.raw.value = '';
     else diffElements.morph.value = '';
     diffusion();
+    diffCommit(type);
   }
 
 async function diffCopyText(type) {
@@ -50,6 +55,7 @@ async function diffPasteText(type) {
     }
 
     diffusion();
+    diffCommit(type);
   } catch (err) {
     console.error('Paste failed:', err);
   }

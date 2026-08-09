@@ -280,6 +280,7 @@ function renderFileRow(n) {
   row.onclick = (e) => {
     if (e.target.closest("[data-rename]")) { sidebarRename("file", n.id); return; }
     if (e.target.closest("[data-dl]")) { downloadFile(n); return; }
+    if (window.__dexNotePick) { window.__dexNotePick(n.id); return; }   // Diff Checker "pick a note" mode
     if (selectMode) { toggleSel("n:" + n.id); return; }
     const isActive = currentNote && String(currentNote.id) === String(n.id);
     if (isActive) { closeSidebar(); return; }   // already open -> reveal it by closing the sidebar
