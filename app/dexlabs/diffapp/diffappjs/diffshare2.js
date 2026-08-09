@@ -62,14 +62,20 @@
   };
 
   const saveTimers = { raw: null, morph: null };
+  const pendingEdit = { raw: false, morph: false };
   function saveBack(pane) {
+    pendingEdit[pane] = true;
     clearTimeout(saveTimers[pane]);
-    saveTimers[pane] = setTimeout(() => window.diffCommitPane(pane), 250);
+    saveTimers[pane] = setTimeout(() => { pendingEdit[pane] = false; window.diffCommitPane(pane); }, 250);
+  }
+  function flushPending(pane) {
+    if (pendingEdit[pane]) { clearTimeout(saveTimers[pane]); pendingEdit[pane] = false; window.diffCommitPane(pane); }
   }
 
   // Load bound notes' content into the panes (on entering the Diff Checker / on load).
   window.diffLoadBoundNotes = function () {
     ["raw", "morph"].forEach(pane => {
+      flushPending(pane);                              // commit any in-flight edit before reloading
       const t = el(pane);
       if (!t) return;
       const id = window.diffGetBoundId(pane);
@@ -153,10 +159,13 @@
       const st = document.createElement("style");
       st.id = "diffShareStyles";
       st.textContent =
-        ".diff-pick-banner{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 12px;background:rgba(144,209,200,.14);border-bottom:1px solid rgba(144,209,200,.3);color:#cfeee9;font-size:13px;}" +
+        ".diff-pick-banner{position:sticky;top:0;z-index:5;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:14px 14px;margin-top:6px;background:#0e1a18;border-bottom:1px solid rgba(144,209,200,.3);color:#cfeee9;font-size:13.5px;box-shadow:0 6px 16px rgba(0,0,0,.45);}" +
         ".diff-pick-banner b{color:#90d1c8;}" +
         ".diff-pick-banner button{background:#1a1a1f;border:1px solid #2a2a32;color:#c8c8d0;border-radius:7px;padding:6px 12px;font-family:inherit;font-size:12.5px;cursor:pointer;}" +
-        ".diff-pick-banner button:hover{background:#24242c;color:#fff;}";
+        ".diff-pick-banner button:hover{background:#24242c;color:#fff;}" +
+        ".diff-settings-row input[type=\"checkbox\"]{-webkit-appearance:none;appearance:none;width:22px;height:22px;border-radius:6px;border:1.5px solid #3a3a44;background:#272727;cursor:pointer;position:relative;flex-shrink:0;margin:0;}" +
+        ".diff-settings-row input[type=\"checkbox\"]:checked{background:#272727;border-color:#90d1c8;}" +
+        ".diff-settings-row input[type=\"checkbox\"]:checked::after{content:'';position:absolute;left:7px;top:3px;width:5px;height:10px;border:solid #fff;border-width:0 2px 2px 0;transform:rotate(45deg);}";
       document.head.appendChild(st);
     }
 

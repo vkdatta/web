@@ -9,6 +9,7 @@
       else diffElements.morph.value = e.target.result;
       diffusion();
       diffCommit(type);
+      if (typeof showNotification === "function") showNotification("Loaded file into " + (type === "raw" ? "Raw" : "Morph") + "");
     };
     r.readAsText(file);
     input.value = '';
@@ -20,6 +21,7 @@
     diffElements.morph.value = temp;
     diffusion();
     if (typeof diffSwapBindings === 'function') diffSwapBindings();
+    if (typeof showNotification === "function") showNotification("Swapped Raw and Morph");
   }
 
   function diffClearText(type) {
@@ -27,6 +29,7 @@
     else diffElements.morph.value = '';
     diffusion();
     diffCommit(type);
+    if (typeof showNotification === "function") showNotification("Cleared " + (type === "raw" ? "Raw" : "Morph") + "");
   }
 
 async function diffCopyText(type) {
@@ -38,6 +41,7 @@ async function diffCopyText(type) {
     if (!text) return;
 
     await navigator.clipboard.writeText(text);
+    if (typeof showNotification === "function") showNotification("Copied " + (type === "raw" ? "Raw" : "Morph") + "");
   } catch (err) {
     console.error('Copy failed:', err);
   }
@@ -56,6 +60,7 @@ async function diffPasteText(type) {
 
     diffusion();
     diffCommit(type);
+    if (typeof showNotification === "function") showNotification("Pasted into " + (type === "raw" ? "Raw" : "Morph") + "");
   } catch (err) {
     console.error('Paste failed:', err);
   }

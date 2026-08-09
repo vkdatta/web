@@ -11,6 +11,7 @@ let clipboard = null;
 let pathFolderIds = new Set();
 let searchQuery = "";
 let sortMode = localStorage.getItem("dexSortMode") || "date_new";
+let sortMixed = localStorage.getItem("dexSortMixed") === "1";
 let expanded = loadExpanded();
 function loadExpanded() { try { return new Set(JSON.parse(localStorage.getItem("dexExpanded") || "[]")); } catch (e) { return new Set(); } }
 function saveExpanded() { localStorage.setItem("dexExpanded", JSON.stringify([...expanded])); }
@@ -130,6 +131,10 @@ function injectSidebarStyles() {
   .dex-sort-item:hover { background:rgba(255,255,255,.06); }
   /* .dex-sort-item.on { color:#a78bfa; }  purple, kept for reference */
   .dex-sort-item.on { color:#90d1c8; }
+  .dex-sort-sep { height:1px; background:rgba(255,255,255,.08); margin:6px 4px; }
+  .dex-sort-toggle { display:flex; align-items:center; gap:9px; }
+  .dex-sort-toggle .dex-mini-check { width:18px; height:18px; border-radius:5px; border:1.5px solid #3a3a44; background:#272727; display:inline-flex; align-items:center; justify-content:center; color:#fff; font-size:12px; flex-shrink:0; }
+  .dex-sort-toggle.on .dex-mini-check { border-color:#90d1c8; }
   .dex-chev { width:16px; height:16px; display:flex; align-items:center; justify-content:center; color:#9a9aa2; transition:transform .2s ease; flex-shrink:0; }
   .dex-chev.open { transform:rotate(90deg); }
   .dex-chev svg { width:14px; height:14px; }
@@ -187,6 +192,19 @@ function openSortMenu(anchor) {
     it.onclick = () => { sortMode = key; localStorage.setItem("dexSortMode", key); menu.remove(); renderSidebar(); };
     menu.appendChild(it);
   });
+  const sep = document.createElement("div"); sep.className = "dex-sort-sep"; menu.appendChild(sep);
+  const chk = document.createElement("div");
+  chk.className = "dex-sort-item dex-sort-toggle" + (sortMixed ? " on" : "");
+  chk.innerHTML = '<span class="dex-mini-check">' + (sortMixed ? "\u2713" : "") + "</span>Files &amp; folders at same level";
+  chk.onclick = (e) => {
+    e.stopPropagation();
+    sortMixed = !sortMixed;
+    localStorage.setItem("dexSortMixed", sortMixed ? "1" : "0");
+    chk.classList.toggle("on", sortMixed);
+    chk.querySelector(".dex-mini-check").textContent = sortMixed ? "\u2713" : "";
+    renderSidebar();
+  };
+  menu.appendChild(chk);
   document.body.appendChild(menu);
   const r = anchor.getBoundingClientRect();
   menu.style.top = (r.bottom + 4) + "px";
@@ -237,6 +255,7 @@ function renderTools() {
   if (clipboard) {
     const n = (clipboard.noteIds.length + clipboard.folderIds.length);
     html += '<div class="dex-tool accent" title="Paste ' + n + ' here" onclick="sidebarPaste()">' + IC.paste + '</div>';
+    html += '<div class="dex-tool" title="New file or folder" onclick="sidebarAddItems()">' + IC.plus + '</div>';
     if (currentFolderId) html += '<div class="dex-tool" title="Up one level" onclick="dexMoveOut()">' + IC.up + '</div>';
     html += '<div class="dex-tool" title="Cancel" onclick="sidebarCancelClipboard()">' + IC.x + '</div>';
   } else if (selectMode) {
@@ -259,6 +278,7 @@ function closeSidebar() {
   const tog = document.getElementById("sidebar1Toggle");
   if (sb) sb.classList.remove("open");
   if (tog) tog.innerHTML = '<i class="material-symbols-rounded">view_object_track</i>';
+  const m = document.getElementById("dexSortMenu"); if (m) m.remove();
 }
 
 function renderFileRow(n) {
@@ -322,14 +342,32 @@ function renderFolderNode(f) {
   if (isOpen && !selectMode) {
     const ch = document.createElement("div");
     ch.className = "dex-children";
-    const subs = applySortFolders(foldersInFolder(f.id));
-    const files = applySortFiles(notesInFolder(f.id));
-    subs.forEach(sf => ch.appendChild(renderFolderNode(sf)));
-    files.forEach(n => ch.appendChild(renderFileRow(n)));
+    orderItems(foldersInFolder(f.id), notesInFolder(f.id), renderFolderNode, renderFileRow)
+      .forEach(node => ch.appendChild(node));
     if (!subs.length && !files.length) { const e = document.createElement("div"); e.className = "dex-empty"; e.textContent = "Empty"; ch.appendChild(e); }
     item.appendChild(ch);
   }
   return item;
+}
+
+function mixedComparator(a, b) {
+  switch (sortMode) {
+    case "az": return a.name.localeCompare(b.name);
+    case "za": return b.name.localeCompare(a.name);
+    case "date_old": return a.mtime - b.mtime || a.name.localeCompare(b.name);
+    case "size_hi": return b.size - a.size || a.name.localeCompare(b.name);
+    case "size_lo": return a.size - b.size || a.name.localeCompare(b.name);
+    case "date_new": default: return b.mtime - a.mtime || a.name.localeCompare(b.name);
+  }
+}
+function orderItems(subs, files, folderRenderer, fileRenderer) {
+  if (sortMixed) {
+    const all = subs.map(f => ({ t: "f", o: f, name: f.name || "", mtime: 0, size: foldersInFolder(f.id).length + notesInFolder(f.id).length }))
+      .concat(files.map(n => ({ t: "n", o: n, name: n.title || "", mtime: parseTimestamp(n.lastEdited), size: (n.content || "").length })));
+    all.sort(mixedComparator);
+    return all.map(x => x.t === "f" ? folderRenderer(x.o) : fileRenderer(x.o));
+  }
+  return applySortFolders(subs).map(folderRenderer).concat(applySortFiles(files).map(fileRenderer));
 }
 
 function renderSidebar() {
@@ -348,10 +386,9 @@ function renderSidebar() {
 
   const q = searchQuery.trim().toLowerCase();
   if (q) {
-    const mFolders = applySortFolders(folders.filter(f => (f.name || "").toLowerCase().indexOf(q) !== -1));
-    const mNotes = applySortFiles(notes.filter(n => (n.title || "").toLowerCase().indexOf(q) !== -1));
-    mFolders.forEach(f => frag.appendChild(renderFolderMatchRow(f)));
-    mNotes.forEach(n => frag.appendChild(renderFileRow(n)));
+    const mFolders = folders.filter(f => (f.name || "").toLowerCase().indexOf(q) !== -1);
+    const mNotes = notes.filter(n => (n.title || "").toLowerCase().indexOf(q) !== -1);
+    orderItems(mFolders, mNotes, renderFolderMatchRow, renderFileRow).forEach(node => frag.appendChild(node));
     tree.appendChild(frag);
     if (!mFolders.length && !mNotes.length) {
       const e = document.createElement("div"); e.className = "dex-empty"; e.textContent = "No matches"; tree.appendChild(e);
@@ -359,10 +396,8 @@ function renderSidebar() {
     return;
   }
 
-  const subs = applySortFolders(foldersInFolder(currentFolderId));
-  const files = applySortFiles(notesInFolder(currentFolderId));
-  subs.forEach(f => frag.appendChild(renderFolderNode(f)));
-  files.forEach(n => frag.appendChild(renderFileRow(n)));
+  orderItems(foldersInFolder(currentFolderId), notesInFolder(currentFolderId), renderFolderNode, renderFileRow)
+    .forEach(node => frag.appendChild(node));
   tree.appendChild(frag);
   if (!subs.length && !files.length) {
     const e = document.createElement("div");
