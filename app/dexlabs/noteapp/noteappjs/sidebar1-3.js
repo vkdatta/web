@@ -99,9 +99,13 @@ function injectSidebarStyles() {
   .dex-row { display:flex; align-items:center; gap:9px; padding:9px 10px; border-radius:8px; cursor:pointer; transition:background .15s ease; }
   .dex-row:hover { background:rgba(255,255,255,.04); }
   .dex-row.sel { background:rgba(154,176,255,.12); }
+  /* purple (kept for future reference):
   .dex-row.dex-current { background:rgba(167,139,250,.10); }
   .dex-row.dex-current .dex-ic { color:#a78bfa; }
-  .dex-chev.onpath { color:#a78bfa; }
+  .dex-chev.onpath { color:#a78bfa; } */
+  .dex-row.dex-current { background:rgba(144,209,200,.12); }
+  .dex-row.dex-current .dex-ic { color:#90d1c8; }
+  .dex-chev.onpath { color:#90d1c8; }
   .dex-ic { width:18px; height:18px; flex-shrink:0; display:flex; align-items:center; justify-content:center; color:#c2c2ca; }
   .dex-ic svg { width:100%; height:100%; }
   .dex-name { flex:1; font-size:13.5px; color:#c8c8d0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
@@ -124,7 +128,8 @@ function injectSidebarStyles() {
   .dex-sort-menu { position:fixed; z-index:100003; background:#141419; border:1px solid #2a2a32; border-radius:10px; padding:6px; box-shadow:0 10px 30px rgba(0,0,0,.5); min-width:210px; }
   .dex-sort-item { padding:9px 12px; border-radius:7px; font-size:13px; color:#c8c8d0; cursor:pointer; white-space:nowrap; }
   .dex-sort-item:hover { background:rgba(255,255,255,.06); }
-  .dex-sort-item.on { color:#a78bfa; }
+  /* .dex-sort-item.on { color:#a78bfa; }  purple, kept for reference */
+  .dex-sort-item.on { color:#90d1c8; }
   .dex-chev { width:16px; height:16px; display:flex; align-items:center; justify-content:center; color:#9a9aa2; transition:transform .2s ease; flex-shrink:0; }
   .dex-chev.open { transform:rotate(90deg); }
   .dex-chev svg { width:14px; height:14px; }
@@ -249,6 +254,13 @@ function renderTools() {
   t.innerHTML = html;
 }
 
+function closeSidebar() {
+  const sb = document.getElementById("sidebar1");
+  const tog = document.getElementById("sidebar1Toggle");
+  if (sb) sb.classList.remove("open");
+  if (tog) tog.innerHTML = '<i class="material-symbols-rounded">view_object_track</i>';
+}
+
 function renderFileRow(n) {
   const item = document.createElement("div");
   item.className = "dex-item";
@@ -269,9 +281,11 @@ function renderFileRow(n) {
     if (e.target.closest("[data-rename]")) { sidebarRename("file", n.id); return; }
     if (e.target.closest("[data-dl]")) { downloadFile(n); return; }
     if (selectMode) { toggleSel("n:" + n.id); return; }
+    const isActive = currentNote && String(currentNote.id) === String(n.id);
+    if (isActive) { closeSidebar(); return; }   // already open -> reveal it by closing the sidebar
     window.currentHighlightLanguage = "none";
     if (typeof window.immediatePlainRender === "function") window.immediatePlainRender();
-    showNoteApp(n.id);
+    showNoteApp(n.id);                          // make it active; keep sidebar open so the highlight shows
   };
   item.appendChild(row);
   return item;
