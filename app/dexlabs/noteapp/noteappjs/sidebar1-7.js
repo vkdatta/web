@@ -133,8 +133,8 @@ function injectSidebarStyles() {
   .dex-sort-item.on { color:#90d1c8; }
   .dex-sort-sep { height:1px; background:rgba(255,255,255,.08); margin:6px 4px; }
   .dex-sort-toggle { display:flex; align-items:center; gap:9px; }
-  .dex-sort-toggle .dex-mini-check { width:18px; height:18px; border-radius:5px; border:1.5px solid #3a3a44; background:#272727; display:inline-flex; align-items:center; justify-content:center; color:#fff; font-size:12px; flex-shrink:0; }
-  .dex-sort-toggle.on .dex-mini-check { border-color:#90d1c8; }
+  .dex-sort-toggle .dex-mini-check { width:19px; height:19px; border-radius:5px; border:1.5px solid #3a3a44; background:transparent; display:inline-flex; align-items:center; justify-content:center; color:#0c0c0e; font-size:12px; font-weight:700; flex-shrink:0; }
+  .dex-sort-toggle.on .dex-mini-check { background:#9ab0ff; border-color:#9ab0ff; }
   .dex-chev { width:16px; height:16px; display:flex; align-items:center; justify-content:center; color:#9a9aa2; transition:transform .2s ease; flex-shrink:0; }
   .dex-chev.open { transform:rotate(90deg); }
   .dex-chev svg { width:14px; height:14px; }
@@ -342,8 +342,9 @@ function renderFolderNode(f) {
   if (isOpen && !selectMode) {
     const ch = document.createElement("div");
     ch.className = "dex-children";
-    orderItems(foldersInFolder(f.id), notesInFolder(f.id), renderFolderNode, renderFileRow)
-      .forEach(node => ch.appendChild(node));
+    const subs = foldersInFolder(f.id);
+    const files = notesInFolder(f.id);
+    orderItems(subs, files, renderFolderNode, renderFileRow).forEach(node => ch.appendChild(node));
     if (!subs.length && !files.length) { const e = document.createElement("div"); e.className = "dex-empty"; e.textContent = "Empty"; ch.appendChild(e); }
     item.appendChild(ch);
   }

@@ -57,7 +57,7 @@
       note._dirty = true;
     }
     if (typeof saveNotes === "function") saveNotes();
-    if (typeof populateNoteList === "function") populateNoteList();
+    try { if (typeof populateNoteList === "function") populateNoteList(); } catch (e) { console.error("sidebar render failed during diff commit", e); }
     scheduleSync();
   };
 
@@ -163,9 +163,9 @@
         ".diff-pick-banner b{color:#90d1c8;}" +
         ".diff-pick-banner button{background:#1a1a1f;border:1px solid #2a2a32;color:#c8c8d0;border-radius:7px;padding:6px 12px;font-family:inherit;font-size:12.5px;cursor:pointer;}" +
         ".diff-pick-banner button:hover{background:#24242c;color:#fff;}" +
-        ".diff-settings-row input[type=\"checkbox\"]{-webkit-appearance:none;appearance:none;width:22px;height:22px;border-radius:6px;border:1.5px solid #3a3a44;background:#272727;cursor:pointer;position:relative;flex-shrink:0;margin:0;}" +
-        ".diff-settings-row input[type=\"checkbox\"]:checked{background:#272727;border-color:#90d1c8;}" +
-        ".diff-settings-row input[type=\"checkbox\"]:checked::after{content:'';position:absolute;left:7px;top:3px;width:5px;height:10px;border:solid #fff;border-width:0 2px 2px 0;transform:rotate(45deg);}";
+        ".diff-settings-row input[type=\"checkbox\"]{-webkit-appearance:none;appearance:none;width:20px;height:20px;border-radius:5px;border:1.5px solid #3a3a44;background:transparent;cursor:pointer;position:relative;flex-shrink:0;margin:0;}" +
+        ".diff-settings-row input[type=\"checkbox\"]:checked{background:#9ab0ff;border-color:#9ab0ff;}" +
+        ".diff-settings-row input[type=\"checkbox\"]:checked::after{content:'';position:absolute;left:6px;top:2px;width:5px;height:10px;border:solid #0c0c0e;border-width:0 2px 2px 0;transform:rotate(45deg);}";
       document.head.appendChild(st);
     }
 
