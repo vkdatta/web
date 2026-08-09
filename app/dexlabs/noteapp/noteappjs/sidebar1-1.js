@@ -44,7 +44,7 @@ function saveFolders() {
   localStorage.setItem("foldersLastEdited", new Date().toISOString());
 }
 function isVisibleFile(n) {
-  return !!((n.content && n.content.trim().length) || n._created || n.folderId);
+  return !!n;
 }
 function escapeHtml(s) {
   return String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -71,6 +71,7 @@ function isDescendant(candidateId, ancestorId) {
   return false;
 }
 function genFolderId() { return "fld_" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
+function genNoteId() { return "n" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2, 8); }
 function randomBase(kind) { return (kind === "folder" ? "folder" : "file") + "-" + Math.random().toString(36).slice(2, 6); }
 
 function injectSidebarStyles() {
@@ -429,13 +430,10 @@ function createFromTree(nodes, parentFolderId) {
       const r = createFromTree(node.children || [], fid);
       f += r.folders; fi += r.files; if (r.limit) limit = true;
     } else {
-      const slot = notes.find(n => !isVisibleFile(n));
-      if (!slot) { limit = true; return; }
       let title = node.name, ext = "txt";
       const dot = node.name.lastIndexOf(".");
       if (dot > 0) { title = node.name.slice(0, dot); ext = node.name.slice(dot + 1) || "txt"; }
-      slot.title = title; slot._created = true; slot.folderId = parentFolderId || null;
-      slot.content = ""; slot.extension = ext; slot.lastEdited = new Date().toISOString(); slot._dirty = true;
+      notes.push({ id: genNoteId(), title, content: "", extension: ext, folderId: parentFolderId || null, lastEdited: new Date().toISOString(), _created: true, _dirty: true });
       fi++;
     }
   });
@@ -449,36 +447,34 @@ function createFromTreeText(raw) {
   saveFolders();
   saveNotes();
   renderSidebar();
-  showNotification((r.limit ? "Note limit hit \u2014 " : "") + "Created " + r.folders + " folder(s), " + r.files + " file(s)");
+  showNotification("Created " + r.folders + " folder(s), " + r.files + " file(s)");
   if (isSignedIn()) syncWithDrive(false);
 }
 
 function createItems(namesRaw, kind, count) {
   let names = (namesRaw || "").split(",").map(s => s.trim()).filter(Boolean);
   if (!names.length) {
-    const c = Math.max(1, Math.min(parseInt(count, 10) || 1, maxNotes));
+    const c = Math.max(1, Math.min(parseInt(count, 10) || 1, 1000));
     const used = {};
     names = [];
     for (let i = 0; i < c; i++) { let nm; do { nm = randomBase(kind); } while (used[nm]); used[nm] = 1; names.push(nm); }
   }
-  let created = 0, limit = false, firstNote = null;
+  let created = 0, firstNote = null;
   names.forEach(name => {
     if (kind === "folder") {
       folders.push({ id: genFolderId(), name, parentId: currentFolderId || null });
       created++;
     } else {
-      const slot = notes.find(n => !isVisibleFile(n));
-      if (!slot) { limit = true; return; }
-      slot.title = name; slot._created = true; slot.folderId = currentFolderId || null;
-      slot.content = ""; slot.extension = "txt"; slot.lastEdited = new Date().toISOString(); slot._dirty = true;
-      created++; if (!firstNote) firstNote = slot;
+      const note = { id: genNoteId(), title: name, content: "", extension: "txt", folderId: currentFolderId || null, lastEdited: new Date().toISOString(), _created: true, _dirty: true };
+      notes.push(note);
+      created++; if (!firstNote) firstNote = note;
     }
   });
   if (kind === "folder") saveFolders();
   saveNotes();
   renderSidebar();
   if (kind === "file" && firstNote && created === 1) showNoteApp(firstNote.id);
-  showNotification(limit ? ("Created " + created + " (note limit reached)") : ("Created " + created));
+  showNotification("Created " + created);
   if (isSignedIn()) syncWithDrive(false);
 }
 
@@ -554,15 +550,15 @@ function sidebarStartCopy() {
 function sidebarCancelClipboard() { clipboard = null; renderSidebar(); }
 
 function copyFileInto(src, folderId) {
-  const slot = notes.find(n => !isVisibleFile(n));
-  if (!slot) return false;
-  slot.title = (src.title || ("note " + src.id));
-  slot.content = src.content || "";
-  slot.extension = src.extension || "txt";
-  slot._created = true;
-  slot.folderId = folderId !== undefined ? folderId : (src.folderId || null);
-  slot.lastEdited = new Date().toISOString();
-  slot._dirty = true;
+  notes.push({
+    id: genNoteId(),
+    title: src.title || "untitled",
+    content: src.content || "",
+    extension: src.extension || "txt",
+    folderId: folderId !== undefined ? folderId : (src.folderId || null),
+    lastEdited: new Date().toISOString(),
+    _created: true, _dirty: true
+  });
   return true;
 }
 function copyFolderSubtree(srcId, newParentId, top) {
@@ -597,21 +593,13 @@ function sidebarPaste() {
   }
   clipboard = null;
   renderSidebar();
-  showNotification(blocked ? ("Pasted (" + blocked + " skipped)") : (limit ? "Pasted (note limit reached)" : "Pasted"));
+  showNotification(blocked ? ("Pasted (" + blocked + " skipped)") : "Pasted");
   if (isSignedIn()) syncWithDrive(false);
 }
 
-async function deleteNoteFile(n) {
+async function deleteNoteBlob(n) {
   const map = loadFileIdMap();
   const fid = map[n.id];
-  n.content = "";
-  n.title = "note " + n.id;
-  n._created = false;
-  n.folderId = null;
-  n.extension = "txt";
-  n.lastEdited = "1970-01-01T00:00:00.000Z";
-  n._dirty = false;
-  if (currentNote && String(currentNote.id) === String(n.id)) { currentNote = null; if (noteTextarea) noteTextarea.value = ""; }
   if (fid) {
     if (isSignedIn() && navigator.onLine) { try { await driveDelete(fid); } catch (e) {} }
     delete map[n.id];
@@ -626,34 +614,29 @@ async function sidebarDeleteSelected() {
   let allFolderIds = [];
   folderIds.forEach(fid => { allFolderIds = allFolderIds.concat(getDescendantFolderIds(fid)); });
   allFolderIds = [...new Set(allFolderIds)];
-  const doomedNotes = notes.filter(n => noteIds.indexOf(String(n.id)) !== -1 || allFolderIds.indexOf(n.folderId) !== -1);
-  const visibleTotal = notes.filter(isVisibleFile).length;
-  const doomedVisible = doomedNotes.filter(isVisibleFile).length;
-  const wouldRemoveAll = (visibleTotal - doomedVisible) <= 0;
-  if (wouldRemoveAll && doomedVisible <= 1 && folderIds.length === 0) {
-    showNotification("There should be at least one active note");
-    return;
+  let doomedNotes = notes.filter(n => noteIds.indexOf(String(n.id)) !== -1 || allFolderIds.indexOf(n.folderId) !== -1);
+  if (doomedNotes.length >= notes.length && notes.length > 0) {
+    // would empty the app — keep the most-recent note
+    doomedNotes = doomedNotes.slice().sort((a, b) => parseTimestamp(b.lastEdited) - parseTimestamp(a.lastEdited));
+    doomedNotes.shift();
+    if (!doomedNotes.length && !allFolderIds.length) { showNotification("There should be at least one active note"); return; }
   }
   const summary = "Deleting " + doomedNotes.length + " file(s)" + (folderIds.length ? " and " + folderIds.length + " folder(s)" : "") + ".";
-  confirmDeleteWithKey(() => performDelete(doomedNotes.slice(), allFolderIds.slice(), wouldRemoveAll), summary);
+  confirmDeleteWithKey(() => performDelete(doomedNotes.slice(), allFolderIds.slice()), summary);
 }
 
-async function performDelete(doomedNotes, allFolderIds, wouldRemoveAll) {
-  let keep = null;
-  if (wouldRemoveAll && doomedNotes.length) { keep = doomedNotes[0]; doomedNotes = doomedNotes.slice(1); }
-  for (const n of doomedNotes) await deleteNoteFile(n);
+async function performDelete(doomedNotes, allFolderIds) {
+  for (const n of doomedNotes) await deleteNoteBlob(n);
+  const doomedIds = new Set(doomedNotes.map(n => String(n.id)));
+  if (currentNote && doomedIds.has(String(currentNote.id))) { currentNote = null; if (noteTextarea) noteTextarea.value = ""; }
+  notes = notes.filter(n => !doomedIds.has(String(n.id)));
   folders = folders.filter(f => allFolderIds.indexOf(f.id) === -1);
   if (allFolderIds.length) saveFolders();
-  if (keep) {
-    keep.content = ""; keep.title = "note " + keep.id; keep._created = true;
-    keep.folderId = null; keep.extension = "txt"; keep.lastEdited = new Date().toISOString(); keep._dirty = true;
-  }
   saveNotes();
   if (currentFolderId && allFolderIds.indexOf(currentFolderId) !== -1) { currentFolderId = null; localStorage.setItem("dexCurrentFolder", ""); }
   selected.clear(); selectMode = false;
   renderSidebar();
-  if (keep) { showNotification("Deleted \u2014 kept one active note"); showNoteApp(keep.id); }
-  else showNotification("Deleted");
+  showNotification("Deleted");
   if (isSignedIn()) syncWithDrive(false);
 }
 
