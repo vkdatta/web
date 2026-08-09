@@ -396,8 +396,9 @@ function renderSidebar() {
     return;
   }
 
-  orderItems(foldersInFolder(currentFolderId), notesInFolder(currentFolderId), renderFolderNode, renderFileRow)
-    .forEach(node => frag.appendChild(node));
+  const subs = foldersInFolder(currentFolderId);
+  const files = notesInFolder(currentFolderId);
+  orderItems(subs, files, renderFolderNode, renderFileRow).forEach(node => frag.appendChild(node));
   tree.appendChild(frag);
   if (!subs.length && !files.length) {
     const e = document.createElement("div");
