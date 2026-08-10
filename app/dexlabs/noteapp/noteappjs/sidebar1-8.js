@@ -133,7 +133,8 @@ function injectSidebarStyles() {
   .dex-sort-item.on { color:#90d1c8; }
   .dex-sort-sep { height:1px; background:rgba(255,255,255,.08); margin:6px 4px; }
   .dex-sort-toggle { display:flex; align-items:center; gap:9px; }
-  .dex-sort-toggle .dex-mini-check { width:19px; height:19px; border-radius:5px; border:1.5px solid #3a3a44; background:transparent; display:inline-flex; align-items:center; justify-content:center; color:#0c0c0e; font-size:12px; font-weight:700; flex-shrink:0; }
+  .dex-sort-toggle .dex-mini-check { width:19px; height:19px; border-radius:5px; border:1.5px solid #3a3a44; background:transparent; display:inline-flex; align-items:center; justify-content:center; color:#0c0c0e; flex-shrink:0; }
+  .dex-sort-toggle .dex-mini-check svg { width:13px; height:13px; }
   .dex-sort-toggle.on .dex-mini-check { background:#9ab0ff; border-color:#9ab0ff; }
   .dex-chev { width:16px; height:16px; display:flex; align-items:center; justify-content:center; color:#9a9aa2; transition:transform .2s ease; flex-shrink:0; }
   .dex-chev.open { transform:rotate(90deg); }
@@ -195,13 +196,13 @@ function openSortMenu(anchor) {
   const sep = document.createElement("div"); sep.className = "dex-sort-sep"; menu.appendChild(sep);
   const chk = document.createElement("div");
   chk.className = "dex-sort-item dex-sort-toggle" + (sortMixed ? " on" : "");
-  chk.innerHTML = '<span class="dex-mini-check">' + (sortMixed ? "\u2713" : "") + "</span>Files &amp; folders at same level";
+  chk.innerHTML = '<span class="dex-mini-check">' + (sortMixed ? IC.tick : "") + "</span>Files &amp; folders at same level";
   chk.onclick = (e) => {
     e.stopPropagation();
     sortMixed = !sortMixed;
     localStorage.setItem("dexSortMixed", sortMixed ? "1" : "0");
     chk.classList.toggle("on", sortMixed);
-    chk.querySelector(".dex-mini-check").textContent = sortMixed ? "\u2713" : "";
+    chk.querySelector(".dex-mini-check").innerHTML = sortMixed ? IC.tick : "";
     renderSidebar();
   };
   menu.appendChild(chk);
