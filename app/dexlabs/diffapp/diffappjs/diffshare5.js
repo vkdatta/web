@@ -159,7 +159,7 @@
       const st = document.createElement("style");
       st.id = "diffShareStyles";
       st.textContent =
-        ".diff-pick-banner{position:sticky;top:0;z-index:5;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:14px 14px;margin-top:16px;background:#0e1a18;border-bottom:1px solid rgba(144,209,200,.3);color:#cfeee9;font-size:13.5px;box-shadow:0 6px 16px rgba(0,0,0,.45);}" +
+        ".diff-pick-banner{position:sticky;top:0;z-index:5;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:14px 14px;margin-top:160px;background:#0e1a18;border-bottom:1px solid rgba(144,209,200,.3);color:#cfeee9;font-size:13.5px;box-shadow:0 6px 16px rgba(0,0,0,.45);}" +
         ".diff-pick-banner b{color:#90d1c8;}" +
         ".diff-pick-banner button{background:#1a1a1f;border:1px solid #2a2a32;color:#c8c8d0;border-radius:7px;padding:6px 12px;font-family:inherit;font-size:12.5px;cursor:pointer;}" +
         ".diff-pick-banner button:hover{background:#24242c;color:#fff;}" +
