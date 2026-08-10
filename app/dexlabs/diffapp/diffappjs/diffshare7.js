@@ -155,6 +155,42 @@
       window.showDiffChecker = function () { const r = orig.apply(this, arguments); try { window.diffLoadBoundNotes(); } catch (e) {} return r; };
     }
 
+    // Flush any in-flight (debounced) pane edit into its bound note.
+    window.diffFlushAll = function () { flushPending("raw"); flushPending("morph"); };
+
+    // If the note currently open in the Note App is bound to a pane, its
+    // textarea can go stale (the underlying note object gets updated by
+    // diffCommitPane, but the visible <textarea> is never re-read). Reopen
+    // it so the editor reflects what was just typed in the Diff Checker.
+    function refreshOpenNoteIfBound() {
+      if (typeof currentNote === "undefined" || !currentNote) return;
+      const boundRaw = window.diffGetBoundId("raw");
+      const boundMorph = window.diffGetBoundId("morph");
+      if (String(currentNote.id) === String(boundRaw) || String(currentNote.id) === String(boundMorph)) {
+        if (typeof openNote === "function") openNote(currentNote.id);
+      }
+    }
+
+    // Flush pending diff edits whenever the user navigates away from the
+    // Diff Checker (into the Note App or the homepage), before anything
+    // else runs, so the note data is current before it's displayed.
+    if (typeof window.showNoteApp === "function") {
+      const origShowNoteApp = window.showNoteApp;
+      window.showNoteApp = function () {
+        try { window.diffFlushAll(); } catch (e) {}
+        const r = origShowNoteApp.apply(this, arguments);
+        try { refreshOpenNoteIfBound(); } catch (e) {}
+        return r;
+      };
+    }
+    if (typeof window.showHomepage === "function") {
+      const origShowHomepage = window.showHomepage;
+      window.showHomepage = function () {
+        try { window.diffFlushAll(); } catch (e) {}
+        return origShowHomepage.apply(this, arguments);
+      };
+    }
+
     if (!document.getElementById("diffShareStyles")) {
       const st = document.createElement("style");
       st.id = "diffShareStyles";
