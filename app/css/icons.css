@@ -34,3 +34,16 @@ delluna-icon svg * {
 
 /* dexsins: dekxitty defines --c-text-dim in its main.css; dexsins' body text colour is #cacaca. */
 :root { --c-text-dim: #cacaca; }
+
+/* Icon colour — the fix for black icons.
+   Delluna SVGs carry no colour of their own (orbit/hud/circuit/plasma parts
+   default to black). dekxitty paints them by setting fill + stroke on
+   `delluna-icon svg, delluna-icon svg *` in every component. dexsins does it
+   once, globally, driven by --dx-icon; override --dx-icon on any parent
+   (or add a hover rule) to recolour the icons inside it. */
+:root { --dx-icon: #cacaca; }
+delluna-icon svg,
+delluna-icon svg * {
+  fill: var(--dx-icon);
+  stroke: var(--dx-icon);
+}

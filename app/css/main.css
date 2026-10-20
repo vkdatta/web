@@ -190,7 +190,11 @@ body.item-view .Blog .post-title-container {
   box-sizing: border-box;
   display: block;
   width: 100%;
-  margin-top: 20px;
+  margin-top: 72px;
+  margin-bottom: 12px;
+}
+@media (max-width: 600px) {
+  body.item-view .Blog .post-title-container { margin-top: 56px; }
 }
 body.item-view .Blog .post-title,
 body.item-view .Blog .post-title a {
@@ -201,9 +205,26 @@ body.item-view .Blog .post-title-container * {
   text-align: left !important;
   letter-spacing: 0.5px;
   word-spacing: 2px;
+  font-family: classy, system-ui, sans-serif !important;
   font-size: 150%;
-  line-height: 1.25;
+  line-height: 1.3;
   color: var(--dx-text);
+}
+
+/* Ink reveal for the article title (same mask-sweep as dekxitty's voldemort .ink-appear) */
+body.item-view .Blog .post-title {
+  -webkit-mask-image: linear-gradient(to right, #000 45%, transparent 50%, transparent 55%);
+          mask-image: linear-gradient(to right, #000 45%, transparent 50%, transparent 55%);
+  -webkit-mask-size: 300% 100%;
+          mask-size: 300% 100%;
+  animation: dxInkAppear 2s ease-in-out forwards;
+}
+@keyframes dxInkAppear {
+  0%   { -webkit-mask-position: 100% 0; mask-position: 100% 0; }
+  100% { -webkit-mask-position: 0% 0;   mask-position: 0% 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  body.item-view .Blog .post-title { animation: none; -webkit-mask-image: none; mask-image: none; }
 }
 .post-title,
 .post-title a {
