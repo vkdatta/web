@@ -190,11 +190,11 @@ body.item-view .Blog .post-title-container {
   box-sizing: border-box;
   display: block;
   width: 100%;
-  margin-top: 72px;
+  margin-top: 62px;
   margin-bottom: 12px;
 }
 @media (max-width: 600px) {
-  body.item-view .Blog .post-title-container { margin-top: 56px; }
+  body.item-view .Blog .post-title-container { margin-top: 46px; }
 }
 body.item-view .Blog .post-title,
 body.item-view .Blog .post-title a {
@@ -205,10 +205,10 @@ body.item-view .Blog .post-title-container * {
   text-align: left !important;
   letter-spacing: 0.5px;
   word-spacing: 2px;
-  font-family: classy, system-ui, sans-serif !important;
+  font-family: dexy, system-ui, sans-serif !important;
   font-size: 150%;
   line-height: 1.3;
-  color: var(--dx-text);
+  color: #A2A2A2;
 }
 
 /* Ink reveal for the article title (same mask-sweep as dekxitty's voldemort .ink-appear) */

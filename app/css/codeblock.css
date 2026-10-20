@@ -3,7 +3,7 @@
   margin: 20px 0;
   max-width: 100%;
   font-size: 14px;
-  background: var(--dx-surface, #0c0c0c);
+  background: var(--dx-surface, #262626);
   border-radius: var(--dx-radius, 10px);
   border: 1px solid var(--dx-border, rgba(255,255,255,0.1));
   overflow: hidden;
@@ -15,7 +15,7 @@
   justify-content: space-between;
   align-items: center;
   padding: 5px 5px 5px 8px;
-  background: var(--dx-surface-raised, #111);
+  background: var(--dx-surface-raised, #404040);
   border-bottom: 1px solid var(--dx-border, rgba(255,255,255,0.1));
   min-height: 20px;
   font-family: "Source Code Pro", Monaco, Consolas, "Courier New", monospace;
