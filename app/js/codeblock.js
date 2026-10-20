@@ -3,7 +3,7 @@ import {
   extensionMap,
   dependencies,
   languageNames
-} from ".languagemap.js";
+} from "./languagemap.js";
 
 (function () {
   "use strict";
