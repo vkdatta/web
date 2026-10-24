@@ -2,11 +2,11 @@
 /*
   contents.js — left-side "Contents" drawer for the nested heading wrappers.
 
-  Lists every heading of the article, nested by level (like the Grokipedia
+  Lists every heading of the article, nested by level (like the aestheticsipedia
   contents panel). Tapping an entry opens the wrappers above it and scrolls
   there. The header is just the title and a close button.
 
-  Needs nxt.js (window.DexNest). grok.js / grok.css are optional (icons only).
+  Needs nxt.js (window.DexNest). aesthetics.js / aesthetics.css are optional (icons only).
 */
 (function(){
 "use strict";
@@ -111,7 +111,7 @@ function build(){
   built = true;
   injectStyles();
 
-  var G = window.Grok;
+  var G = window.aesthetics;
 
   /* ---------- shell ---------- */
   var btn = document.createElement("button");

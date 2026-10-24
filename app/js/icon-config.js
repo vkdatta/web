@@ -3,17 +3,10 @@
 // dekxitty's topbar icons, so it stays crisp at 24px.
 if (window.Delluna) {
   window.Delluna.configure({
-    variant: 'plasma',
+    variant: 'og',
     icons: {
       'menu-right': { variant: 'og' },
       x: { variant: 'og' },
-      tick: { variant: 'orbit' },
-      expand_more: { variant: 'orbit' },
-      arrow_forward: { variant: 'orbit' },
-      arrow_back: { variant: 'orbit' },
-      chev: { variant: 'orbit' },
-      description: { variant: 'hud' },
-      category: { variant: 'hud' },
       bug_report: { variant: 'hud' }
     }
   });

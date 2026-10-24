@@ -1,6 +1,6 @@
 /*
-  grok.css — bloom menu, fluid stepper (swipe + scroll), slider
-  Ported from grok.html and re-themed to the dexsins dark tokens.
+  aesthetics.css — bloom menu, fluid stepper (swipe + scroll), slider
+  Ported from aesthetics.html and re-themed to the dexsins dark tokens.
   Everything is prefixed gk- so it cannot collide with the global button/input rules.
 */
 :root {

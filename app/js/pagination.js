@@ -53,7 +53,7 @@
     return h+'</div>';
   }
 
-  /* swipeable / scrollable stepper pager (grok.js); falls back to plain links if it isn't loaded */
+  /* swipeable / scrollable stepper pager (aesthetics.js); falls back to plain links if it isn't loaded */
   function goPage(n, pages){
     n = Math.max(1, Math.min(pages, n));
     if(n === page) return;
@@ -62,13 +62,13 @@
   function mountStepper(host, pages){
     host.className = 'gk-pager';
     host.innerHTML =
-        '<button type="button" class="gk-btn gk-pg-prev" aria-label="Previous page">'+window.Grok.icons.left+'</button>'
+        '<button type="button" class="gk-btn gk-pg-prev" aria-label="Previous page">'+window.aesthetics.icons.left+'</button>'
       + '<div class="gk-pg-steps"></div>'
-      + '<button type="button" class="gk-btn gk-pg-next" aria-label="Next page">'+window.Grok.icons.right+'</button>';
+      + '<button type="button" class="gk-btn gk-pg-next" aria-label="Next page">'+window.aesthetics.icons.right+'</button>';
     var prev = host.querySelector('.gk-pg-prev'), next = host.querySelector('.gk-pg-next');
     var labels = []; for(var i=1;i<=pages;i++) labels.push(String(i));
     var from = (lastPage && lastPage<=pages) ? lastPage : page;
-    var st = window.Grok.stepper(host.querySelector('.gk-pg-steps'), {
+    var st = window.aesthetics.stepper(host.querySelector('.gk-pg-steps'), {
       count: pages, labels: labels, active: from-1, scrub: false, ariaLabel: 'Pages',
       href: function(i){ return '?page='+(i+1); },
       onChange: function(i){ goPage(i+1, pages); }
@@ -104,7 +104,7 @@
     var slice=arr.slice((page-1)*PER_PAGE, page*PER_PAGE);
     c.innerHTML = (slice.length ? slice.map(cardHTML).join('')
                                 : '<p style="text-align:center;opacity:.7;padding:40px 0">No posts found.</p>')
-                + controlsHTML() + (window.Grok ? (pages>1 ? '<div id="cpg-steps"></div>' : '') : pagerHTML(pages));
+                + controlsHTML() + (window.aesthetics ? (pages>1 ? '<div id="cpg-steps"></div>' : '') : pagerHTML(pages));
 
     c.querySelectorAll('.post-outer').forEach(function(p){
       p.style.cursor='pointer';
@@ -121,7 +121,7 @@
       a.addEventListener('click',function(ev){ ev.preventDefault(); page=parseInt(a.getAttribute('data-page'),10); updateURL(); render(); window.scrollTo(0,0); });
     });
     var sh = c.querySelector('#cpg-steps');
-    if(sh && window.Grok) mountStepper(sh, pages);
+    if(sh && window.aesthetics) mountStepper(sh, pages);
     lastPage = page;
     ready();
   }

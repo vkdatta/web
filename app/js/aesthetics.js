@@ -1,12 +1,12 @@
 /*
-  grok.js — Bloom menu + fluid Stepper (swipe / scroll), ported from grok.html.
-  window.Grok.bloom(host, opts)   -> { open, close, el }
-  window.Grok.stepper(el, opts)   -> { get, set, refresh, el }
-  Styles live in css/grok.css.
+  aesthetics.js — Bloom menu + fluid Stepper (swipe / scroll), ported from aesthetics.html.
+  window.aesthetics.bloom(host, opts)   -> { open, close, el }
+  window.aesthetics.stepper(el, opts)   -> { get, set, refresh, el }
+  Styles live in css/aesthetics.css.
 */
 (function(){
 "use strict";
-if(window.Grok) return;
+if(window.aesthetics) return;
 
 var reduced = function(){ return window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches; };
 var I = function(p){ return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' + p + '</svg>'; };
@@ -253,5 +253,5 @@ function stepper(el, opts){
   return api;
 }
 
-window.Grok = { bloom: bloom, stepper: stepper, icons: ICONS };
+window.aesthetics = { bloom: bloom, stepper: stepper, icons: ICONS };
 })();
