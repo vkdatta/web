@@ -8,7 +8,7 @@
 
   Level cues (so you can tell H2 from H3 at a glance):
     1. the wrapper is indented from the LEFT by level (only the wrapper — content is not)
-    2. every level has its own colour code; the accent is a left border bar only
+    2. every level has its own colour; the accent is a left bar only
        (same language as the Contents drawer) on a tinted, filled wrapper
     3. the level number sits on the RIGHT of the wrapper and doubles as the
        toggle: no strike = open, struck through = closed
@@ -26,25 +26,16 @@
 /* ---------- tweakables ---------- */
 const INDENT_STEP = "clamp(6px, 2.4vw, 14px)";   // extra left indent per heading level (wrapper only)
 const BADGE_PREFIX = "";                          // set to "H" to show "H2" instead of "2"
-/* colour codes: --c is the flat accent (tints, number, Contents dot); BAR is the left bar (gradient = multicolour) */
+/* per-level colour, "r,g,b" — muted jewel ramp, violet -> rose; used for the left bar, tints, number and Contents dot */
 const LEVEL_RGB = {
-  1: "255,138,101",   // rainbow
-  2: "43,201,200",    // beach
-  3: "20,150,190",    // peacock
-  4: "212,175,55",    // gold
-  5: "190,196,205",   // silver
-  6: "196,115,70"     // copper
-};
-const LEVEL_BAR = {
-  1: "linear-gradient(180deg,#ff5f6d,#ffb347,#f9e45b,#5fd38d,#4da3ff,#a78bfa)",
-  2: "linear-gradient(180deg,#1fd1c8,#2bb5e8,#3ddc97,#e8d9a0)",
-  3: "linear-gradient(180deg,#0b8fa6,#0a7cc0,#3b4fd1,#1fa67a)",
-  4: "linear-gradient(180deg,#8a6a1f,#f1d27a,#c9a227,#f6e3a1)",
-  5: "linear-gradient(180deg,#8e949c,#eef0f4,#aab0b8,#dfe3e8)",
-  6: "linear-gradient(180deg,#7a3e1d,#e8a070,#b86a3a,#d98a5a)"
+  1: "167,139,250",   // amethyst
+  2: "129,140,248",   // indigo
+  3: "96,165,214",    // steel blue
+  4: "94,186,170",    // jade
+  5: "201,169,110",   // brass
+  6: "190,130,150"    // dusty rose
 };
 const GREY_RGB = "130,130,130";                   // H7 and deeper
-const GREY_BAR = "linear-gradient(180deg,#666,#9a9a9a)";
 
 const reducedMotion = function(){
   return window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -56,7 +47,7 @@ function injectStyles(){
   let levelCss = "";
   for(let n = 1; n <= 9; n++){
     levelCss +=
-      ".nested-section.ns-level-" + n + "{--c:" + (LEVEL_RGB[n] || GREY_RGB) + ";--bar:" + (LEVEL_BAR[n] || GREY_BAR) + ";}\n" +
+      ".nested-section.ns-level-" + n + "{--c:" + (LEVEL_RGB[n] || GREY_RGB) + ";}\n" +
       ".nested-section.ns-level-" + n + " > .ns-heading{margin-left:calc(" + (n - 1) + " * var(--ns-indent));}\n";
   }
 
@@ -69,7 +60,6 @@ function injectStyles(){
     .nested-section{
       --ns-indent:${INDENT_STEP};
       --c:130,130,130;
-      --bar:linear-gradient(180deg,#666,#9a9a9a);
       position:relative;
       z-index:0;
       display:block;
@@ -123,7 +113,7 @@ function injectStyles(){
     }
     .ns-heading::before{
       content:""; position:absolute; left:0; top:0; bottom:0; width:4px;
-      background:var(--bar);
+      background:rgb(var(--c));
       pointer-events:none;
     }
     .nested-section:not(.ns-leaf) > .ns-heading{ cursor:pointer; }

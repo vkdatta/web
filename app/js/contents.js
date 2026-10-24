@@ -81,8 +81,9 @@ function injectStyles(){
       -webkit-tap-highlight-color:transparent;
     }
     .dx-toc-item::before{
-      content:""; flex:0 0 auto; width:6px; height:6px; margin-top:.62em; border-radius:50%;
-      background:rgb(var(--c,139,120,255)); opacity:.55; transition:opacity .15s, transform .15s;
+      content:""; flex:0 0 auto; align-self:flex-start; width:.45em; height:1.45em; /* = one text line, so the dot centres on line 1 */
+      background:radial-gradient(circle closest-side, rgb(var(--c,139,120,255)) 98%, transparent 100%) center / .45em .45em no-repeat;
+      opacity:.55; transition:opacity .15s, transform .15s;
     }
     .dx-toc-item:hover,.dx-toc-item:focus-visible{ background:rgba(255,255,255,.05); outline:none; }
     .dx-toc-item:hover::before{ opacity:1; }
