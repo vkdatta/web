@@ -23,16 +23,36 @@ body.feed-view .post-outer a {
   color: #fff;
   font-size: 70% !important;
 }
+/* article links — Wikipedia-style: blue, dotted underline; light purple once visited */
 .post-body a {
   font-family: dexy;
-  text-decoration: underline;
   font-size: 90%;
-  color: #909090;
   padding: 0;
   margin: 0;
   letter-spacing: 2px;
   display: inline-block !important;
-  text-decoration-style: dashed;
+}
+.post-body a:not([imageanchor]) {
+  color: var(--dx-link, #6f9bff);
+  text-decoration-line: underline;
+  text-decoration-style: dotted;
+  text-decoration-thickness: 1.5px;
+  text-decoration-color: currentColor;
+}
+.post-body a:not([imageanchor]):visited {
+  color: var(--dx-link-visited, #b8a6ea);
+}
+.post-body a:not([imageanchor]):hover,
+.post-body a:not([imageanchor]):focus-visible {
+  color: var(--dx-link-hover, #9dbbff);
+  text-decoration-style: solid;
+}
+.post-body a:not([imageanchor]):visited:hover,
+.post-body a:not([imageanchor]):visited:focus-visible {
+  color: #cdbff2;
+}
+.post-body a:not([imageanchor]):active {
+  color: var(--dx-link-active, #c4d6ff);
 }
 button a {
   text-decoration: none !important;

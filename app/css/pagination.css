@@ -152,3 +152,10 @@ body.item-view .Blog .post-outer {
   padding: 0 !important;
   max-width: 100dvw !important;
 }
+
+/* swipeable / scrollable stepper pager (grok.js + grok.css) */
+.gk-pager{
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  width:100%;max-width:640px;margin:26px auto;padding:0 16px;box-sizing:border-box;
+}
+.gk-pager .gk-pg-steps{min-width:0;flex:0 1 auto;max-width:100%}

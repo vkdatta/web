@@ -41,6 +41,11 @@
   --dx-text: #ededed;
   --dx-text-dim: #8f8f8f;
   --dx-radius: 10px;
+  /* article links (Wikipedia-style) */
+  --dx-link: #6f9bff;
+  --dx-link-hover: #9dbbff;
+  --dx-link-active: #c4d6ff;
+  --dx-link-visited: #b8a6ea;
 }
 html {
   font-family: dexy;
