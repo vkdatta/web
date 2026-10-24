@@ -4,11 +4,9 @@
 
   Lists every heading of the article, nested by level (like the Grokipedia
   contents panel). Tapping an entry opens the wrappers above it and scrolls
-  there. The header carries:
-    • a bloom menu   — Expand all / Collapse all / Reset (H1 only)
-    • a level stepper — swipe across 1 2 3 … to open the article down to that level
+  there. The header is just the title and a close button.
 
-  Needs nxt.js (window.DexNest) and, for the bloom + stepper, grok.js / grok.css.
+  Needs nxt.js (window.DexNest). grok.js / grok.css are optional (icons only).
 */
 (function(){
 "use strict";
@@ -65,17 +63,9 @@ function injectStyles(){
       display:flex; align-items:center; justify-content:space-between; gap:10px;
       padding:14px 14px 8px 22px;
     }
-    .dx-toc-title{ font-family:dexy,system-ui,sans-serif; font-size:16px; letter-spacing:3px; color:#9a9a9a; }
+    .dx-toc-title{ font-family:classy,system-ui,sans-serif; font-size:17px; letter-spacing:.5px; text-transform:none; color:#d4d4d4; }
     .dx-toc-actions{ display:flex; align-items:center; gap:8px; }
     .dx-toc-actions .gk-btn{ width:40px; height:40px; }
-
-    .dx-toc-depth{
-      position:relative; z-index:1; flex:0 0 auto;
-      display:flex; align-items:center; justify-content:space-between; gap:12px;
-      padding:4px 14px 10px 22px;
-    }
-    .dx-toc-depth > span{ font-size:12px; letter-spacing:2px; color:#7d7d7d; text-transform:uppercase; white-space:nowrap; }
-    .dx-toc-depth .gk-steps{ flex:0 1 auto; min-width:0; }
 
     .dx-toc-list{ position:relative; flex:1 1 auto; overflow-y:auto; overscroll-behavior:contain; padding:6px 0 calc(28px + env(safe-area-inset-bottom, 0px)); }
     .dx-toc ul{ list-style:none; margin:0; padding:0; width:auto; display:block; }
@@ -121,7 +111,6 @@ function build(){
   injectStyles();
 
   var G = window.Grok;
-  var levels = Nest.levels();
 
   /* ---------- shell ---------- */
   var btn = document.createElement("button");
@@ -144,36 +133,8 @@ function build(){
   closeBtn.type = "button"; closeBtn.className = "gk-btn"; closeBtn.setAttribute("aria-label", "Close contents");
   closeBtn.innerHTML = G ? G.icons.close : "×";
 
-  /* bloom menu: expand / collapse / reset */
-  if(G){
-    G.bloom(actions, {
-      direction: "bottom", anchor: "end", ariaLabel: "Section actions", width: 190,
-      items: [
-        { label: "Expand all",   icon: G.icons.expand,   onSelect: function(){ Nest.expandAll(); } },
-        { label: "Collapse all", icon: G.icons.collapse, onSelect: function(){ Nest.collapseAll(); } },
-        { label: "Reset (H" + Nest.defaultLevel() + " open)", icon: G.icons.reset, onSelect: function(){ Nest.reset(); } }
-      ]
-    });
-  }
   actions.appendChild(closeBtn);
   panel.appendChild(head);
-
-  /* level stepper: swipe across to open the article down to that level */
-  var stepper = null;
-  if(G && levels.length > 1){
-    var depthRow = document.createElement("div"); depthRow.className = "dx-toc-depth";
-    var lab = document.createElement("span"); lab.textContent = "Open levels";
-    var host = document.createElement("div");
-    depthRow.appendChild(lab); depthRow.appendChild(host);
-    panel.appendChild(depthRow);
-    stepper = G.stepper(host, {
-      count: levels.length,
-      labels: levels.map(String),
-      active: Nest.openDepth(),
-      ariaLabel: "Open headings down to level",
-      onChange: function(i){ Nest.openToLevel(levels[i]); }
-    });
-  }
 
   /* ---------- nested list ---------- */
   var nav = document.createElement("nav");
@@ -220,14 +181,6 @@ function build(){
   document.body.appendChild(backdrop);
   document.body.appendChild(panel);
 
-  /* ---------- state sync ---------- */
-  function syncStepper(){
-    if(!stepper) return;
-    var d = Nest.openDepth();
-    if(d < 0) stepper.clear(); else stepper.set(d, { silent: true });
-  }
-  document.addEventListener("dexnest:change", syncStepper);
-
   function visible(sec){ return !(sec.parentElement && sec.parentElement.closest(".nested-section.ns-collapsed")); }
   function markActive(){
     var line = (window.innerHeight || 700) * 0.3, cur = null;
@@ -252,7 +205,6 @@ function build(){
     panel.classList.add("open"); backdrop.classList.add("open");
     btn.setAttribute("aria-expanded", "true");
     document.documentElement.style.overflow = "hidden";
-    if(stepper) stepper.refresh();
     setTimeout(function(){ closeBtn.focus({ preventScroll: true }); }, 30);
   }
   function close(returnFocus){

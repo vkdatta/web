@@ -204,8 +204,23 @@ import {
     }
     const codeElements = document.querySelectorAll("code");
     for (const originalCode of codeElements) {
-      if (originalCode.parentNode.classList.contains("code-container"))
+      if (
+        originalCode.parentNode.classList.contains("code-container") ||
+        originalCode.classList.contains("inline-code-hl")
+      )
         continue;
+      /* single-line + plain text (no language) => GitHub-style inline code:
+         just a text highlighter, no header / copy / wrap / collapse */
+      const rawText = originalCode.textContent.trim();
+      const rawLang = originalCode.getAttribute("lang") || "txt";
+      if (
+        !rawText.includes("\n") &&
+        languageLoader.detectLanguageFromExtension(rawLang) === "none"
+      ) {
+        originalCode.classList.add("inline-code-hl");
+        originalCode.textContent = rawText;
+        continue;
+      }
       try {
         const newCodeElement = document.createElement("code");
         const { displayName, lineCount } = await highlightCodeBlock(

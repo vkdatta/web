@@ -195,12 +195,16 @@ body.item-view .Blog .post-title-container {
   box-sizing: border-box;
   display: block;
   width: 100%;
-  margin-top: 62px;
-  margin-bottom: 12px;
+  /* equal breathing room above the title and between title and content */
+  --dx-title-gap: 44px;
+  margin-top: var(--dx-title-gap);
+  margin-bottom: var(--dx-title-gap);
 }
 @media (max-width: 600px) {
-  body.item-view .Blog .post-title-container { margin-top: 46px; }
+  body.item-view .Blog .post-title-container { --dx-title-gap: 32px; }
 }
+/* the body's own 15px top padding would add to the bottom gap — drop it */
+body.item-view .Blog .post-body { padding-top: 0; }
 body.item-view .Blog .post-title,
 body.item-view .Blog .post-title a {
   background: none;
@@ -210,7 +214,7 @@ body.item-view .Blog .post-title-container * {
   text-align: left !important;
   letter-spacing: 0.5px;
   word-spacing: 2px;
-  font-family: dexy, system-ui, sans-serif !important;
+  font-family: classy, system-ui, sans-serif !important;
   font-size: 150%;
   line-height: 1.3;
   color: #A2A2A2;
