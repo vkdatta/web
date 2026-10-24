@@ -7,9 +7,9 @@
   becomes its body.
 
   Level cues (so you can tell H2 from H3 at a glance):
-    1. the wrapper is indented from the RIGHT by level (only the wrapper — content is not)
-    2. every level has its own accent colour, drawn as a left border only
-       (same language as the Contents drawer)
+    1. the wrapper is indented from the LEFT by level (only the wrapper — content is not)
+    2. every level has its own colour code; the accent is a left border bar only
+       (same language as the Contents drawer) on a tinted, filled wrapper
     3. the level number sits on the RIGHT of the wrapper and doubles as the
        toggle: no strike = open, struck through = closed
 
@@ -24,16 +24,27 @@
 "use strict";
 
 /* ---------- tweakables ---------- */
-const INDENT_STEP = "clamp(6px, 2.4vw, 14px)";   // extra RIGHT indent per heading level (wrapper only)
+const INDENT_STEP = "clamp(6px, 2.4vw, 14px)";   // extra left indent per heading level (wrapper only)
 const BADGE_PREFIX = "";                          // set to "H" to show "H2" instead of "2"
-const LEVEL_RGB = {                               // per-level colour, "r,g,b" — muted jewel ramp, violet -> rose
-  1: "167,139,250",   // amethyst
-  2: "129,140,248",   // indigo
-  3: "96,165,214",    // steel blue
-  4: "94,186,170",    // jade
-  5: "201,169,110",   // brass
-  6: "190,130,150"    // dusty rose
+/* colour codes: --c is the flat accent (tints, number, Contents dot); BAR is the left bar (gradient = multicolour) */
+const LEVEL_RGB = {
+  1: "255,138,101",   // rainbow
+  2: "43,201,200",    // beach
+  3: "20,150,190",    // peacock
+  4: "212,175,55",    // gold
+  5: "190,196,205",   // silver
+  6: "196,115,70"     // copper
 };
+const LEVEL_BAR = {
+  1: "linear-gradient(180deg,#ff5f6d,#ffb347,#f9e45b,#5fd38d,#4da3ff,#a78bfa)",
+  2: "linear-gradient(180deg,#1fd1c8,#2bb5e8,#3ddc97,#e8d9a0)",
+  3: "linear-gradient(180deg,#0b8fa6,#0a7cc0,#3b4fd1,#1fa67a)",
+  4: "linear-gradient(180deg,#8a6a1f,#f1d27a,#c9a227,#f6e3a1)",
+  5: "linear-gradient(180deg,#8e949c,#eef0f4,#aab0b8,#dfe3e8)",
+  6: "linear-gradient(180deg,#7a3e1d,#e8a070,#b86a3a,#d98a5a)"
+};
+const GREY_RGB = "130,130,130";                   // H7 and deeper
+const GREY_BAR = "linear-gradient(180deg,#666,#9a9a9a)";
 
 const reducedMotion = function(){
   return window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -43,10 +54,10 @@ function injectStyles(){
   if(document.getElementById("ns-styles")) return;
 
   let levelCss = "";
-  for(let n = 1; n <= 6; n++){
+  for(let n = 1; n <= 9; n++){
     levelCss +=
-      ".nested-section.ns-level-" + n + "{--c:" + LEVEL_RGB[n] + ";}\n" +
-      ".nested-section.ns-level-" + n + " > .ns-heading{margin-right:calc(" + (n - 1) + " * var(--ns-indent));}\n";
+      ".nested-section.ns-level-" + n + "{--c:" + (LEVEL_RGB[n] || GREY_RGB) + ";--bar:" + (LEVEL_BAR[n] || GREY_BAR) + ";}\n" +
+      ".nested-section.ns-level-" + n + " > .ns-heading{margin-left:calc(" + (n - 1) + " * var(--ns-indent));}\n";
   }
 
   const style = document.createElement("style");
@@ -57,7 +68,8 @@ function injectStyles(){
 
     .nested-section{
       --ns-indent:${INDENT_STEP};
-      --c:139,120,255;
+      --c:130,130,130;
+      --bar:linear-gradient(180deg,#666,#9a9a9a);
       position:relative;
       z-index:0;
       display:block;
@@ -82,33 +94,43 @@ function injectStyles(){
     .nested-section.ns-dim{ opacity:0.5; }
     .nested-section.ns-active{ opacity:1; }
 
-    /* ---- the wrapper: left border only, title fills the left, level number sits on the right ---- */
+    /* ---- the wrapper: filled + tinted, accent is a left bar only; level number sits on the right ---- */
     .ns-heading{
-      margin-top:0; margin-left:0; margin-bottom:10px;
-      padding:8px 10px 8px 16px;
+      position:relative;
+      overflow:hidden;
+      margin-top:0; margin-right:0; margin-bottom:10px;
+      padding:8px 8px 8px 18px;
       min-height:46px;
       display:flex;
       align-items:center;
       gap:10px;
-      color:#ececec;
+      color:#fff;
       font-family:'classy',system-ui,sans-serif;
       font-size:15px;
       line-height:1.7;
       font-weight:normal;
-      letter-spacing:1.5px;
-      background:linear-gradient(90deg, rgba(var(--c),.11), rgba(var(--c),.02) 70%, transparent);
+      letter-spacing:3px;
+      background:
+        linear-gradient(rgba(var(--c),.07), rgba(var(--c),.07)),
+        var(--dx-surface-raised,#111);
       border:0;
-      border-left:3px solid rgb(var(--c));
-      border-radius:0 8px 8px 0;
+      border-radius:10px;
       user-select:none;
       -webkit-user-select:none;
       -webkit-tap-highlight-color:transparent;
       scroll-margin-top:12px;
       transition:background .15s ease;
     }
+    .ns-heading::before{
+      content:""; position:absolute; left:0; top:0; bottom:0; width:4px;
+      background:var(--bar);
+      pointer-events:none;
+    }
     .nested-section:not(.ns-leaf) > .ns-heading{ cursor:pointer; }
     .nested-section:not(.ns-leaf) > .ns-heading:hover{
-      background:linear-gradient(90deg, rgba(var(--c),.2), rgba(var(--c),.05) 70%, transparent);
+      background:
+        linear-gradient(rgba(var(--c),.13), rgba(var(--c),.13)),
+        var(--dx-surface-raised,#111);
     }
     .ns-heading:focus-visible{ outline:2px solid rgba(var(--c),.6); outline-offset:3px; }
 
@@ -129,18 +151,19 @@ function injectStyles(){
       position:relative;
       flex:0 0 auto;
       display:inline-flex; align-items:center; justify-content:center;
-      width:26px; height:26px;
+      width:30px; height:30px;
       color:rgb(var(--c));
-      background:transparent;
-      border:0;
+      background:rgba(var(--c),.12);
+      border:1px solid rgba(var(--c),.45);
+      border-radius:10px;
       font-family:'classy',system-ui,sans-serif;
-      font-size:14px; line-height:1; letter-spacing:0; word-spacing:0;
+      font-size:13px; line-height:1; letter-spacing:0; word-spacing:0;
       pointer-events:none; user-select:none;
-      transition:opacity .2s ease;
+      transition:background .15s ease, opacity .2s ease;
     }
     .ns-num::after{
       content:"";
-      position:absolute; left:3px; right:3px; top:50%;
+      position:absolute; left:5px; right:5px; top:50%;
       height:2px; margin-top:-1px;
       border-radius:2px;
       background:currentColor;
@@ -148,8 +171,9 @@ function injectStyles(){
       transform-origin:left center;
       transition:transform .22s cubic-bezier(.2,.9,.25,1);
     }
-    .nested-section.ns-collapsed > .ns-heading > .ns-num{ opacity:.75; }
+    .nested-section.ns-collapsed > .ns-heading > .ns-num{ opacity:.8; }
     .nested-section.ns-collapsed > .ns-heading > .ns-num::after{ transform:scaleX(1); }
+    .nested-section:not(.ns-leaf) > .ns-heading:hover > .ns-num{ background:rgba(var(--c),.24); }
 
     /* ---- body: animated open/close (grid 1fr <-> 0fr) ---- */
     .ns-body{
